@@ -1,13 +1,5 @@
 
-// Demo program that reads per-vertex data from a curv file.
-// To compile this witg g++ 9.3:
-// 
-//    g++ -I../../include/ read_curv.cpp -o read_curv
-//
-// or with clang 10:
-//
-//    clang++ -I../../include/ read_curv.cpp -o read_curv
-//
+// The main for our code.
 
 #include "libfs.h"
 
@@ -31,8 +23,8 @@ int main(int argc, char** argv) {
     std::string rh_label_file = "demo_data/subjects_dir/fsaverage3/label/rh.cortex.label";
 
     fs::Mesh lh_white, rh_white; 
-    fs::read_fssurface(&lh_white, lh_surf_file);
-    fs::read_fssurface(&rh_white, rh_surf_file);
+    fs::read_surf(&lh_white, lh_surf_file);
+    fs::read_surf(&rh_white, rh_surf_file);
 
     fs::Label lh_cortex, rh_cortex;
     fs::read_label(&lh_cortex, lh_label_file);
