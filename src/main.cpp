@@ -18,36 +18,23 @@
 #include <iterator>
 
 int main(int argc, char** argv) {
-    std::string curv_fname = "lh.thickness";
-    if(argc == 2) {
-        curv_fname = argv[1];
+    if(argc > 1) {
+        std::cout << "Usage: " << argv[0] << "\n";
     }
-    std::cout << "Reading input curv file '" << curv_fname << "'.\n";    
-    std::cout << "System endianness is: " << (fs::is_bigendian() ? "big" : "little") << ".\n";
-    std::vector<float> data = fs::read_curv(curv_fname);
-    float min_entry = *std::min_element(data.begin(), data.end());
-    float max_entry = *std::max_element(data.begin(), data.end());
-    if(data.size() > 0) {
-        std::cout << "Received " << data.size() << " values in range " << min_entry  << " to " << max_entry << ".\n"; 
-    } else {
-        std::cout << "Received empty vector.\n";
-    }
+    std::string lh_surf_file = "demo_data/subjects_dir/fsaverage3/surf/lh.white";
+    std::string rh_surf_file = "demo_data/subjects_dir/fsaverage3/surf/rh.white";
+    std::string lh_label_file = "demo_data/subjects_dir/fsaverage3/label/lh.cortex.label";
+    std::string rh_label_file = "demo_data/subjects_dir/fsaverage3/label/rh.cortex.label";
 
+    fs::Mesh lh_white, rh_white; 
+    fs::read_fssurface(&lh_white, lh_surf_file);
+    fs::read_fssurface(&rh_white, rh_surf_file);
 
-    std::cout << "=== Writing and re-reading ===.\n";
+    fs::Label lh_cortex, rh_cortex;
+    fs::read_label(&lh_cortex, lh_label_file);
+    fs::read_label(&rh_cortex, rh_label_file);
 
-    // Write again.
-    std::string write_filename = "tmp.lh.thickness";
-    fs::write_curv(write_filename, data);
-    std::vector<float> data2 = fs::read_curv(write_filename);
-    float min_entry2 = *std::min_element(data2.begin(), data2.end());
-    float max_entry2 = *std::max_element(data2.begin(), data2.end());
-    if(data.size() > 0) {
-        std::cout << "Received " << data2.size() << " values in range " << min_entry2  << " to " << max_entry2 << ".\n"; 
-    } else {
-        std::cout << "Received empty vector.\n";
-    }
-
+    std::cout << "Read surfaces and labels.\n";
 
     exit(0);
 }
