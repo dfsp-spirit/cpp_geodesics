@@ -20,7 +20,11 @@
 int main(int argc, char** argv) {
     if(argc > 1) {
         std::cout << "Usage: " << argv[0] << "\n";
+        exit(1);
     }
+
+    std::cout << "Reading surfaces and labels...\n";
+
     std::string lh_surf_file = "demo_data/subjects_dir/fsaverage3/surf/lh.white";
     std::string rh_surf_file = "demo_data/subjects_dir/fsaverage3/surf/rh.white";
     std::string lh_label_file = "demo_data/subjects_dir/fsaverage3/label/lh.cortex.label";
@@ -34,7 +38,7 @@ int main(int argc, char** argv) {
     fs::read_label(&lh_cortex, lh_label_file);
     fs::read_label(&rh_cortex, rh_label_file);
 
-    std::cout << "Read surfaces and labels.\n";
+    std::cout << " * Done reading surfaces and labels.\n";
 
     exit(0);
 }
