@@ -2,6 +2,7 @@
 // The main for our code.
 
 #include "libfs.h"
+#include "typedef_vcg.h"
 
 #include <string>
 #include <iostream>
