@@ -260,7 +260,7 @@ namespace fs {
   }
 
   // Read a brain mesh from a file in binary FreeSurfer 'surf' format into the given Mesh instance.
-  void read_fssurface(Mesh* surface, std::string filename) {
+  void read_surf(Mesh* surface, std::string filename) {
     const int SURF_TRIS_MAGIC = 16777214;
     std::ifstream infile;
     infile.open(filename, std::ios_base::in | std::ios::binary);
@@ -626,6 +626,21 @@ namespace fs {
     std::vector<float> coord_y;
     std::vector<float> coord_z;
     std::vector<float> value;
+
+    // Compute for each vertex of the surface whether it is inside the label.
+    std::vector<bool> vert_in_label(size_t surface_num_verts) {
+      if(surface_num_verts < this->vertex.size()) { // nonsense, so we warn (but don't exit, maybe the user really wants this).
+        std::cerr << "Invalid number of vertices for surface, must be at least " << this->vertex.size() << "\n";
+      }
+      std::vector<bool> is_in;
+      for(size_t i=0; i <surface_num_verts; i++) {
+        is_in.push_back(false);
+      }
+      for(size_t i=0; i <this->vertex.size(); i++) {
+        is_in[this->vertex[i]] = true;
+      }
+      return(is_in);
+    }
   };
 
   // Read a FreeSurfer ASCII label file.
