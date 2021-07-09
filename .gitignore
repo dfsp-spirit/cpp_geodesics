@@ -30,3 +30,11 @@
 *.exe
 *.out
 *.app
+geodesics
+
+# Cmake stuff
+CMakeCache.txt
+Makefile
+cmake_install.cmake
+CMakeFiles/
+
