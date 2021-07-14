@@ -3,6 +3,7 @@
 
 #include "libfs.h"
 #include "typedef_vcg.h"
+#include "fs_mesh_to_vcg.h"
 
 #include <string>
 #include <iostream>
