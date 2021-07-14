@@ -47,6 +47,7 @@ namespace fs {
   std::string _freadstringnewline(std::istream&);
   std::string _freadfixedlengthstring(std::istream&, int32_t, bool);
   bool _ends_with(std::string const &fullString, std::string const &ending);
+  size_t _vidx_2d(size_t, size_t, size_t);
   struct MghHeader;
   
   /// Models a triangular mesh, used for brain surface meshes.
@@ -56,8 +57,8 @@ namespace fs {
   /// The m faces are stored as a vector of 3m integers, where 3 consecutive values represent the 3 vertices (by index)
   /// making up the respective face. Vertex indices are 0-based.
   struct Mesh {
-    std::vector<float> vertices;
-    std::vector<int> faces;
+    std::vector<_Float32> vertices;
+    std::vector<int32_t> faces;
 
     /// Return string representing the mesh in Wavefront Object (.obj) format.
     std::string to_obj() const {
@@ -80,6 +81,31 @@ namespace fs {
     size_t num_faces() const {
       return(this->faces.size() / 3);
     }
+
+    /// @brief Retrieve vertex indices of a face, treating the faces vector as an nx3 matrix.
+    /// @param i the row index, valid values are 0..num_faces.
+    /// @param j the column index, valid values are 0..2 (for the 3 vertices of a face).
+    int32_t fm_at(size_t i, size_t j) {
+      size_t idx = _vidx_2d(i, j, 3);
+      if(idx > this->faces.size()-1) {
+        std::cerr << "Indices << (" << i << "," << j << ") into Mesh.faces out of bounds. Hit " << idx << " with max valid index " << this->faces.size()-1 << ".\n";
+        exit(1);
+      }
+      return(this->faces[idx]);
+    }
+
+    /// @brief Retrieve coordinates of a vertex, treating the vertices vector as an nx3 matrix.
+    /// @param i the row index, valid values are 0..num_vertices.
+    /// @param j the column index, valid values are 0..2 (for the x,y,z coordinates).
+    _Float32 vm_at(size_t i, size_t j) {
+      size_t idx = _vidx_2d(i, j, 3);
+      if(idx > this->vertices.size()-1) {
+        std::cerr << "Indices << (" << i << "," << j << ") into Mesh.vertices out of bounds. Hit " << idx << " with max valid index " << this->vertices.size()-1 << ".\n";
+        exit(1);
+      }
+      return(this->vertices[idx]);
+    }
+    
 
     /// Return string representing the mesh in PLY format.
     std::string to_ply() const {
@@ -641,6 +667,11 @@ namespace fs {
       colortable->label.push_back(colortable->r[i] + colortable->g[i]*256 + colortable->b[i]*65536 + colortable->a[i]*16777216);
     }
 
+  }
+
+  /// Compute the vector index for treating a vector of length n*m as a matrix with n rows and m columns.
+  size_t _vidx_2d(size_t row, size_t column, size_t row_length=3) {
+    return (row+1)*row_length -row_length + column;
   }
 
   /// @brief Read a FreeSurfer annotation or brain surface parcellation from an annot stream.
