@@ -34,5 +34,10 @@ int main(int argc, char** argv) {
 
     std::cout << " * Done reading surfaces and labels.\n";
 
+    // Create a VCGLIB mesh from the libfs Mesh.
+    MyMesh m;
+    vcgmesh_from_fs_surface(&m, lh_white);
+
+
     exit(0);
 }
