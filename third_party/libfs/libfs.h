@@ -85,7 +85,7 @@ namespace fs {
     /// @brief Retrieve vertex indices of a face, treating the faces vector as an nx3 matrix.
     /// @param i the row index, valid values are 0..num_faces.
     /// @param j the column index, valid values are 0..2 (for the 3 vertices of a face).
-    int32_t fm_at(size_t i, size_t j) {
+    int32_t fm_at(size_t i, size_t j) const {
       size_t idx = _vidx_2d(i, j, 3);
       if(idx > this->faces.size()-1) {
         std::cerr << "Indices << (" << i << "," << j << ") into Mesh.faces out of bounds. Hit " << idx << " with max valid index " << this->faces.size()-1 << ".\n";
@@ -97,7 +97,7 @@ namespace fs {
     /// @brief Retrieve coordinates of a vertex, treating the vertices vector as an nx3 matrix.
     /// @param i the row index, valid values are 0..num_vertices.
     /// @param j the column index, valid values are 0..2 (for the x,y,z coordinates).
-    _Float32 vm_at(size_t i, size_t j) {
+    _Float32 vm_at(size_t i, size_t j) const {
       size_t idx = _vidx_2d(i, j, 3);
       if(idx > this->vertices.size()-1) {
         std::cerr << "Indices << (" << i << "," << j << ") into Mesh.vertices out of bounds. Hit " << idx << " with max valid index " << this->vertices.size()-1 << ".\n";
