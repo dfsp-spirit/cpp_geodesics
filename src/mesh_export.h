@@ -10,5 +10,5 @@
 
 void export_mesh_ply(MyMesh& m, const std::string& outfile) {
     std::cout << "Exporting mesh in PLY format to file '" << outfile << "'.\n";
-    vcg::tri::io::ExporterPLY<MyMesh>::Save(m, outfile.c_str());
+    vcg::tri::io::ExporterPLY<MyMesh>::Save(m, outfile.c_str(), 0, false);
 }

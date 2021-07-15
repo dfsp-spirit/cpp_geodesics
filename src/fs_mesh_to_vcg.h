@@ -30,10 +30,10 @@ void vcgmesh_from_fs_surface(MyMesh* m, const fs::Mesh& fs_surface) {
 
   // Create faces
   vcg::tri::Allocator<MyMesh>::AddFaces(*m, nf);
-  for (int i=0; i < nv ; i++) {
+  for (int i=0; i < nf; i++) {
 	  FaceIterator fi=m->face.begin()+i;
 	  for (int j = 0; j < 3; j++)  {
-		  (*fi).V(j)=ivp[fs_surface.vm_at(i, j)];
+		  (*fi).V(j)=ivp[fs_surface.fm_at(i, j)];
     }
   }
 }
