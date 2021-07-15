@@ -11,36 +11,31 @@
 void vcgmesh_from_fs_surface(MyMesh* m, const fs::Mesh& fs_surface) {  
   int nv = fs_surface.num_vertices();
   int nf = fs_surface.num_faces();
-  
-  //MyMesh::VertexIterator vi = vcg::tri::Allocator<MyMesh>::AddVertices(*m, nv);
-  //MyMesh::FaceIterator fi = vcg::tri::Allocator<MyMesh>::AddFaces(*m, nf);
+
+  // Add vertices  
   vcg::tri::Allocator<MyMesh>::AddVertices(*m, nv);
 
   std::cout << "Creating MyMesh instance with " << nv << " vertices and " << nf << " faces.\n";
 
+  // Create vertex pointers, used later when creating faces.
   std::vector<MyMesh::VertexPointer> ivp;
   ivp.resize(nv);
-	vcg::SimpleTempData<typename MyMesh::VertContainer, int> indices(m->vert);
-  // Add vertex coordinates.
+	
+  // Set vertex coordinates.
   for (int i=0; i < nv; i++) {
     VertexIterator vi = m->vert.begin()+i;
     ivp[i]=&*vi;
     (*vi).P() = CoordType(fs_surface.vm_at(i, 0), fs_surface.vm_at(i, 1), fs_surface.vm_at(i, 2));
   }
 
-  std::cout << "Added vertices.\n";
-
   // Create faces
   vcg::tri::Allocator<MyMesh>::AddFaces(*m, nf);
-  vcg::SimpleTempData<typename MyMesh::FaceContainer, int> indicesf(m->face);
   for (int i=0; i < nv ; i++) {
 	  FaceIterator fi=m->face.begin()+i;
-	  indicesf[fi] = i;
 	  for (int j = 0; j < 3; j++)  {
-		  (*fi).V(j)=ivp[fs_surface.vm_at(i, 0)];
+		  (*fi).V(j)=ivp[fs_surface.vm_at(i, j)];
     }
   }
-  std::cout << "Added faces.\n";
 }
 
   

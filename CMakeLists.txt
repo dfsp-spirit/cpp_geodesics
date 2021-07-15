@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.8.2)
 project(libfs)
 
-set(SOURCE_FILES src/main.cpp)
+set(SOURCE_FILES src/main.cpp src/typedef_vcg.h)
 include_directories( include third_party/libfs )
 include_directories( include third_party/vcglib )
 include_directories( include third_party/vcglib/eigenlib )
