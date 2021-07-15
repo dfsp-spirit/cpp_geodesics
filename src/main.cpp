@@ -4,6 +4,7 @@
 #include "libfs.h"
 #include "typedef_vcg.h"
 #include "fs_mesh_to_vcg.h"
+#include "mesh_export.h"
 
 #include <string>
 #include <iostream>
@@ -37,6 +38,9 @@ int main(int argc, char** argv) {
     // Create a VCGLIB mesh from the libfs Mesh.
     MyMesh m;
     vcgmesh_from_fs_surface(&m, lh_white);
+
+    // Export the mesh to PLY format to check that is looks correct (e.g., in Blender).
+    export_mesh_ply(m, "mesh.ply");
 
 
     exit(0);

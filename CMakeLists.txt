@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.8.2)
 project(libfs)
 
-set(SOURCE_FILES src/main.cpp src/typedef_vcg.h)
+set(SOURCE_FILES src/main.cpp src/typedef_vcg.h third_party/vcglib/wrap/ply/plylib.cpp)
 include_directories( include third_party/libfs )
 include_directories( include third_party/vcglib )
 include_directories( include third_party/vcglib/eigenlib )
@@ -18,7 +18,7 @@ endif()
 
 
 if( CMAKE_CXX_COMPILER_ID MATCHES "Clang|AppleClang|GNU" )
-    target_compile_options( geodesics PRIVATE -Wall -Wextra -Werror )
+    target_compile_options( geodesics PRIVATE -Wall -Wextra)
 endif()
 if( CMAKE_CXX_COMPILER_ID MATCHES "MSVC" )
 	target_compile_options( geodesics PRIVATE /W4 /WX )
