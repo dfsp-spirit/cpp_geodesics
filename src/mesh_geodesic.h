@@ -15,7 +15,7 @@
 
 // Compute pseudo-geodesic distance from query vertices 'verts' to all others (or to those
 // within a maximal distance of maxdist_ if it is > 0).
-std::vector<float> geodist(MyMesh m, std::vector<int> verts, float maxdist) {
+std::vector<float> geodist(MyMesh& m, std::vector<int> verts, float maxdist) {
   
     int n = verts.size();
     VertexIterator vi;

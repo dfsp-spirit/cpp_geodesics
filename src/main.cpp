@@ -64,6 +64,10 @@ int main(int argc, char** argv) {
     // Write it to a JSON file.
     strtofile(neigh_to_json(neigh), "mesh_adj.json");
     
+    // Compute geodesic distances to query vertex
+    std::vector<int> query_vertices_geod;
+    query_vertices_geod.push_back(500);
+    std::vector<float> dists = geodist(m, query_vertices_geod, -1.0);
 
 
     exit(0);
