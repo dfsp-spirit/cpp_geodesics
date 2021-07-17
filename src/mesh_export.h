@@ -9,7 +9,7 @@
 
 
 void export_mesh_ply(MyMesh& m, const std::string& outfile) {
-    std::cout << "Exporting mesh in PLY format to file '" << outfile << "'.\n";
+    //std::cout << "Exporting mesh in PLY format to file '" << outfile << "'.\n";
     int mask = 0;   // The mask defines which mesh features to write (e.g., vertex colors, normals, ...)
     bool use_binary_format_version = false;
     vcg::tri::io::ExporterPLY<MyMesh>::Save(m, outfile.c_str(), mask, use_binary_format_version);

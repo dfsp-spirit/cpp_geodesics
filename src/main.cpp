@@ -5,6 +5,7 @@
 #include "typedef_vcg.h"
 #include "fs_mesh_to_vcg.h"
 #include "mesh_export.h"
+#include "mesh_adj.h"
 
 #include <string>
 #include <iostream>
@@ -36,11 +37,21 @@ int main(int argc, char** argv) {
     std::cout << " * Done reading surfaces and labels.\n";
 
     // Create a VCGLIB mesh from the libfs Mesh.
+    std::cout << " Creating VCG mesh from brain surface.\n";
     MyMesh m;
     vcgmesh_from_fs_surface(&m, lh_white);
 
     // Export the mesh to PLY format to check that is looks correct (e.g., in Blender).
+    std::cout << " Exporting mesh in PLY format to file 'mesh.ply'.\n";
     export_mesh_ply(m, "mesh.ply");
+
+    // Compute adjacency list representation of mesh
+    std::cout << " Computing adjacency list representation of mesh.\n";
+    std::vector<int> query_vertices;
+    for(int i=0; i<m.vn; i++) {
+        query_vertices.push_back(i);
+    }
+    std::vector<std::vector<int>> neigh = mesh_adj(m, query_vertices, 1, false);
 
 
     exit(0);
