@@ -15,7 +15,7 @@ void vcgmesh_from_fs_surface(MyMesh* m, const fs::Mesh& fs_surface) {
   // Add vertices  
   vcg::tri::Allocator<MyMesh>::AddVertices(*m, nv);
 
-  std::cout << "Creating MyMesh instance with " << nv << " vertices and " << nf << " faces.\n";
+  std::cout << " Creating MyMesh instance with " << nv << " vertices and " << nf << " faces.\n";
 
   // Create vertex pointers, used later when creating faces.
   std::vector<MyMesh::VertexPointer> ivp;
