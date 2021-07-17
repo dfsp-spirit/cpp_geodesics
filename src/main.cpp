@@ -51,7 +51,8 @@ int main(int argc, char** argv) {
     for(int i=0; i<m.vn; i++) {
         query_vertices.push_back(i);
     }
-    std::vector<std::vector<int>> neigh = mesh_adj(m, query_vertices, 1, false);
+    int k = 1;  // The 'k' for computing the k-ring neighborhood.
+    std::vector<std::vector<int>> neigh = mesh_adj(m, query_vertices, k, false);
 
 
     exit(0);
