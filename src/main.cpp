@@ -27,6 +27,8 @@ int main(int argc, char** argv) {
     std::string rh_surf_file = "demo_data/subjects_dir/" + subject + "/surf/rh.white";
     std::string lh_label_file = "demo_data/subjects_dir/" + subject + "/label/lh.cortex.label";
     std::string rh_label_file = "demo_data/subjects_dir/" + subject + "/label/rh.cortex.label";
+    std::string lh_curv_file = "demo_data/subjects_dir/" + subject + "/surf/lh.thickness";
+    std::string rh_curv_file = "demo_data/subjects_dir/" + subject + "/surf/rh.thickness";
 
     fs::Mesh lh_white, rh_white; 
     fs::read_surf(&lh_white, lh_surf_file);
@@ -35,6 +37,10 @@ int main(int argc, char** argv) {
     fs::Label lh_cortex, rh_cortex;
     fs::read_label(&lh_cortex, lh_label_file);
     fs::read_label(&rh_cortex, rh_label_file);
+
+    std::vector<float> lh_thickness, rh_thickness;
+    lh_thickness = fs::read_curv_data(lh_curv_file);
+    rh_thickness = fs::read_curv_data(rh_curv_file);
 
     // Create a VCGLIB mesh from the libfs Mesh.
     std::cout << " Creating VCG mesh from brain surface.\n";
