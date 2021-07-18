@@ -16,8 +16,8 @@
 #include <iterator>
 
 int main(int argc, char** argv) {
-    if(argc > 2) {
-        std::cout << "Usage: " << argv[0] << "\n";
+    if(argc != 2) {
+        std::cout << "Usage: " << argv[0] << " s|p\n";
         exit(1);
     }
 
@@ -80,7 +80,7 @@ int main(int argc, char** argv) {
         mean_dists = mean_geodist(m);
     } else {
         std::cout << "Parallel!\n";
-        mean_dists = mean_geodist_p(m);
+        mean_dists = mean_geodist_p(lh_white);
     }
      
 

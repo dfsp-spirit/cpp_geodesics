@@ -54,27 +54,20 @@ std::vector<float> geodist(MyMesh& m, std::vector<int> verts, float maxdist) {
 
 
 /// Compute for each mesh vertex the mean geodesic distance to all others.
-std::vector<float> mean_geodist_p(MyMesh &m) {
+std::vector<float> mean_geodist_p(const fs::Mesh& surf) {
   std::vector<float> meandists;
-  size_t nv = m.VN();
+  size_t nv = surf.num_vertices();
   float max_dist = -1.0;
-  meandists.resize(nv);
-
-  std::string lh_surf_file = "demo_data/subjects_dir/fsaverage3/surf/lh.white";
+  meandists.resize(nv);  
   
-        fs::Mesh lh_white;
-  fs::read_surf(&lh_white, lh_surf_file);
-  
-  
-  # pragma omp parallel for firstprivate(max_dist, lh_surf_file, lh_white)
+  # pragma omp parallel for firstprivate(max_dist, surf)
   for(size_t i=0; i<nv; i++) {
-    MyMesh m2;
-    vcgmesh_from_fs_surface(&m2, lh_white);
-    //vcg::tri::Append<MyMesh,MyMesh>::MeshCopy(m2,m);
+    MyMesh m;
+    vcgmesh_from_fs_surface(&m, surf);
     std::vector<int> query_vert;
     query_vert.resize(1);
     query_vert[0] = i;
-    std::vector<float> gdists = geodist(m2, query_vert, max_dist);
+    std::vector<float> gdists = geodist(m, query_vert, max_dist);
     double dist_sum = 0.0;
     for(size_t j=0; j<nv; j++) {
         dist_sum += gdists[j];
