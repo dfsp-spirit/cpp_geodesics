@@ -38,4 +38,34 @@ void vcgmesh_from_fs_surface(MyMesh* m, const fs::Mesh& fs_surface) {
   }
 }
 
+
+/// Create an fs::Mesh instance from a VCGLIB MyMesh
+void fs_surface_from_vcgmesh(fs::Mesh* surf, MyMesh& m) {
+  SimpleTempData<MyMesh::VertContainer,int> vert_indices(m.vert);
+
+  std::vector<float> vertex_coords;
+
+  VertexIterator vi = m.vert.begin();
+  for (int i=0; i < m.vn; i++) {
+    vert_indices[vi] = i;
+    vertex_coords.push_back((vi)->P().X());
+    vertex_coords.push_back((vi)->P().Y());
+    vertex_coords.push_back((vi)->P().Z());
+    ++vi;
+  }
+
+  std::vector<int> faces; // Their vertex indices.
+
+  FaceIterator fi = m.face.begin();
+  for (int i=0; i < m.fn; i++) {
+    faces.push_back(vert_indices[fi->V(0)]);
+    faces.push_back(vert_indices[fi->V(1)]);
+    faces.push_back(vert_indices[fi->V(2)]);
+    ++fi;
+  }
+
+  surf->vertices = vertex_coords;
+  surf->faces = faces;
+}
+
   
