@@ -57,6 +57,15 @@ namespace fs {
   /// The m faces are stored as a vector of 3m integers, where 3 consecutive values represent the 3 vertices (by index)
   /// making up the respective face. Vertex indices are 0-based.
   struct Mesh {
+
+    /// Construct a Mesh from the given vertices and faces.
+    Mesh(std::vector<_Float32> cvertices, std::vector<int32_t> cfaces) { 
+      vertices = cvertices; faces = cfaces; 
+    }
+
+    /// Construct an empty Mesh.
+    Mesh() {}
+
     std::vector<_Float32> vertices;
     std::vector<int32_t> faces;
 
@@ -132,10 +141,20 @@ namespace fs {
 
   /// Models a FreeSurfer curv file that contains per-vertex float data.
   struct Curv {
+
+    /// Construct a Curv instance from the given per-vertex data.
+    Curv(std::vector<_Float32> curv_data) :
+      num_faces(100000), num_vertices(0), num_values_per_vertex(1) { data = curv_data; num_vertices = data.size(); }
+    
+    /// Construct an empty Curv instance.
+    Curv() :
+      num_faces(100000), num_vertices(0), num_values_per_vertex(1) {}
+
     int32_t num_faces;
+    std::vector<_Float32> data;
     int32_t num_vertices;
     int32_t num_values_per_vertex;
-    std::vector<_Float32> data;
+    
   };
 
   /// The colortable from an Annot file, can be used for parcellations and integer labels. Typically each index (in all fields) describes a brain region.
@@ -273,6 +292,10 @@ namespace fs {
 
   /// Models the data of an MGH file. Currently these are 1D vectors, but one can compute the 4D array using the dimXlength fields of the respective MghHeader.
   struct MghData {
+    MghData() {}
+    MghData(std::vector<int32_t> curv_data) { data_mri_int = curv_data; }
+    explicit MghData(std::vector<uint8_t> curv_data) { data_mri_uchar = curv_data; }
+    MghData(std::vector<float> curv_data) { data_mri_float = curv_data; }
     std::vector<int32_t> data_mri_int;
     std::vector<uint8_t> data_mri_uchar;
     std::vector<float> data_mri_float;

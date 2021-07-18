@@ -80,12 +80,17 @@ int main(int argc, char** argv) {
     // Compute mean geodesic distance from each vertex to all others
     std::cout << " Computing mean geodesic distance from each vertex to all others.\n";
     std::vector<float> mean_dists;
+    std::string mean_geodist_outfile;
     if (std::string(argv[1]) == "s") {
         std::cout << "Sequential!\n";
         mean_dists = mean_geodist(m);
+        mean_geodist_outfile = "geodist_seq.curv";
+        fs::write_curv(mean_geodist_outfile, mean_dists);
     } else {
         std::cout << "Parallel!\n";
         mean_dists = mean_geodist_p(lh_white);
+        mean_geodist_outfile = "geodist_par.curv";
+        fs::write_curv(mean_geodist_outfile, mean_dists);
     }
      
 
