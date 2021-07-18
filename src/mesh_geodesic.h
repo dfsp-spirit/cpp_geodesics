@@ -1,4 +1,4 @@
-
+#include "libfs.h"
 #include "typedef_vcg.h"
 #include <vcg/complex/complex.h>
 #include <vcg/complex/append.h>
@@ -54,14 +54,47 @@ std::vector<float> geodist(MyMesh& m, std::vector<int> verts, float maxdist) {
 
 
 /// Compute for each mesh vertex the mean geodesic distance to all others.
+std::vector<float> mean_geodist_p(MyMesh &m) {
+  std::vector<float> meandists;
+  size_t nv = m.VN();
+  float max_dist = -1.0;
+  meandists.resize(nv);
+
+  std::string lh_surf_file = "demo_data/subjects_dir/fsaverage3/surf/lh.white";
+  
+
+  
+  # pragma omp parallel for firstprivate(max_dist, lh_surf_file)
+  for(size_t i=0; i<nv; i++) {
+      fs::Mesh lh_white;
+  fs::read_surf(&lh_white, lh_surf_file);
+    MyMesh m2;
+    vcgmesh_from_fs_surface(&m2, lh_white);
+    //vcg::tri::Append<MyMesh,MyMesh>::MeshCopy(m2,m);
+    std::vector<int> query_vert;
+    query_vert.resize(1);
+    query_vert[0] = i;
+    std::vector<float> gdists = geodist(m2, query_vert, max_dist);
+    double dist_sum = 0.0;
+    for(size_t j=0; j<nv; j++) {
+        dist_sum += gdists[j];
+    }
+    meandists[i] = (float)(dist_sum / nv);
+  }
+  return meandists;
+}
+
+
+/// Compute for each mesh vertex the mean geodesic distance to all others.
 std::vector<float> mean_geodist(MyMesh &m) {
   std::vector<float> meandists;
   size_t nv = m.VN();
   float max_dist = -1.0;
   meandists.resize(nv);
-  std::vector<int> query_vert;
-  query_vert.resize(1);
-  for(size_t i=0; i<nv; i++) {    
+  
+  for(size_t i=0; i<nv; i++) {
+    std::vector<int> query_vert;
+    query_vert.resize(1);
     query_vert[0] = i;
     std::vector<float> gdists = geodist(m, query_vert, max_dist);
     double dist_sum = 0.0;

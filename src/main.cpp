@@ -16,7 +16,7 @@
 #include <iterator>
 
 int main(int argc, char** argv) {
-    if(argc > 1) {
+    if(argc > 2) {
         std::cout << "Usage: " << argv[0] << "\n";
         exit(1);
     }
@@ -74,7 +74,15 @@ int main(int argc, char** argv) {
 
     // Compute mean geodesic distance from each vertex to all others
     std::cout << " Computing mean geodesic distance from each vertex to all others.\n";
-    std::vector<float> mean_dists = mean_geodist(m);
+    std::vector<float> mean_dists;
+    if (std::string(argv[1]) == "s") {
+        std::cout << "Sequential!\n";
+        mean_dists = mean_geodist(m);
+    } else {
+        std::cout << "Parallel!\n";
+        mean_dists = mean_geodist_p(m);
+    }
+     
 
 
     exit(0);
