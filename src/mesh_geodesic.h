@@ -62,12 +62,12 @@ std::vector<float> mean_geodist_p(MyMesh &m) {
 
   std::string lh_surf_file = "demo_data/subjects_dir/fsaverage3/surf/lh.white";
   
-
-  
-  # pragma omp parallel for firstprivate(max_dist, lh_surf_file)
-  for(size_t i=0; i<nv; i++) {
-      fs::Mesh lh_white;
+        fs::Mesh lh_white;
   fs::read_surf(&lh_white, lh_surf_file);
+  
+  
+  # pragma omp parallel for firstprivate(max_dist, lh_surf_file, lh_white)
+  for(size_t i=0; i<nv; i++) {
     MyMesh m2;
     vcgmesh_from_fs_surface(&m2, lh_white);
     //vcg::tri::Append<MyMesh,MyMesh>::MeshCopy(m2,m);
