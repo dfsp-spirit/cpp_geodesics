@@ -45,9 +45,14 @@ int main(int argc, char** argv) {
     rh_thickness = fs::read_curv_data(rh_curv_file);
 
     // Create a VCGLIB mesh from the libfs Mesh.
-    std::cout << " Creating VCG mesh from brain surface.\n";
+    std::cout << " Creating VCG mesh from brain surface with " << lh_white.num_vertices() << " vertices and " << lh_white.num_faces() << " faces.\n";
     MyMesh m;
     vcgmesh_from_fs_surface(&m, lh_white);
+
+    // Test the reverse conversion
+    fs::Mesh lh_white2;
+    fs_surface_from_vcgmesh(&lh_white2, m);
+    std::cout << " Re-created fs::Mesh from VCG mesh, it has " << lh_white2.num_vertices() << " vertices and " << lh_white2.num_faces() << " faces.\n";
 
     // Export the mesh to PLY format to check that is looks correct (e.g., in Blender).
     std::cout << " Exporting mesh in PLY format to file 'mesh.ply'.\n";
