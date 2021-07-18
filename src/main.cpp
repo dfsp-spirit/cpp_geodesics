@@ -67,7 +67,8 @@ int main(int argc, char** argv) {
     // Compute geodesic distances to query vertex
     std::vector<int> query_vertices_geod;
     query_vertices_geod.push_back(500);
-    std::vector<float> dists = geodist(m, query_vertices_geod, -1.0);
+    float max_dist = -1.0; // Negative value means no max distance.
+    std::vector<float> dists = geodist(m, query_vertices_geod, max_dist);
 
 
     exit(0);

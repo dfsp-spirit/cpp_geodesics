@@ -14,7 +14,7 @@
 
 
 // Compute pseudo-geodesic distance from query vertices 'verts' to all others (or to those
-// within a maximal distance of maxdist_ if it is > 0).
+// within a maximal distance of maxdist_ if it is > 0). Often 'verts' only contains a single source vertex.
 std::vector<float> geodist(MyMesh& m, std::vector<int> verts, float maxdist) {
   
     int n = verts.size();
@@ -50,4 +50,21 @@ std::vector<float> geodist(MyMesh& m, std::vector<int> verts, float maxdist) {
       ++vi;
     }
     return geodists;
+}
+
+
+std::vector<float> mean_geodist(Mesh &m) {
+  float meandists = std::vector<float>;
+
+  float max_dist = -1.0;
+  meandists.resize(m.nv);
+  std::vector<int> query_vert;
+  query_vert.resize(1);
+  for(size_t i=0; i<m.nv; i++) {    
+    query_vert[0] = i;
+    gdists = geodist(m, query_vert, max_dist);
+    meandists[i] average = accumulate( v.begin(), v.end(), 0.0) / n;
+
+  }
+
 }
