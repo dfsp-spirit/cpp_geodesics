@@ -53,18 +53,23 @@ std::vector<float> geodist(MyMesh& m, std::vector<int> verts, float maxdist) {
 }
 
 
-std::vector<float> mean_geodist(Mesh &m) {
-  float meandists = std::vector<float>;
-
+/// Compute for each mesh vertex the mean geodesic distance to all others.
+std::vector<float> mean_geodist(MyMesh &m) {
+  std::vector<float> meandists;
+  size_t nv = m.VN();
   float max_dist = -1.0;
-  meandists.resize(m.nv);
+  meandists.resize(nv);
   std::vector<int> query_vert;
   query_vert.resize(1);
-  for(size_t i=0; i<m.nv; i++) {    
+  for(size_t i=0; i<nv; i++) {    
     query_vert[0] = i;
-    gdists = geodist(m, query_vert, max_dist);
-    meandists[i] average = accumulate( v.begin(), v.end(), 0.0) / n;
-
+    std::vector<float> gdists = geodist(m, query_vert, max_dist);
+    double dist_sum = 0.0;
+    for(size_t j=0; j<nv; j++) {
+        dist_sum += gdists[j];
+    }
+    meandists[i] = (float)(dist_sum / nv);
   }
-
+  return meandists;
 }
+

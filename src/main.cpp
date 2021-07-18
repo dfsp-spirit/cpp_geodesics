@@ -64,11 +64,17 @@ int main(int argc, char** argv) {
     // Write it to a JSON file.
     strtofile(neigh_to_json(neigh), "mesh_adj.json");
     
-    // Compute geodesic distances to query vertex
+    // Compute geodesic distances to a single query vertex
     std::vector<int> query_vertices_geod;
-    query_vertices_geod.push_back(500);
+    int qv = 500;
+    query_vertices_geod.push_back(qv);
+    std::cout << " Computing geodesic distance from query vertex " << qv << " to all others.\n";
     float max_dist = -1.0; // Negative value means no max distance.
-    std::vector<float> dists = geodist(m, query_vertices_geod, max_dist);
+    std::vector<float> dists_to_vert = geodist(m, query_vertices_geod, max_dist);
+
+    // Compute mean geodesic distance from each vertex to all others
+    std::cout << " Computing mean geodesic distance from each vertex to all others.\n";
+    std::vector<float> mean_dists = mean_geodist(m);
 
 
     exit(0);
