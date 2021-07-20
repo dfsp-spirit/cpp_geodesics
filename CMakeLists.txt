@@ -5,6 +5,7 @@ set(SOURCE_FILES src/main.cpp src/typedef_vcg.h third_party/vcglib/wrap/ply/plyl
 include_directories( include third_party/libfs )
 include_directories( include third_party/vcglib )
 include_directories( include third_party/vcglib/eigenlib )
+include_directories( include third_party/spline )
 add_executable(geodesics ${SOURCE_FILES})
 
 set_property(TARGET geodesics PROPERTY CXX_STANDARD 11)
