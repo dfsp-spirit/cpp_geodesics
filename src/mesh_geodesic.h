@@ -138,9 +138,24 @@ std::vector<std::vector<float>> geodesic_circles(MyMesh& m, std::vector<int> que
     }
   }
 
-  // TODO: compute here
-  std::vector<std::vector<float>> fake_res;
-  return fake_res;
+  std::vector<float> radius, perimeter, meandist;
+  size_t nqv = query_vertices.size();
+  radius.resize(nqv);
+  perimeter.resize(nqv);
+  meandist.resize(nqv);
+  for(size_t i=0; i<nqv; i++) {
+    int qv = query_vertices[i];
+
+  }
+  
+  // Prepare and return results.
+  std::vector<std::vector<float>> res;
+  res.push_back(radius);
+  res.push_back(perimeter);
+  if(do_meandist) {
+    res.push_back(meandist);
+  }
+  return res;
 }
 
 
