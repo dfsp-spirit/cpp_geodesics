@@ -190,10 +190,16 @@ std::vector<std::vector<float>> geodesic_circles(MyMesh& m, std::vector<int> que
 
     std::vector<double> sample_at_radii = linspace<double>(r_cycle-10.0, r_cycle+10.0, sampling);
     std::vector<std::vector<double>> circle_stats = _compute_geodesic_circle_stats(m, v_geodist, sample_at_radii, max_dist);
+    std::vector<double> circle_areas = circle_stats[0];
+    std::vector<double> circle_perimeters = circle_stats[1];
 
     std::vector<double> x = linspace<double>(1.0, sampling, 1.0);
     std::vector<double> xx = linspace<double>(1.0, sampling, 0.1);
     // Now perform cubic spline interpolation.
+    tk::spline spl_areas(x, circle_areas);
+    tk::spline spl_perimeters(x, circle_perimeters);
+     // now sample the spline
+     std::vector<double> aa(xx.size());
 
   }
   
