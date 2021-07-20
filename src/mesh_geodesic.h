@@ -1,4 +1,8 @@
+#pragma once
+
 #include "libfs.h"
+#include "spline.h"
+
 #include "typedef_vcg.h"
 #include "mesh_area.h"
 #include <vcg/complex/complex.h>
@@ -148,6 +152,12 @@ std::vector<double> linspace(T start_in, T end_in, int num_in) {
 }
 
 
+
+std::vector<std::vector<double>> _compute_geodesic_circle_stats(MyMesh& m, std::vector<float> geodist, std::vector<double> sample_at_radii, double max_dist) {
+  std::vector<std::vector<double>> fake_res;
+  return fake_res;
+}
+
 /// Compute geodesic circles at each query vertex and return their radius and perimeter (and mean geodesic distance if requested).
 std::vector<std::vector<float>> geodesic_circles(MyMesh& m, std::vector<int> query_vertices, float scale=5.0, bool do_meandist=false) {
   double sampling = 10.0;
@@ -179,7 +189,7 @@ std::vector<std::vector<float>> geodesic_circles(MyMesh& m, std::vector<int> que
     std::vector<float> v_geodist = geodist(m, query_vertex, max_dist);
 
     std::vector<double> sample_at_radii = linspace<double>(r_cycle-10.0, r_cycle+10.0, sampling);
-    std::vector<std::vector<double>> circle_stats = _compute_geodesic_circle_stats(m, geodist, sample_at_radii, max_dist);
+    std::vector<std::vector<double>> circle_stats = _compute_geodesic_circle_stats(m, v_geodist, sample_at_radii, max_dist);
 
     std::vector<double> x = linspace<double>(1.0, sampling, 1.0);
     std::vector<double> xx = linspace<double>(1.0, sampling, 0.1);
