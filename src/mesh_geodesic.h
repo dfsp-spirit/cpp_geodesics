@@ -119,9 +119,38 @@ std::vector<float> mean_geodist(MyMesh &m) {
 }
 
 
+/// A linspace or seq function for C++.
+template<typename T>
+std::vector<double> linspace(T start_in, T end_in, int num_in) {
+
+  std::vector<double> linspaced;
+
+  double start = static_cast<double>(start_in);
+  double end = static_cast<double>(end_in);
+  double num = static_cast<double>(num_in);
+
+  if (num == 0) { return linspaced; }
+  if (num == 1) 
+    {
+      linspaced.push_back(start);
+      return linspaced;
+    }
+
+  double delta = (end - start) / (num - 1);
+
+  for(int i=0; i < num-1; ++i)
+    {
+      linspaced.push_back(start + delta * i);
+    }
+  linspaced.push_back(end); // I want to ensure that start and end
+                            // are exactly the same as the input
+  return linspaced;
+}
+
+
 /// Compute geodesic circles at each query vertex and return their radius and perimeter (and mean geodesic distance if requested).
 std::vector<std::vector<float>> geodesic_circles(MyMesh& m, std::vector<int> query_vertices, float scale=5.0, bool do_meandist=false) {
-  float sampling = 10.0;
+  double sampling = 10.0;
   double mesh_area = mesh_area_total(m);  
   double area_scale = (scale * mesh_area) / 100.0;
   double r_cycle = sqrt(area_scale / M_PI);
@@ -145,6 +174,11 @@ std::vector<std::vector<float>> geodesic_circles(MyMesh& m, std::vector<int> que
   meandist.resize(nqv);
   for(size_t i=0; i<nqv; i++) {
     int qv = query_vertices[i];
+    std::vector<int> query_vertex;
+    query_vertex.push_back(qv);
+    std::vector<float> v_geodist = geodist(m, query_vertex, max_dist);
+
+    std::vector<double> r = linspace<double>(r_cycle-10.0, r_cycle+10.0, sampling);
 
   }
   
@@ -153,7 +187,7 @@ std::vector<std::vector<float>> geodesic_circles(MyMesh& m, std::vector<int> que
   res.push_back(radius);
   res.push_back(perimeter);
   if(do_meandist) {
-    res.push_back(meandist);
+    res.push_back(meandist);    
   }
   return res;
 }
