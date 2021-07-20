@@ -57,11 +57,16 @@ std::vector<float> geodist(MyMesh& m, std::vector<int> verts, float maxdist) {
 std::vector<float> mean_geodist_p(MyMesh &m) {
   
   // The MyMesh instance cannot be shared between the processes because it
-  // gets changed when the geodist function is run (distance are stored in
+  // gets changed when the geodist function is run (distances are stored in
   // the vertices' quality field). Also, firstprivate(m) does not work because
-  // it has not copy constructor. We therefore convert it to an fs::Mesh
+  // it has no copy constructor. We therefore convert it to an fs::Mesh
   // and share that, then constuct one MyMesh instance per thread in the
   // parallel for loop from the shared fs::Mesh.
+  // I guess an alternative could be to wrap the MyMesh in our own wrapper class,
+  // provide a copy constructor for that which copies the member MyMesh using the
+  // VCGLIB mesh copy functionality, use firstprivate() on the wrapper, and then pass
+  // in each thread the inner MyMesh from the wrapper to the geodist function. We have
+  // not tried this though. 
   fs::Mesh surf;
   fs_surface_from_vcgmesh(&surf, m);
 
