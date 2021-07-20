@@ -1,13 +1,9 @@
 #pragma once
 
 #include "typedef_vcg.h"
-#include <wrap/io_trimesh/export_ply.h>
-#include <wrap/ply/plylib.h>
-#include <vcg/complex/algorithms/pointcloud_normal.h>
-#include <wrap/io_trimesh/export_vrml.h>
-#include <wrap/io_trimesh/import.h>
 
 
+/// Compute total area of the mesh.
 double mesh_area_total(MyMesh& m) {
     FaceIterator face;
     double area = 0.0;
@@ -20,6 +16,7 @@ double mesh_area_total(MyMesh& m) {
 }
 
 
+/// Compute per-face area for the mesh.
 std::vector<double> mesh_area_per_face(MyMesh& m) {
     FaceIterator face;
     std::vector<double> faceareas;    

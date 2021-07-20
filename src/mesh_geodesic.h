@@ -1,9 +1,13 @@
 #include "libfs.h"
 #include "typedef_vcg.h"
+#include "mesh_area.h"
 #include <vcg/complex/complex.h>
 #include <vcg/complex/append.h>
 #include<vcg/complex/algorithms/geodesic.h>
 #include <vcg/container/simple_temporary_data.h>
+
+#define _USE_MATH_DEFINES
+#include <cmath>
 
 
 #include <string>
@@ -115,11 +119,21 @@ std::vector<float> mean_geodist(MyMesh &m) {
 }
 
 
-/// Compute geodesic circles at each query vertex and return their radius and perimeter.
-std::vector<std::vector<float>> geodesic_circles(MyMesh& m, std::vector<int> query_vertices, float scale=5.0, do_meandist=false) {
+/// Compute geodesic circles at each query vertex and return their radius and perimeter (and mean geodesic distance if requested).
+std::vector<std::vector<float>> geodesic_circles(MyMesh& m, std::vector<int> query_vertices, float scale=5.0, bool do_meandist=false) {
   float sampling = 10.0;
-  double mesh_area = mesh_total_area(m);
+  double mesh_area = mesh_area_total(m);  
+  double area_scale = (scale * mesh_area) / 100.0;
+  double r_cycle = sqrt(area_scale / M_PI);
+  
+  double max_dist = r_cycle + 10.0; // Early termination of geodesic distance computation for dramatic speed-up.
+  if(do_meandist) {
+    max_dist = -1.0; // Compute full pairwise geodesic distances if requested.
+  }
 
+  // TODO: compute here
+  std::vector<std::vector<float>> fake_res;
+  return fake_res;
 }
 
 
