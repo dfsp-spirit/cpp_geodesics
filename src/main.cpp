@@ -22,6 +22,7 @@ int main(int argc, char** argv) {
     }
 
     std::string subject = "fsaverage3";
+    //std::string subject = "subject1";
     std::cout << " Reading FreeSurfer surfaces and labels for subject '" + subject + "'...\n";
 
     
@@ -88,7 +89,7 @@ int main(int argc, char** argv) {
         fs::write_curv(mean_geodist_outfile, mean_dists);
     } else {
         std::cout << "Parallel!\n";
-        mean_dists = mean_geodist_p(lh_white);
+        mean_dists = mean_geodist_p(m);
         mean_geodist_outfile = "geodist_par.curv";
         fs::write_curv(mean_geodist_outfile, mean_dists);
     }

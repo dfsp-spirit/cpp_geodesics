@@ -54,13 +54,23 @@ std::vector<float> geodist(MyMesh& m, std::vector<int> verts, float maxdist) {
 
 
 /// Compute for each mesh vertex the mean geodesic distance to all others.
-std::vector<float> mean_geodist_p(const fs::Mesh& surf) {
+std::vector<float> mean_geodist_p(MyMesh &m) {
+  
+  // The MyMesh instance cannot be shared between the processes because it
+  // gets changed when the geodist function is run (distance are stored in
+  // the vertices' quality field). Also, firstprivate(m) does not work because
+  // it has not copy constructor. We therefore convert it to an fs::Mesh
+  // and share that, then constuct one MyMesh instance per thread in the
+  // parallel for loop from the shared fs::Mesh.
+  fs::Mesh surf;
+  fs_surface_from_vcgmesh(&surf, m);
+
   std::vector<float> meandists;
   size_t nv = surf.num_vertices();
   float max_dist = -1.0;
   meandists.resize(nv);  
   
-  # pragma omp parallel for firstprivate(max_dist, surf)
+  # pragma omp parallel for firstprivate(max_dist) shared(surf)
   for(size_t i=0; i<nv; i++) {
     MyMesh m;
     vcgmesh_from_fs_surface(&m, surf);
