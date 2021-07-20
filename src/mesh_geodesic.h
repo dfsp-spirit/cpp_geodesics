@@ -53,7 +53,7 @@ std::vector<float> geodist(MyMesh& m, std::vector<int> verts, float maxdist) {
 }
 
 
-/// Compute for each mesh vertex the mean geodesic distance to all others.
+/// Compute for each mesh vertex the mean geodesic distance to all others, parallel using OpenMP.
 std::vector<float> mean_geodist_p(MyMesh &m) {
   
   // The MyMesh instance cannot be shared between the processes because it
@@ -88,7 +88,7 @@ std::vector<float> mean_geodist_p(MyMesh &m) {
 }
 
 
-/// Compute for each mesh vertex the mean geodesic distance to all others.
+/// Compute for each mesh vertex the mean geodesic distance to all others, sequentially.
 std::vector<float> mean_geodist(MyMesh &m) {
   std::vector<float> meandists;
   size_t nv = m.VN();
