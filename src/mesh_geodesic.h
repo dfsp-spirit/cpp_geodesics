@@ -114,3 +114,12 @@ std::vector<float> mean_geodist(MyMesh &m) {
   return meandists;
 }
 
+
+/// Compute geodesic circles at each query vertex and return their radius and perimeter.
+std::vector<std::vector<float>> geodesic_circles(MyMesh& m, std::vector<int> query_vertices, float scale=5.0, do_meandist=false) {
+  float sampling = 10.0;
+  double mesh_area = mesh_total_area(m);
+
+}
+
+
