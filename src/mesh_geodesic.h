@@ -131,6 +131,13 @@ std::vector<std::vector<float>> geodesic_circles(MyMesh& m, std::vector<int> que
     max_dist = -1.0; // Compute full pairwise geodesic distances if requested.
   }
 
+  // Use all vertices if query_vertices is empty.
+  if(query_vertices.empty()) {
+    for(int i=0; i<m.vn; i++) {
+      query_vertices.push_back(i);
+    }
+  }
+
   // TODO: compute here
   std::vector<std::vector<float>> fake_res;
   return fake_res;
