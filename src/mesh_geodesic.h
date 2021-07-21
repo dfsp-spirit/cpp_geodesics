@@ -203,7 +203,7 @@ std::vector<std::vector<double>> _compute_geodesic_circle_stats(MyMesh& m, std::
 
     // Now compute partial area for faces which are only partly in range.
     for(int i=0; i<m.fn; i++) {
-      if(faces_num_verts_in_radius[i] != 3) {
+      if(faces_num_verts_in_radius[i] != 3 && faces_num_verts_in_radius[i] != 0) {
         int num_verts_in_radius = faces_num_verts_in_radius[i];
         int k = -1;
         std::vector<int> face_verts = surf.face_vertices(i);
