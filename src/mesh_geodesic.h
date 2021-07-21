@@ -38,10 +38,10 @@ std::vector<float> geodist(MyMesh& m, std::vector<int> verts, float maxdist) {
     tri::UpdateTopology<MyMesh>::VertexFace(m);
 
     // Prepare seed vector
-    std::vector<MyVertex*> seedVec;
+    std::vector<MyVertex*> seedVec(verts.size());
     for (int i=0; i < n; i++) {
       vi = m.vert.begin()+verts[i];
-      seedVec.push_back(&*vi);
+      seedVec[i] = &*vi;
     }
 
     // Compute pseudo-geodesic distance by summing dists along shortest path in graph.
@@ -52,10 +52,10 @@ std::vector<float> geodist(MyMesh& m, std::vector<int> verts, float maxdist) {
       tri::Geodesic<MyMesh>::PerVertexDijkstraCompute(m,seedVec,ed);
     }
 
-    std::vector<float> geodists;
+    std::vector<float> geodists(m.vn);
     vi=m.vert.begin();
     for (int i=0; i < m.vn; i++) {
-      geodists.push_back(vi->Q());
+      geodists[i] = vi->Q();
       ++vi;
     }
     return geodists;
@@ -188,7 +188,9 @@ std::vector<std::vector<float>> geodesic_circles(MyMesh& m, std::vector<int> que
     std::vector<int> query_vertex;
     query_vertex.push_back(qv);
     std::vector<float> v_geodist = geodist(m, query_vertex, max_dist);
-    meandist[i] = std::accumulate(v_geodist.begin(), v_geodist.end(), 0.0) / v_geodist.size(); 
+    if(do_meandist) {
+      meandist[i] = std::accumulate(v_geodist.begin(), v_geodist.end(), 0.0) / v_geodist.size(); 
+    }
 
     std::vector<double> sample_at_radii = linspace<double>(r_cycle-10.0, r_cycle+10.0, sampling);
     std::vector<std::vector<double>> circle_stats = _compute_geodesic_circle_stats(m, v_geodist, sample_at_radii, max_dist);
