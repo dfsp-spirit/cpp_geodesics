@@ -5,6 +5,8 @@
 
 #include "typedef_vcg.h"
 #include "mesh_area.h"
+#include "vec_math.h"
+
 #include <vcg/complex/complex.h>
 #include <vcg/complex/append.h>
 #include <vcg/complex/algorithms/geodesic.h>
@@ -242,7 +244,8 @@ std::vector<std::vector<double>> _compute_geodesic_circle_stats(MyMesh& m, std::
         coords_combined.insert( coords_combined.end(), coords_v1.begin(), coords_v1.end());
         coords_combined.insert( coords_combined.end(), coords_v2.begin(), coords_v2.end());
         
-
+        float alpha1 = face_vertex_dists[1]/(face_vertex_dists[1]-face_vertex_dists[0]);
+        std::vector<float> v1 = coords_v0 * vinit(alpha1,3) + (1.0f-alpha1) * coords_v1;
       }      
     }
 
