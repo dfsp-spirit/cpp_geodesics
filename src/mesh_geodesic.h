@@ -136,18 +136,16 @@ std::vector<double> linspace(T start_in, T end_in, int num_in) {
   double num = static_cast<double>(num_in);
 
   if (num == 0) { return linspaced; }
-  if (num == 1) 
-    {
+  if (num == 1) {
       linspaced.push_back(start);
       return linspaced;
-    }
+  }
 
   double delta = (end - start) / (num - 1);
 
-  for(int i=0; i < num-1; ++i)
-    {
+  for(int i=0; i < num-1; ++i) {
       linspaced.push_back(start + delta * i);
-    }
+  }
   linspaced.push_back(end); // I want to ensure that start and end
                             // are exactly the same as the input
   return linspaced;
@@ -217,7 +215,35 @@ std::vector<std::vector<double>> _compute_geodesic_circle_stats(MyMesh& m, std::
           }
         }
         assert(k>=0);
-      }
+        // Reorder vertex indices of face, based on k.
+        std::vector<int> face_verts_copy = surf.face_vertices(i); // tmp
+        if(k == 1) {
+          face_verts[0] = face_verts_copy[1];
+          face_verts[1] = face_verts_copy[2];
+          face_verts[2] = face_verts_copy[0];
+        } else if(k==2) {
+          face_verts[0] = face_verts_copy[2];
+          face_verts[1] = face_verts_copy[0];
+          face_verts[2] = face_verts_copy[1];
+        } // No re-ordering for k==0.
+
+        std::vector<float> face_vertex_dists(3);  // Get distances for all vertices of this face.
+        face_vertex_dists[0] = geodist[face_verts[0]] - radius;
+        face_vertex_dists[1] = geodist[face_verts[1]] - radius;
+        face_vertex_dists[2] = geodist[face_verts[2]] - radius;
+
+        // The following 3 vectors should be a matrix.
+        std::vector<float> coords_v0 = surf.vertex_coords(face_verts[0]);
+        std::vector<float> coords_v1 = surf.vertex_coords(face_verts[1]);
+        std::vector<float> coords_v2 = surf.vertex_coords(face_verts[2]);
+        std::vector<float> coords_combined; // Combine them
+        coords_combined.reserve(9); // preallocate memory
+        coords_combined.insert( coords_combined.end(), coords_v0.begin(), coords_v0.end());
+        coords_combined.insert( coords_combined.end(), coords_v1.begin(), coords_v1.end());
+        coords_combined.insert( coords_combined.end(), coords_v2.begin(), coords_v2.end());
+        
+
+      }      
     }
 
   }
