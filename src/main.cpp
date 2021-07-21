@@ -94,6 +94,7 @@ int main(int argc, char** argv) {
         fs::write_curv(mean_geodist_outfile, mean_dists);
     }
 
+
     // Compute geodesic circle stats
     std::vector<int32_t> qv_cs;
     bool do_meandists = false;

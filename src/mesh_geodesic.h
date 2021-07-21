@@ -127,6 +127,16 @@ std::vector<float> mean_geodist(MyMesh &m) {
 }
 
 
+/// Assumes the last value is in.
+template<typename T>
+int numsteps_for_stepsize(T start_in, T end_in, double stepsize) {
+  double start = static_cast<double>(start_in);
+  double end = static_cast<double>(end_in);
+  double delta = end - start;
+  int numsteps = (int)ceil(delta / stepsize);
+  return numsteps + 1;
+}
+
 /// A linspace or seq function for C++.
 template<typename T>
 std::vector<double> linspace(T start_in, T end_in, int num_in) {
@@ -274,6 +284,11 @@ std::vector<std::vector<double>> _compute_geodesic_circle_stats(MyMesh& m, std::
 
 /// Compute geodesic circles at each query vertex and return their radius and perimeter (and mean geodesic distance if requested).
 /// If 'query_vertices' is empty, this function will work on ALL vertices.
+/// If 'do_meandist' is true, this function will compute the mean geodesic distances to all other vertices for each vertex and
+/// return those as well. This is only partially needed for the function (it only needs to know for each vertex the geodesic
+/// distances in a certain radius, not to ALL vertices), but it is faster to do it here instead of separately computing the mean
+/// distances with another function call to mean_geodist_p()/mean_geodist() IF you need them anyways. If in doubt, leave this 
+/// disabled for a dramatic speedup (how much depends on the 'scale' parameter).
 std::vector<std::vector<float>> geodesic_circles(MyMesh& m, std::vector<int> query_vertices, float scale=5.0, bool do_meandist=false) {
   double sampling = 10.0;
   double mesh_area = mesh_area_total(m);  
@@ -292,7 +307,7 @@ std::vector<std::vector<float>> geodesic_circles(MyMesh& m, std::vector<int> que
       query_vertices[i] = i;
     }
   }
-  std::cout  << "Using " << query_vertices.size() << " query vertices.\n";
+  //std::cout  << "Using " << query_vertices.size() << " query vertices.\n";
 
   std::vector<float> radius, perimeter, meandist;
   size_t nqv = query_vertices.size();
@@ -316,11 +331,11 @@ std::vector<std::vector<float>> geodesic_circles(MyMesh& m, std::vector<int> que
     assert(sample_at_radii.size() == circle_areas.size());
     assert(sample_at_radii.size() == circle_perimeters.size());
 
-    std::vector<double> x = linspace<double>(1.0, sampling, 1.0); // spline x values
-    std::vector<double> xx = linspace<double>(1.0, sampling, 0.1);  // where to sample
+    std::vector<double> x = linspace<double>(1.0, sampling, numsteps_for_stepsize(1.0, sampling, 1.0)); // spline x values
+    std::vector<double> xx = linspace<double>(1.0, sampling, numsteps_for_stepsize(1.0, sampling, 0.1));  // where to sample
     int num_samples = xx.size();
 
-    std::cout << "At vertex #" << i << " v(" << qv << "). Sampled at " << sample_at_radii.size() << " radii. Received " << circle_areas.size() << " circle area values and length of x is " << x.size() << ".\n";
+    assert(x.size() == circle_areas.size()); // If this fails, there is a bug in the numsteps_for_stepsize() function.
 
     // Create cubic splines interpolation.
     tk::spline spl_areas(x, circle_areas);
