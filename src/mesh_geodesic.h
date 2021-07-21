@@ -7,7 +7,7 @@
 #include "mesh_area.h"
 #include <vcg/complex/complex.h>
 #include <vcg/complex/append.h>
-#include<vcg/complex/algorithms/geodesic.h>
+#include <vcg/complex/algorithms/geodesic.h>
 #include <vcg/container/simple_temporary_data.h>
 
 #define _USE_MATH_DEFINES
@@ -20,6 +20,7 @@
 #include <algorithm>
 #include <iterator>
 #include <numeric>
+#include <cassert>
 
 
 // Compute pseudo-geodesic distance from query vertices 'verts' to all others (or to those
@@ -200,10 +201,22 @@ std::vector<std::vector<double>> _compute_geodesic_circle_stats(MyMesh& m, std::
     for(int i=0; i<m.fn; i++) {
       if(faces_num_verts_in_radius[i] != 3) {
         int num_verts_in_radius = faces_num_verts_in_radius[i];
-        int k;
+        int k = -1;
+        std::vector<int> face_verts = surf.face_vertices(i);
         if(num_verts_in_radius == 2) { // 2 in, 1 out
-          
+          for(int j=0; j<3; j++) {
+            if(vert_in_radius[face_verts[j]] == false) {
+              k=j;
+            }
+          }          
+        } else { // 1 in, 2 out
+          for(int j=0; j<3; j++) {
+            if(vert_in_radius[face_verts[j]] == true) {
+              k=j;
+            }
+          }
         }
+        assert(k>=0);
       }
     }
 
