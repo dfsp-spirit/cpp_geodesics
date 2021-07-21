@@ -93,6 +93,19 @@ int main(int argc, char** argv) {
         mean_geodist_outfile = "geodist_par.curv";
         fs::write_curv(mean_geodist_outfile, mean_dists);
     }
+
+    // Compute geodesic circle stats
+    std::vector<int32_t> qv_cs;
+    bool do_meandists = false;
+    std::vector<std::vector<float>> circle_stats = geodesic_circles(m, qv_cs, 5.0, do_meandists);
+    std::vector<float> areas = circle_stats[0];    
+    std::vector<float> perimeters = circle_stats[1];
+    fs::write_curv("geocircles_area.curv", areas);
+    fs::write_curv("geocircles_perimeter.curv", perimeters);
+    if(do_meandists) {
+        std::vector<float> mean_geodists = circle_stats[2]; // Should be identical to the ones in 'mean_geodist' computed above.
+        fs::write_curv("geocircles_meandist.curv", mean_geodists);
+    }
      
 
 
