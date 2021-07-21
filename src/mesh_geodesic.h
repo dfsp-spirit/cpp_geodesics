@@ -153,13 +153,45 @@ std::vector<double> linspace(T start_in, T end_in, int num_in) {
 }
 
 
-/// Compute radius and perimeter stats.
+///  Compute geodesic circle area and perimeter at location defined by geodists for all radii.
+///  The location at which it will be computed is the vertex for which the geodesic distances were computed.
 ///
 /// This function is internal, it is called by geodesic_circles().
 std::vector<std::vector<double>> _compute_geodesic_circle_stats(MyMesh& m, std::vector<float> geodist, std::vector<double> sample_at_radii, double max_dist) {
+
+  fs::Mesh surf;
+  fs_surface_from_vcgmesh(&surf, m);
+
+  int nr = sample_at_radii.size();
+  std::vector<double> per_face_area = mesh_area_per_face(m);
+  for(int radius_idx=0; radius_idx<nr; radius_idx++) {
+    double radius = sample_at_radii[radius_idx];
+
+    ///////////////////// WARNING: We have to double-check what the distance values is for vertices for which NO values was computed.
+    /////////////////////          If it is 0.0 instead of NA or INF, the following code will not work and we need to replace the values first.
+
+    std::vector<bool> vert_in_radius(m.vn); // Whether vertex v is in radius, i.e., whether its geodesic distance value is < radius.
+    for(int i=0; i<m.vn; i++) {
+      vert_in_radius[i] = geodist[i] < radius;
+    }
+
+    // Count how many vertices per face are in radius.
+    std::vector<int> faces_num_verts_in_radius(m.fn);
+    for(int i=0; i<m.fn; i++) {
+      faces_num_verts_in_radius[i] = 0;
+      for(int j=0; j<3; j++) {
+        if(geodist[surf.fm_at(i, j)] < radius) {
+          faces_num_verts_in_radius[i]++;
+        }
+      }
+    }
+
+  }
+
   std::vector<std::vector<double>> fake_res;
   return fake_res;
 }
+
 
 /// Compute geodesic circles at each query vertex and return their radius and perimeter (and mean geodesic distance if requested).
 /// If 'query_vertices' is empty, this function will work on ALL vertices.

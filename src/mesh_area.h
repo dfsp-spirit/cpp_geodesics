@@ -24,7 +24,7 @@ std::vector<double> mesh_area_per_face(MyMesh& m) {
     int faceind = 0;
     for(face=m.face.begin(); face != m.face.end(); face++) {
       if(!(*face).IsD()) {
-        faceareas[faceind] = DoubleArea(*face);
+        faceareas[faceind] = DoubleArea(*face) / 2.0;
 	    faceind++;
       }
     }
