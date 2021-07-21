@@ -298,7 +298,7 @@ std::vector<std::vector<float>> geodesic_circles(MyMesh& m, std::vector<int> que
   
   double max_dist = r_cycle + 10.0; // Early termination of geodesic distance computation for dramatic speed-up.
   if(do_meandist) {
-    max_dist = -1.0; // Compute full pairwise geodesic distances if requested.
+    max_dist = -1.0; // Compute full pairwise geodesic distances if meandist computation was requested.
   }
 
   // Use all vertices if query_vertices is empty.
@@ -326,16 +326,15 @@ std::vector<std::vector<float>> geodesic_circles(MyMesh& m, std::vector<int> que
     } else {
       // The geodist() function has been called with a positive max_dist setting, and it returned 0.0 for all vertices it
       // did not visit in that case. That is unfortunate, so we fix the returned distance values here.
+      // If we do not fix this, the _compute_geodesic_circle_stats() function will produce wrong results based on the distances.
       for(size_t j=0; j<v_geodist.size(); j++) {
         if(j!=(size_t)qv) { // If j==qv, the distance is *really* zero.
           if(v_geodist[j] <= 0.000000001) {
             v_geodist[j] = max_possible_float;
           }
         }
-
       }
       
-
     }
 
     std::vector<double> sample_at_radii = linspace<double>(r_cycle-10.0, r_cycle+10.0, sampling);
