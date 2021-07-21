@@ -19,6 +19,7 @@
 #include <vector>
 #include <algorithm>
 #include <iterator>
+#include <numeric>
 
 
 // Compute pseudo-geodesic distance from query vertices 'verts' to all others (or to those
@@ -187,20 +188,37 @@ std::vector<std::vector<float>> geodesic_circles(MyMesh& m, std::vector<int> que
     std::vector<int> query_vertex;
     query_vertex.push_back(qv);
     std::vector<float> v_geodist = geodist(m, query_vertex, max_dist);
+    meandist[i] = std::accumulate(v_geodist.begin(), v_geodist.end(), 0.0) / v_geodist.size(); 
 
     std::vector<double> sample_at_radii = linspace<double>(r_cycle-10.0, r_cycle+10.0, sampling);
     std::vector<std::vector<double>> circle_stats = _compute_geodesic_circle_stats(m, v_geodist, sample_at_radii, max_dist);
     std::vector<double> circle_areas = circle_stats[0];
     std::vector<double> circle_perimeters = circle_stats[1];
 
-    std::vector<double> x = linspace<double>(1.0, sampling, 1.0);
-    std::vector<double> xx = linspace<double>(1.0, sampling, 0.1);
-    // Now perform cubic spline interpolation.
-    tk::spline spl_areas(x, circle_areas);
-    tk::spline spl_perimeters(x, circle_perimeters);
-     // now sample the spline
-     std::vector<double> aa(xx.size());
+    std::vector<double> x = linspace<double>(1.0, sampling, 1.0); // spline x values
+    std::vector<double> xx = linspace<double>(1.0, sampling, 0.1);  // where to sample
+    int num_samples = xx.size();
 
+    // Create cubic splines interpolation.
+    tk::spline spl_areas(x, circle_areas);
+    tk::spline spl_radius(x, sample_at_radii);
+    tk::spline spl_perimeters(x, circle_perimeters);
+    // Get interpolated values.
+    std::vector<double> sampled_areas(num_samples);
+    for(int i=0; i<num_samples; i++) { sampled_areas[i] = spl_areas(xx[i]); }
+    std::vector<double> sampled_radii(num_samples);
+    for(int i=0; i<num_samples; i++) { sampled_radii[i] = spl_radius(xx[i]); }
+    std::vector<double> sampled_perimeters(num_samples);
+    for(int i=0; i<num_samples; i++) { sampled_perimeters[i] = spl_perimeters(xx[i]); }
+
+    // Determine index of min
+    for(int i=0; i<num_samples; i++) {
+      sampled_areas[i] = fabs(area_scale - sampled_areas[i]);
+    }
+    int min_index = std::distance(sampled_areas.begin(),std::min_element(sampled_areas.begin(),sampled_areas.end()));
+    // Collect results.
+    radius[i] = sampled_radii[min_index];
+    perimeter[i] = sampled_perimeters[min_index];
   }
   
   // Prepare and return results.
