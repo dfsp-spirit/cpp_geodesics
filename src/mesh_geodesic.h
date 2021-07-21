@@ -186,6 +186,27 @@ std::vector<std::vector<double>> _compute_geodesic_circle_stats(MyMesh& m, std::
       }
     }
 
+    double total_area_in_radius = 0.0; // So far.
+    double total_perimeter = 0.0;
+
+    // Add the area of all faces which are full in radius (all 3 vertices in radius).
+    for(int i=0; i<m.fn; i++) {
+      if(faces_num_verts_in_radius[i] == 3) {
+        total_area_in_radius += per_face_area[i];
+      }
+    }
+
+    // Now compute partial area for faces which are only partly in range.
+    for(int i=0; i<m.fn; i++) {
+      if(faces_num_verts_in_radius[i] != 3) {
+        int num_verts_in_radius = faces_num_verts_in_radius[i];
+        int k;
+        if(num_verts_in_radius == 2) { // 2 in, 1 out
+          
+        }
+      }
+    }
+
   }
 
   std::vector<std::vector<double>> fake_res;
