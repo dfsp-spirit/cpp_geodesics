@@ -157,7 +157,7 @@ std::vector<double> linspace(T start_in, T end_in, int num_in) {
 ///  The location at which it will be computed is the vertex for which the geodesic distances were computed.
 ///
 /// This function is internal, it is called by geodesic_circles().
-std::vector<std::vector<double>> _compute_geodesic_circle_stats(MyMesh& m, std::vector<float> geodist, std::vector<double> sample_at_radii, double max_dist) {
+std::vector<std::vector<double>> _compute_geodesic_circle_stats(MyMesh& m, std::vector<float> geodist, std::vector<double> sample_at_radii) {
 
   fs::Mesh surf;
   fs_surface_from_vcgmesh(&surf, m);
@@ -229,7 +229,7 @@ std::vector<std::vector<float>> geodesic_circles(MyMesh& m, std::vector<int> que
     }
 
     std::vector<double> sample_at_radii = linspace<double>(r_cycle-10.0, r_cycle+10.0, sampling);
-    std::vector<std::vector<double>> circle_stats = _compute_geodesic_circle_stats(m, v_geodist, sample_at_radii, max_dist);
+    std::vector<std::vector<double>> circle_stats = _compute_geodesic_circle_stats(m, v_geodist, sample_at_radii);
     std::vector<double> circle_areas = circle_stats[0];
     std::vector<double> circle_perimeters = circle_stats[1];
 
