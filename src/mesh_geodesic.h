@@ -290,6 +290,9 @@ std::vector<std::vector<double>> _compute_geodesic_circle_stats(MyMesh& m, std::
 /// distances with another function call to mean_geodist_p()/mean_geodist() IF you need them anyways. If in doubt, leave this 
 /// disabled for a dramatic speedup (how much depends on the 'scale' parameter).
 std::vector<std::vector<float>> geodesic_circles(MyMesh& m, std::vector<int> query_vertices, float scale=5.0, bool do_meandist=false) {
+
+  std::cerr << "This function is not done yet and should not be used. Compare results with R version.\n";
+
   double sampling = 10.0;
   double mesh_area = mesh_area_total(m);  
   double area_scale = (scale * mesh_area) / 100.0;
