@@ -153,13 +153,16 @@ std::vector<double> linspace(T start_in, T end_in, int num_in) {
 }
 
 
-
+/// Compute radius and perimeter stats.
+///
+/// This function is internal, it is called by geodesic_circles().
 std::vector<std::vector<double>> _compute_geodesic_circle_stats(MyMesh& m, std::vector<float> geodist, std::vector<double> sample_at_radii, double max_dist) {
   std::vector<std::vector<double>> fake_res;
   return fake_res;
 }
 
 /// Compute geodesic circles at each query vertex and return their radius and perimeter (and mean geodesic distance if requested).
+/// If 'query_vertices' is empty, this function will work on ALL vertices.
 std::vector<std::vector<float>> geodesic_circles(MyMesh& m, std::vector<int> query_vertices, float scale=5.0, bool do_meandist=false) {
   double sampling = 10.0;
   double mesh_area = mesh_area_total(m);  
@@ -173,8 +176,9 @@ std::vector<std::vector<float>> geodesic_circles(MyMesh& m, std::vector<int> que
 
   // Use all vertices if query_vertices is empty.
   if(query_vertices.empty()) {
+    query_vertices.resize(m.vn);
     for(int i=0; i<m.vn; i++) {
-      query_vertices.push_back(i);
+      query_vertices[i] = i;
     }
   }
 
@@ -185,8 +189,8 @@ std::vector<std::vector<float>> geodesic_circles(MyMesh& m, std::vector<int> que
   meandist.resize(nqv);
   for(size_t i=0; i<nqv; i++) {
     int qv = query_vertices[i];
-    std::vector<int> query_vertex;
-    query_vertex.push_back(qv);
+    std::vector<int> query_vertex(1);
+    query_vertex[0] = qv;
     std::vector<float> v_geodist = geodist(m, query_vertex, max_dist);
     if(do_meandist) {
       meandist[i] = std::accumulate(v_geodist.begin(), v_geodist.end(), 0.0) / v_geodist.size(); 
