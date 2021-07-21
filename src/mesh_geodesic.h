@@ -245,7 +245,9 @@ std::vector<std::vector<double>> _compute_geodesic_circle_stats(MyMesh& m, std::
         coords_combined.insert( coords_combined.end(), coords_v2.begin(), coords_v2.end());
         
         float alpha1 = face_vertex_dists[1]/(face_vertex_dists[1]-face_vertex_dists[0]);
-        std::vector<float> v1 = coords_v0 * vinit(alpha1,3) + (1.0f-alpha1) * coords_v1;
+        std::vector<float> v1 = alpha1 * coords_v0 + (1.0f-alpha1) * coords_v1;
+        float alpha2 = face_vertex_dists[2]/(face_vertex_dists[2]-face_vertex_dists[0]);
+        std::vector<float> v2 = alpha2 * coords_v0 + (1.0f-alpha2) * coords_v2;
       }      
     }
 
