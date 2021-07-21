@@ -263,8 +263,6 @@ std::vector<std::vector<double>> _compute_geodesic_circle_stats(MyMesh& m, std::
     // Collect results 
     areas_by_radius[radius_idx] = total_area_in_radius;
     perimeters_by_radius[radius_idx] = total_perimeter;
-    
-
   }
 
   std::vector<std::vector<double>> res;
@@ -294,6 +292,7 @@ std::vector<std::vector<float>> geodesic_circles(MyMesh& m, std::vector<int> que
       query_vertices[i] = i;
     }
   }
+  std::cout  << "Using " << query_vertices.size() << " query vertices.\n";
 
   std::vector<float> radius, perimeter, meandist;
   size_t nqv = query_vertices.size();
@@ -314,9 +313,14 @@ std::vector<std::vector<float>> geodesic_circles(MyMesh& m, std::vector<int> que
     std::vector<double> circle_areas = circle_stats[0];
     std::vector<double> circle_perimeters = circle_stats[1];
 
+    assert(sample_at_radii.size() == circle_areas.size());
+    assert(sample_at_radii.size() == circle_perimeters.size());
+
     std::vector<double> x = linspace<double>(1.0, sampling, 1.0); // spline x values
     std::vector<double> xx = linspace<double>(1.0, sampling, 0.1);  // where to sample
     int num_samples = xx.size();
+
+    std::cout << "At vertex #" << i << " v(" << qv << "). Sampled at " << sample_at_radii.size() << " radii. Received " << circle_areas.size() << " circle area values and length of x is " << x.size() << ".\n";
 
     // Create cubic splines interpolation.
     tk::spline spl_areas(x, circle_areas);
