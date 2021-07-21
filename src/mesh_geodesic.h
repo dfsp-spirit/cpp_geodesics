@@ -165,6 +165,10 @@ std::vector<std::vector<double>> _compute_geodesic_circle_stats(MyMesh& m, std::
 
   int nr = sample_at_radii.size();
   std::vector<double> per_face_area = mesh_area_per_face(m);
+
+  std::vector<double> areas_by_radius(nr);
+  std::vector<double> perimeters_by_radius(nr);
+
   for(int radius_idx=0; radius_idx<nr; radius_idx++) {
     double radius = sample_at_radii[radius_idx];
 
@@ -238,23 +242,35 @@ std::vector<std::vector<double>> _compute_geodesic_circle_stats(MyMesh& m, std::
         std::vector<float> coords_v0 = surf.vertex_coords(face_verts[0]);
         std::vector<float> coords_v1 = surf.vertex_coords(face_verts[1]);
         std::vector<float> coords_v2 = surf.vertex_coords(face_verts[2]);
-        std::vector<float> coords_combined; // Combine them
-        coords_combined.reserve(9); // preallocate memory
-        coords_combined.insert( coords_combined.end(), coords_v0.begin(), coords_v0.end());
-        coords_combined.insert( coords_combined.end(), coords_v1.begin(), coords_v1.end());
-        coords_combined.insert( coords_combined.end(), coords_v2.begin(), coords_v2.end());
         
+        // These computations use vector math with overloaded operators from vec_math.h
         float alpha1 = face_vertex_dists[1]/(face_vertex_dists[1]-face_vertex_dists[0]);
         std::vector<float> v1 = alpha1 * coords_v0 + (1.0f-alpha1) * coords_v1;
         float alpha2 = face_vertex_dists[2]/(face_vertex_dists[2]-face_vertex_dists[0]);
         std::vector<float> v2 = alpha2 * coords_v0 + (1.0f-alpha2) * coords_v2;
-      }      
+
+        float b = vnorm(cross(coords_v0 - v1, coords_v0 - v2)) / 2.0;
+        if(num_verts_in_radius == 2) { // 2 in, 1 out
+          total_area_in_radius += per_face_area[i] - b;
+        } else { // 1 in, 2 out
+          total_area_in_radius += b;
+        }
+
+        total_perimeter += vnorm(v1 - v2);
+      }     
+      
     }
+    // Collect results 
+    areas_by_radius[radius_idx] = total_area_in_radius;
+    perimeters_by_radius[radius_idx] = total_perimeter;
+    
 
   }
 
-  std::vector<std::vector<double>> fake_res;
-  return fake_res;
+  std::vector<std::vector<double>> res;
+  res.push_back(areas_by_radius);
+  res.push_back(perimeters_by_radius);
+  return res;
 }
 
 
