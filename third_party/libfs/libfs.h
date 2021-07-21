@@ -91,25 +91,52 @@ namespace fs {
       return(this->faces.size() / 3);
     }
 
-    /// @brief Retrieve vertex indices of a face, treating the faces vector as an nx3 matrix.
+    /// @brief Retrieve a vertex index of a face, treating the faces vector as an nx3 matrix.
     /// @param i the row index, valid values are 0..num_faces.
     /// @param j the column index, valid values are 0..2 (for the 3 vertices of a face).
     int32_t fm_at(size_t i, size_t j) const {
       size_t idx = _vidx_2d(i, j, 3);
-      if(idx > this->faces.size()-1) {
-        std::cerr << "Indices << (" << i << "," << j << ") into Mesh.faces out of bounds. Hit " << idx << " with max valid index " << this->faces.size()-1 << ".\n";
+      if(idx > this->num_faces()-1) {
+        std::cerr << "Indices << (" << i << "," << j << ") into Mesh.faces out of bounds. Hit " << idx << " with max valid index " << this->num_faces()-1 << ".\n";
         exit(1);
       }
       return(this->faces[idx]);
     }
 
-    /// @brief Retrieve coordinates of a vertex, treating the vertices vector as an nx3 matrix.
+
+    /// Get all vertex indices of the face, given by its index.
+    std::vector<int32_t> face_vertices(size_t face) const {
+      if(face > this->num_faces()-1) {
+        std::cerr << "Index << " << face << " into Mesh.faces out of bounds, max valid index is " << this->num_faces()-1 << ".\n";
+        exit(1);
+      }
+      std::vector<int32_t> fv(3);
+      fv[0] = this->fm_at(face, 0);
+      fv[1] = this->fm_at(face, 1);
+      fv[2] = this->fm_at(face, 2);
+      return(fv);
+    }
+
+    /// Get all coordinates of the vertex, given by its index.
+    std::vector<_Float32> vertex_coords(size_t vertex) const {
+      if(vertex > this->num_vertices()-1) {
+        std::cerr << "Index << " << vertex << " into Mesh.vertices out of bounds, max valid index is " << this->num_vertices()-1 << ".\n";
+        exit(1);
+      }
+      std::vector<_Float32> vc(3);
+      vc[0] = this->vm_at(vertex, 0);
+      vc[1] = this->vm_at(vertex, 1);
+      vc[2] = this->vm_at(vertex, 2);
+      return(vc);
+    }
+
+    /// @brief Retrieve a coordinate of a vertex, treating the vertices vector as an nx3 matrix.
     /// @param i the row index, valid values are 0..num_vertices.
     /// @param j the column index, valid values are 0..2 (for the x,y,z coordinates).
     _Float32 vm_at(size_t i, size_t j) const {
       size_t idx = _vidx_2d(i, j, 3);
-      if(idx > this->vertices.size()-1) {
-        std::cerr << "Indices << (" << i << "," << j << ") into Mesh.vertices out of bounds. Hit " << idx << " with max valid index " << this->vertices.size()-1 << ".\n";
+      if(idx > this->num_vertices()-1) {
+        std::cerr << "Indices << (" << i << "," << j << ") into Mesh.vertices out of bounds. Hit " << idx << " with max valid index " << this->num_vertices()-1 << ".\n";
         exit(1);
       }
       return(this->vertices[idx]);
