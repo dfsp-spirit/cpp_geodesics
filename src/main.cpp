@@ -15,11 +15,10 @@
 #include <algorithm>
 #include <iterator>
 
-int main(int argc, char** argv) {
-    if(argc != 2) {
-        std::cout << "Usage: " << argv[0] << " s|p\n";
-        exit(1);
-    }
+
+
+/// exec_mode must be 's' or 'p'.
+int test_stuff(const std::string& exec_mode) {        
 
     std::string subject = "fsaverage3";
     //std::string subject = "subject1";
@@ -82,7 +81,7 @@ int main(int argc, char** argv) {
     std::cout << " Computing mean geodesic distance from each vertex to all others.\n";
     std::vector<float> mean_dists;
     std::string mean_geodist_outfile;
-    if (std::string(argv[1]) == "s") {
+    if (exec_mode == "s") {
         std::cout << "Sequential!\n";
         mean_dists = mean_geodist(m);
         mean_geodist_outfile = "geodist_seq.curv";
@@ -111,5 +110,16 @@ int main(int argc, char** argv) {
         fs::write_curv(mgd_filename, mean_geodists_circ);
     }
     
+    return 0;
+}
+
+int main(int argc, char** argv) {
+
+    
+    //if(argc != 2) {
+    //    std::cout << "Usage: " << argv[0] << " s|p\n";
+    //    exit(1);
+    //}
+    test_stuff("s");
     exit(0);
 }
