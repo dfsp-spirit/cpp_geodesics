@@ -120,6 +120,34 @@ int main(int argc, char** argv) {
     //    std::cout << "Usage: " << argv[0] << " s|p\n";
     //    exit(1);
     //}
-    test_stuff("s");
-    exit(0);
+    //test_stuff(argv[1]);
+    //exit(0);
+
+    if(argc != 2) {
+        std::cout << "Usage: " << argv[0] << " <subjects_file>\n";
+        std::cout << "  This must be run inside your FreeSurfer subjects directory.\n";
+        exit(1);
+    }
+    std::string subjects_file = std::string(argv[1]);
+    std::vector<std::string> subjects = fs::read_subjectsfile(subjects_file);
+    std::cout << "Found " << subjects.size() << " subjects.\n";
+    
+    const std::vector<std::string> hemis = {"lh", "rh"};
+    std::string surf_file, hemi, subject;
+    fs::Mesh surface;
+
+    for (int i=0; i<subjects.size(); i++) {
+        for (int hemi_idx=0; hemi_idx<hemis.size(); hemi_idx++) {
+            hemi = hemis[hemi_idx];
+            subject = subjects[i];
+            surf_file = "./" + subject + "/surf/" + hemi + ".white";
+            fs::read_surf(&surface, surf_file);
+
+            // Create a VCGLIB mesh from the libfs Mesh.
+            std::cout << " Creating VCG mesh from brain surface with " << surface.num_vertices() << " vertices and " << surface.num_faces() << " faces.\n";
+            MyMesh m;
+            vcgmesh_from_fs_surface(&m, surface);
+        }
+    }
+
 }
