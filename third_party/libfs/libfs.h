@@ -412,6 +412,19 @@ namespace fs {
     }
   }
 
+  /// Read a vector of subject identifiers from a FreeSurfer subjects file.
+  /// @param filename a text file that contains one subject identifier per line.
+  std::vector<std::string> read_subjectsfile(const std::string& filename) {
+    std::vector<std::string> subjects;
+    std::ifstream input(filename);
+    std::string line;
+
+    while( std::getline( input, line ) ) {
+        subjects.push_back(line);
+    }
+    return(subjects);
+  }
+
   /// Read MGH data from a stream.
   /// 
   /// @param mgh An Mgh instance that should be filled with the data from the stream.
