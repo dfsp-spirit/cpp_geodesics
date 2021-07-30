@@ -123,30 +123,45 @@ int main(int argc, char** argv) {
     //test_stuff(argv[1]);
     //exit(0);
 
-    if(argc != 2) {
-        std::cout << "Usage: " << argv[0] << " <subjects_file>\n";
-        std::cout << "  This must be run inside your FreeSurfer subjects directory.\n";
+    if(argc < 2 || argc > 3) {
+        std::cout << "Usage: " << argv[0] << " <subjects_file> [<subjects_dir>]\n";
+        std::cout << "  <subjects_file> : text file containing one subject identifier per line.\n";
+        std::cout << "  <subjects_dir>  : directory containing the FreeSurfer recon-all output for the subjects. Defaults to current working directory.\n";
         exit(1);
     }
     std::string subjects_file = std::string(argv[1]);
+    std::string subjects_dir = "./";
+    if(argc == 3) {
+        subjects_dir = std::string(argv[2]);
+    }
+
+
     std::vector<std::string> subjects = fs::read_subjectsfile(subjects_file);
-    std::cout << "Found " << subjects.size() << " subjects.\n";
+    std::cout << "Found " << subjects.size() << " subjects listed in subjects file '" << subjects_file << "'.\n";
+    std::cout << "Using subject directory '" << subjects_dir << "'.\n";
     
     const std::vector<std::string> hemis = {"lh", "rh"};
     std::string surf_file, hemi, subject;
     fs::Mesh surface;
 
-    for (int i=0; i<subjects.size(); i++) {
-        for (int hemi_idx=0; hemi_idx<hemis.size(); hemi_idx++) {
+    for (size_t i=0; i<subjects.size(); i++) {
+        subject = subjects[i];
+        std::cout << " * Handling subject '" << subject << "', # " << (i+1) << " of " << subjects.size() << ".\n";
+        for (size_t hemi_idx=0; hemi_idx<hemis.size(); hemi_idx++) {
             hemi = hemis[hemi_idx];
-            subject = subjects[i];
+            
+            // Load FreeSurfer mesh from file.
             surf_file = "./" + subject + "/surf/" + hemi + ".white";
             fs::read_surf(&surface, surf_file);
 
-            // Create a VCGLIB mesh from the libfs Mesh.
-            std::cout << " Creating VCG mesh from brain surface with " << surface.num_vertices() << " vertices and " << surface.num_faces() << " faces.\n";
+            // Create a VCGLIB mesh from the libfs Mesh.            
             MyMesh m;
             vcgmesh_from_fs_surface(&m, surface);
+
+            // Compute the geodesic mean distances and write result file.
+            std::vector<float> mean_dists = mean_geodist_p(m);
+            std::string mean_geodist_outfile = "./" + subject + "/surf/" + hemi + ".mean_geodist";
+            fs::write_curv(mean_geodist_outfile, mean_dists);
         }
     }
 
