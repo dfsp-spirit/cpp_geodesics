@@ -166,7 +166,7 @@ int main(int argc, char** argv) {
             fs::write_curv(mean_geodist_outfile, mean_dists);
             auto finish = std::chrono::high_resolution_clock::now();
             int num_secs = (finish - start).count();
-            std::cout << "   - Computation for hemi " << hemi << " took " << num_secs << " seconds.\n";
+            std::cout << "   - Computation for hemi " << hemi << " took " << num_secs << " seconds (" << (num_secs/60) << ":" << (num_secs%60) <<").\n";
         }
     }
 
