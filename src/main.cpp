@@ -124,6 +124,7 @@ int main(int argc, char** argv) {
     //exit(0);
 
     if(argc < 2 || argc > 3) {
+        std::cout << "== Compute mean geodesic distances for each vertex to all others for ?h.pialsurface6 ==.\n";
         std::cout << "Usage: " << argv[0] << " <subjects_file> [<subjects_dir>]\n";
         std::cout << "  <subjects_file> : text file containing one subject identifier per line.\n";
         std::cout << "  <subjects_dir>  : directory containing the FreeSurfer recon-all output for the subjects. Defaults to current working directory.\n";
@@ -151,7 +152,7 @@ int main(int argc, char** argv) {
             hemi = hemis[hemi_idx];
             
             // Load FreeSurfer mesh from file.
-            surf_file = "./" + subject + "/surf/" + hemi + ".white";
+            surf_file = "./" + subject + "/surf/" + hemi + ".pialsurface6";
             fs::read_surf(&surface, surf_file);
 
             // Create a VCGLIB mesh from the libfs Mesh.            
