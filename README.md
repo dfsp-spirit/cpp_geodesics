@@ -26,7 +26,7 @@ The applications use the following algorithms:
 * geodesic_geo: Several algorithms, including:
     - Exact geodesics
     - Dijkstra
-    - Subdivision version of Dijkstra that splits edges (becomes Dijkstra algo for num_extra_splits=1 and approaches exact version with increasing number of splits)
+    - Subdivision version of Dijkstra that splits edges (becomes Dijkstra algo for num_extra_splits=0 and approaches exact version with increasing number of splits)
 
 
 
