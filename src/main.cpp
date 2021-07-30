@@ -162,7 +162,7 @@ int main(int argc, char** argv) {
 
             // Compute the geodesic mean distances and write result file.
             std::vector<float> mean_dists = mean_geodist_p(m);
-            std::string mean_geodist_outfile = "./" + subject + "/surf/" + hemi + ".mean_geodist";
+            std::string mean_geodist_outfile = "./" + subject + "/surf/" + hemi + ".mean_geodist_vcglib.curv";
             fs::write_curv(mean_geodist_outfile, mean_dists);
             auto finish = std::chrono::high_resolution_clock::now();
             int num_secs = (finish - start).count();
