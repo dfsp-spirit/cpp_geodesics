@@ -1,5 +1,5 @@
 
-// The main for our code.
+// The main for the geodesic program. This main file uses the VCGLIB algorithm.
 
 #include "libfs.h"
 #include "typedef_vcg.h"
