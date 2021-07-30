@@ -419,6 +419,11 @@ namespace fs {
     std::ifstream input(filename);
     std::string line;
 
+    if(! input.is_open()) {
+      std::cerr << "Could not open subjects file '" << filename << "'.\n";
+      exit(1);
+    }
+
     while( std::getline( input, line ) ) {
         subjects.push_back(line);
     }
