@@ -14,7 +14,6 @@
 #include <vector>
 #include <algorithm>
 #include <iterator>
-#include <chrono>
 
 
 /// exec_mode must be 's' or 'p'.
@@ -149,7 +148,6 @@ int main(int argc, char** argv) {
         subject = subjects[i];
         std::cout << " * Handling subject '" << subject << "', # " << (i+1) << " of " << subjects.size() << ".\n";
         for (size_t hemi_idx=0; hemi_idx<hemis.size(); hemi_idx++) {
-            auto start = std::chrono::high_resolution_clock::now();
             hemi = hemis[hemi_idx];
             
             // Load FreeSurfer mesh from file.
@@ -164,9 +162,7 @@ int main(int argc, char** argv) {
             std::vector<float> mean_dists = mean_geodist_p(m);
             std::string mean_geodist_outfile = "./" + subject + "/surf/" + hemi + ".mean_geodist_vcglib.curv";
             fs::write_curv(mean_geodist_outfile, mean_dists);
-            auto finish = std::chrono::high_resolution_clock::now();
-            int num_secs = (finish - start).count();
-            std::cout << "   - Computation for hemi " << hemi << " took " << num_secs << " seconds (" << (num_secs/60) << ":" << (num_secs%60) <<").\n";
+            std::cout << "   - Computation for hemi " << hemi << " done.\n";
         }
     }
 
