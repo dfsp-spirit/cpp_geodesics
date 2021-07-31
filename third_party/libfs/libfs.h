@@ -7,7 +7,7 @@
 #include <fstream>
 #include <cassert>
 #include <sstream>
-
+#include <stdexcept>
 
 /// @file
 ///
@@ -94,21 +94,21 @@ namespace fs {
     /// @brief Retrieve a vertex index of a face, treating the faces vector as an nx3 matrix.
     /// @param i the row index, valid values are 0..num_faces.
     /// @param j the column index, valid values are 0..2 (for the 3 vertices of a face).
-    int32_t fm_at(size_t i, size_t j) const {
+    /// @throws std::range_error on invalid index
+    const int32_t& fm_at(size_t i, size_t j) const {
       size_t idx = _vidx_2d(i, j, 3);
-      if(idx > this->faces.size()-1) {
-        std::cerr << "Indices << (" << i << "," << j << ") into Mesh.faces out of bounds. Hit " << idx << " with max valid index " << this->faces.size()-1 << ".\n";
-        exit(1);
+      if(idx > this->faces.size()-1) {        
+        throw std::range_error("Indices (" + std::to_string(i) + "," + std::to_string(j) + ") into Mesh.faces out of bounds. Hit " + std::to_string(idx) + " with max valid index " + std::to_string(this->faces.size()-1) + ".\n");
       }
       return(this->faces[idx]);
     }
 
 
     /// Get all vertex indices of the face, given by its index.
+    /// @throws std::range_error on invalid index
     std::vector<int32_t> face_vertices(size_t face) const {
       if(face > this->num_faces()-1) {
-        std::cerr << "Index << " << face << " into Mesh.faces out of bounds, max valid index is " << this->num_faces()-1 << ".\n";
-        exit(1);
+        throw std::range_error("Index " + std::to_string(face) + " into Mesh.faces out of bounds, max valid index is " + std::to_string(this->num_faces()-1) + ".\n");
       }
       std::vector<int32_t> fv(3);
       fv[0] = this->fm_at(face, 0);
@@ -118,10 +118,10 @@ namespace fs {
     }
 
     /// Get all coordinates of the vertex, given by its index.
+    /// @throws std::range_error on invalid index
     std::vector<_Float32> vertex_coords(size_t vertex) const {
       if(vertex > this->num_vertices()-1) {
-        std::cerr << "Index << " << vertex << " into Mesh.vertices out of bounds, max valid index is " << this->num_vertices()-1 << ".\n";
-        exit(1);
+        throw std::range_error("Index " + std::to_string(vertex) + " into Mesh.vertices out of bounds, max valid index is " + std::to_string(this->num_vertices()-1) + ".\n");
       }
       std::vector<_Float32> vc(3);
       vc[0] = this->vm_at(vertex, 0);
@@ -133,11 +133,11 @@ namespace fs {
     /// @brief Retrieve a coordinate of a vertex, treating the vertices vector as an nx3 matrix.
     /// @param i the row index, valid values are 0..num_vertices.
     /// @param j the column index, valid values are 0..2 (for the x,y,z coordinates).
-    _Float32 vm_at(size_t i, size_t j) const {
+    /// @throws std::range_error on invalid index
+    const _Float32& vm_at(size_t i, size_t j) const {
       size_t idx = _vidx_2d(i, j, 3);
       if(idx > this->vertices.size()-1) {
-        std::cerr << "Indices << (" << i << "," << j << ") into Mesh.vertices out of bounds. Hit " << idx << " with max valid index " << this->vertices.size()-1 << ".\n";
-        exit(1);
+        throw std::range_error("Indices (" + std::to_string(i) + "," + std::to_string(j) + ") into Mesh.vertices out of bounds. Hit " + std::to_string(idx) + " with max valid index " + std::to_string(this->vertices.size()-1) + ".\n");
       }
       return(this->vertices[idx]);
     }
@@ -256,11 +256,11 @@ namespace fs {
     }
 
     /// Get the number of vertices of this parcellation (or the associated surface).
+    /// @throws std::runtime_error on invalid annot
     size_t num_vertices() const {
       size_t nv = this->vertex_indices.size();
       if(this->vertex_labels.size() != nv) {
-        std::cerr << "Inconsistent annot, number of vertex indices and labels does not match.\n";
-        exit(1);
+        throw std::runtime_error("Inconsistent annot, number of vertex indices and labels does not match.\n");
       }
       return nv;
     }
@@ -390,6 +390,7 @@ namespace fs {
   /// @param mgh An Mgh instance that should be filled with the data from the filename.
   /// @param filename Path to the input MGH file.
   /// @see There exists an overloaded version that reads from a stream.
+  /// @throws runtime_error if the file uses an unsupported MRI data type.
   void read_mgh(Mgh* mgh, const std::string& filename) {
     MghHeader mgh_header;
     read_mgh_header(&mgh_header, filename);
@@ -404,24 +405,23 @@ namespace fs {
       std::vector<float> data = _read_mgh_data_float(&mgh_header, filename);
       mgh->data.data_mri_float = data;
     } else {      
-      std::cout << "Not reading MGH data from file '" << filename << "', data type " << mgh->header.dtype << " not supported yet.\n";
       if(_ends_with(filename, ".mgz")) {
-        std::cout << "Note: your MGH filename ends with '.mgz'. Keep in mind that MGZ format is not supported yet.\n";  
+        std::cout << "Note: your MGH filename ends with '.mgz'. Keep in mind that MGZ format is not supported directly. You can ignore this message if you wrapped a gz stream.\n";  
       }
-      exit(1);
+      throw std::runtime_error("Not reading MGH data from file '" + filename + "', data type " + std::to_string(mgh->header.dtype) + " not supported yet.\n");
     }
   }
 
   /// Read a vector of subject identifiers from a FreeSurfer subjects file.
   /// @param filename a text file that contains one subject identifier per line.
+  /// @throws runtime_error if the file cannot be read
   std::vector<std::string> read_subjectsfile(const std::string& filename) {
     std::vector<std::string> subjects;
     std::ifstream input(filename);
     std::string line;
 
-    if(! input.is_open()) {
-      std::cerr << "Could not open subjects file '" << filename << "'.\n";
-      exit(1);
+    if(! input.is_open()) {      
+      throw std::runtime_error("Could not open subjects file '" + filename + "'.\n");
     }
 
     while( std::getline( input, line ) ) {
@@ -435,6 +435,7 @@ namespace fs {
   /// @param mgh An Mgh instance that should be filled with the data from the stream.
   /// @param is Pointer to an open istream from which to read the MGH data.
   /// @see There exists an overloaded version that reads from a file.
+  /// @throws runtime_error if the file uses an unsupported MRI data type.
   void read_mgh(Mgh* mgh, std::istream* is) {
     MghHeader mgh_header;
     read_mgh_header(&mgh_header, is);
@@ -449,8 +450,7 @@ namespace fs {
       std::vector<float> data = _read_mgh_data_float(&mgh_header, is);
       mgh->data.data_mri_float = data;
     } else {      
-      std::cout << "Not reading data from MGH stream, data type " << mgh->header.dtype << " not supported yet.\n";
-      exit(1);
+      throw std::runtime_error("Not reading data from MGH stream, data type " + std::to_string(mgh->header.dtype) + " not supported yet.\n");
     }
   }
 
@@ -459,13 +459,13 @@ namespace fs {
   /// @param mgh_header An MghHeader instance that should be filled with the data from the stream.
   /// @param is Pointer to an open istream from which to read the MGH data.
   /// @see There exists an overloaded version that reads from a file.
+  /// @throws runtime_error if the file uses an unsupported MRI file format version. Only version 1 is supported (the only existing version to my knowledge).
   void read_mgh_header(MghHeader* mgh_header, std::istream* is) {
     const int MGH_VERSION = 1;    
 
     int format_version = _freadt<int32_t>(*is);
     if(format_version != MGH_VERSION) {        
-      std::cerr << "Invalid MGH file or unsupported file format version: expected version " << MGH_VERSION << ", found " << format_version << ".\n";
-      exit(1);
+      throw std::runtime_error("Invalid MGH file or unsupported file format version: expected version " + std::to_string(MGH_VERSION) + ", found " + std::to_string(format_version) + ".\n");
     }
     mgh_header->dim1length =  _freadt<int32_t>(*is);
     mgh_header->dim2length =  _freadt<int32_t>(*is);
@@ -530,6 +530,7 @@ namespace fs {
   /// @param mgh_header An MghHeader instance that should be filled with the data from the file.
   /// @param filename Path to the file from which to read the MGH data.
   /// @see There exists an overloaded version that reads from a stream.
+  /// @throws runtime_error if the file cannot be opened
   void read_mgh_header(MghHeader* mgh_header, const std::string& filename) {    
     std::ifstream ifs;
     ifs.open(filename, std::ios_base::in | std::ios::binary);
@@ -537,8 +538,7 @@ namespace fs {
       read_mgh_header(mgh_header, &ifs);
       ifs.close();
     } else {
-      std::cerr << "Unable to open MGH file '" << filename << "'.\n";
-      exit(1);
+      throw std::runtime_error("Unable to open MGH file '" + filename + "'.\n");
     }
   }
 
@@ -546,6 +546,7 @@ namespace fs {
   /// Read arbitrary MGH data from a file.
   ///
   /// THIS FUNCTION IS INTERNAL AND SHOULD NOT BE CALLED BY API CLIENTS.
+  /// @throws runtime_error if the file cannot be opened
   template <typename T>
   std::vector<T> _read_mgh_data(MghHeader* mgh_header, const std::string& filename) {
     std::ifstream ifs;
@@ -561,8 +562,7 @@ namespace fs {
       ifs.close();
       return(data);
     } else {
-      std::cerr << "Unable to open MGH file '" << filename << "'.\n";
-      exit(1);
+      throw std::runtime_error("Unable to open MGH file '" + filename + "'.\n");
     }
   }
 
@@ -625,6 +625,7 @@ namespace fs {
   ///
   /// @param surface a Mesh instance representing a vertex-indexed tri-mesh. This will be filled.
   /// @param filename The path to the file from which to read the mesh. Must be in binary FreeSurfer surf format. An example file is `surf/lh.white`.
+  /// @throws runtime_error if the file cannot be opened, domain_error if the surf file magic mismatches.  
   void read_surf(Mesh* surface, const std::string& filename) {
     const int SURF_TRIS_MAGIC = 16777214;
     std::ifstream is;
@@ -632,8 +633,7 @@ namespace fs {
     if(is.is_open()) {
       int magic = _fread3(is);
       if(magic != SURF_TRIS_MAGIC) {
-        std::cerr << "Magic did not match: expected " << SURF_TRIS_MAGIC << ", found " << magic << ".\n";
-        exit(1);
+        throw std::domain_error("Magic did not match: expected " + std::to_string(SURF_TRIS_MAGIC) + ", found " + std::to_string(magic) + ".\n");
       }
       std::string created_line = _freadstringnewline(is);
       std::string comment_line = _freadstringnewline(is);
@@ -652,8 +652,7 @@ namespace fs {
       surface->vertices = vdata;
       surface->faces = fdata;
     } else {
-      std::cerr << "Unable to open surface file '" << filename << "'.\n";
-      exit(1);
+      throw std::runtime_error("Unable to open surface file '" + filename + "'.\n");
     }
   }
 
@@ -671,18 +670,19 @@ namespace fs {
   /// @details The curv format is a simple binary format that stores one floating point value per vertex of a related brain surface.
   /// @param curv A Curv instance to be filled.
   /// @param is An open istream from which to read the curv data.
+  /// @throws domain_error if the curv file magic mismatches or the curv file header claims that the file contains more than 1 value per vertex.
   void read_curv(Curv* curv, std::istream *is) {
     const int CURV_MAGIC = 16777215;
     int magic = _fread3(*is);
     if(magic != CURV_MAGIC) {
-      std::cerr << "Magic did not match: expected " << CURV_MAGIC << ", found " << magic << ".\n";
+      throw std::domain_error("Magic did not match: expected " + std::to_string(CURV_MAGIC) + ", found " + std::to_string(magic) + ".\n");
     }
     curv->num_vertices = _freadt<int32_t>(*is);
     curv->num_faces =  _freadt<int32_t>(*is);
     curv->num_values_per_vertex = _freadt<int32_t>(*is);
     //std::cout << "Read file with " << num_verts << " vertices, " << num_faces << " faces and " << num_values_per_vertex << " values per vertex.\n";
     if(curv->num_values_per_vertex != 1) { // Not supported, I know no case where this is used. Please submit a PR with a demo file if you have one, and let me know where it came from.
-      std::cerr << "Curv file must contain exactly 1 value per vertex, found " << curv->num_values_per_vertex << ".\n";  
+      throw std::domain_error("Curv file must contain exactly 1 value per vertex, found " + std::to_string(curv->num_values_per_vertex) + ".\n");
     }
     std::vector<float> data;
     for(int i=0; i<curv->num_vertices; i++) {
@@ -696,14 +696,14 @@ namespace fs {
   /// @details The curv format is a simple binary format that stores one floating point value per vertex of a related brain surface.
   /// @param curv A Curv instance to be filled.
   /// @param filename Path to a file from which to read the curv data.
+  /// @throws runtime_error if the file cannot be opened, domain_error if the curv file magic mismatches or the curv file header claims that the file contains more than 1 value per vertex.
   void read_curv(Curv* curv, const std::string& filename) {
     std::ifstream is(filename);
     if(is.is_open()) {
       read_curv(curv, &is);
       is.close();
     } else {
-      std::cerr << "Could not open curv file for reading.\n";
-      exit(1);
+      throw std::runtime_error("Could not open curv file '" + filename + "' for reading.\n");
     }
   }
 
@@ -746,6 +746,7 @@ namespace fs {
   /// @details A brain parcellations contains a region table and assigns to each vertex of a surface a region.
   /// @param annot An Annot instance to be filled.
   /// @param is An open istream from which to read the annot data.
+  /// @throws domain_error if the file format version is not supported or the file is missing the color table.
   void read_annot(Annot* annot, std::istream *is) {
     
     int32_t num_vertices = _freadt<int32_t>(*is);
@@ -764,23 +765,20 @@ namespace fs {
     if(has_colortable == 1) {
       int32_t num_colortable_entries_old_format = _freadt<int32_t>(*is);
       if(num_colortable_entries_old_format > 0) {
-        std::cerr << "Reading annotation in old format not supported. Please open an issue and supply an example file if you need this.\n";
-        exit(1);
+        throw std::domain_error("Reading annotation in old format not supported. Please open an issue and supply an example file if you need this.\n");
       } else {
         int32_t colortable_format_version = -num_colortable_entries_old_format; // If the value is negative, we are in new format and its absolute value is the format version.
         if(colortable_format_version == 2) {
           int32_t num_colortable_entries = _freadt<int32_t>(*is); // This time for real.
           _read_annot_colortable(&annot->colortable, is, num_colortable_entries);
         } else {
-          std::cerr << "Reading annotation in new format version !=2 not supported. Please open an issue and supply an example file if you need this.\n";
-          exit(1);
+          throw std::domain_error("Reading annotation in new format version !=2 not supported. Please open an issue and supply an example file if you need this.\n");
         }
 
       }
 
     } else {
-      std::cerr << "Reading annotation without colortable not supported. Maybe invalid annotation file?\n";
-      exit(1);
+      throw std::domain_error("Reading annotation without colortable not supported. Maybe invalid annotation file?\n");
     }
   }
 
@@ -789,14 +787,14 @@ namespace fs {
   /// @param annot An Annot instance that should be filled.
   /// @param filename Path to the label file that should be read.
   /// @see There exists an overload to read from a stream instead.
+  /// @throws runtime_error if the file cannot be opened, domain_error if the file format version is not supported or the file is missing the color table.
   void read_annot(Annot* annot, const std::string& filename) {
     std::ifstream is(filename);
     if(is.is_open()) {
       read_annot(annot, &is);
       is.close();
     } else {
-      std::cerr << "Could not open annot file for reading.\n";
-      exit(1);
+      throw std::runtime_error("Could not open annot file '" + filename + "' for reading.\n");
     }
   }
 
@@ -805,6 +803,7 @@ namespace fs {
   /// @details The curv format is a simple binary format that stores one floating point value per vertex of a related brain surface.
   /// @param filename Path to a file from which to read the curv data.
   /// @return a vector of float values, one per vertex.
+  /// @throws runtime_error if the file cannot be opened, domain_error if the curv file magic mismatches or the curv file header claims that the file contains more than 1 value per vertex.
   std::vector<float> read_curv_data(const std::string& filename) {
     Curv curv;
     read_curv(&curv, filename);
@@ -900,10 +899,10 @@ namespace fs {
   }
 
   /// Read a fixed length C-style string from an open binary stream. This does not care about trailing NULL bytes or anything, it just reads the given length of bytes.
+  /// @throws std::out_of_range if length is not positive
   std::string _freadfixedlengthstring(std::istream &is, int32_t length, bool strip_last_char=true) {
     if(length <= 0) {
-      std::cerr << "Parameter 'length' must be a positive integer.\n";
-      exit(1);
+      throw std::out_of_range("Parameter 'length' must be a positive integer.\n");
     }
     std::string str;
     str.resize(length);
@@ -949,6 +948,7 @@ namespace fs {
   /// @param filename The path to the output file.
   /// @param curv_data the data to write.
   /// @param num_faces the value for the header field `num_faces`. This is not needed afaik and typically ignored.
+  /// @throws std::runtime_error if the file cannot be opened.
   void write_curv(const std::string& filename, std::vector<float> curv_data, const int32_t num_faces = 100000) {
     std::ofstream ofs;
     ofs.open(filename, std::ofstream::out | std::ofstream::binary);
@@ -956,8 +956,7 @@ namespace fs {
       write_curv(ofs, curv_data, num_faces);
       ofs.close();
     } else {
-      std::cerr << "Unable to open curvature file '" << filename << "' for writing.\n";
-      exit(1);
+      throw std::runtime_error("Unable to open curvature file '" + filename + "' for writing.\n");
     }
   }
 
@@ -965,6 +964,7 @@ namespace fs {
   /// @details The MGH format is a binary, big-endian FreeSurfer file format for storing 4D data. Several data types are supported, and one has to check the header to see which one is contained in a file.
   /// @param mgh An Mgh instance that should be written.
   /// @param os An output stream to which to write the data. The stream must be open, and this function will not close it after writing to it.
+  /// @throws std::logic_error if the mgh header and data are inconsistent, std::domain_error if the given MRI data type is unknown or unsupported.
   void write_mgh(const Mgh& mgh, std::ostream& os) {
      _fwritet<int32_t>(os, 1); // MGH file format version
      _fwritet<int32_t>(os, mgh.header.dim1length);
@@ -1003,31 +1003,27 @@ namespace fs {
     size_t num_values = mgh.header.num_values();
     if(mgh.header.dtype == MRI_INT) {
       if(mgh.data.data_mri_int.size() != num_values) {
-        std::cerr << "Detected mismatch of MRI_INT data size and MGH header dim length values.\n";
-        exit(1);
+        throw std::logic_error("Detected mismatch of MRI_INT data size and MGH header dim length values.\n");
       }
       for(size_t i=0; i<num_values; i++) {
          _fwritet<int32_t>(os, mgh.data.data_mri_int[i]);
       }
     } else if(mgh.header.dtype == MRI_FLOAT) {
       if(mgh.data.data_mri_float.size() != num_values) {
-        std::cerr << "Detected mismatch of MRI_FLOAT data size and MGH header dim length values.\n";
-        exit(1);
+        throw std::logic_error("Detected mismatch of MRI_FLOAT data size and MGH header dim length values.\n");
       }
       for(size_t i=0; i<num_values; i++) {
          _fwritet<_Float32>(os, mgh.data.data_mri_float[i]);
       }
     } else if(mgh.header.dtype == MRI_UCHAR) {
       if(mgh.data.data_mri_uchar.size() != num_values) {
-        std::cerr << "Detected mismatch of MRI_UCHAR data size and MGH header dim length values.\n";
-        exit(1);
+        throw std::logic_error("Detected mismatch of MRI_UCHAR data size and MGH header dim length values.\n");
       }
       for(size_t i=0; i<num_values; i++) {
          _fwritet<uint8_t>(os, mgh.data.data_mri_uchar[i]);
       }
     } else {
-      std::cerr << "Unsupported MRI data type " << mgh.header.dtype << ", cannot write MGH data.\n";
-      exit(1);
+      throw std::domain_error("Unsupported MRI data type " + std::to_string(mgh.header.dtype) + ", cannot write MGH data.\n");
     }
     
   }
@@ -1037,6 +1033,7 @@ namespace fs {
   /// @param mgh An Mgh instance that should be written.
   /// @param filename Path to an output file to which to write.
   /// @see There exists an overload to write to a stream.
+  /// @throws std::runtime_error if the file cannot be opened, std::logic_error if the mgh header and data are inconsistent, std::domain_error if the given MRI data type is unknown or unsupported.
   void write_mgh(const Mgh& mgh, const std::string& filename) {
     std::ofstream ofs;
     ofs.open(filename, std::ofstream::out | std::ofstream::binary);
@@ -1044,8 +1041,7 @@ namespace fs {
       write_mgh(mgh, ofs);
       ofs.close();
     } else {
-      std::cerr << "Unable to open MGH file '" << filename << "' for writing.\n";
-      exit(1);
+      throw std::runtime_error("Unable to open MGH file '" + filename + "' for writing.\n");
     }
   }
 
@@ -1059,7 +1055,7 @@ namespace fs {
 
     /// Compute for each vertex of the surface whether it is inside the label.
     std::vector<bool> vert_in_label(size_t surface_num_verts) const {
-      if(surface_num_verts < this->vertex.size()) { // nonsense, so we warn (but don't exit, maybe the user really wants this).
+      if(surface_num_verts < this->vertex.size()) { // nonsense, so we warn (but don't throw, maybe the user really wants this).
         std::cerr << "Invalid number of vertices for surface, must be at least " << this->vertex.size() << "\n";
       }
       std::vector<bool> is_in;
@@ -1088,6 +1084,7 @@ namespace fs {
   /// @param label A Label instance that should be filled.
   /// @param is An open stream from which to read the label.
   /// @see There exists an overload to read from a file instead.
+  /// @throws std::domain_error if the label data format is incorrect
   void read_label(Label* label, std::ifstream* is) {
     std::string line;
     int line_idx = -1;
@@ -1101,14 +1098,12 @@ namespace fs {
       } else {
         if(line_idx == 1) {
           if (!(iss >> num_entries_header)) { 
-            std::cerr << "Could not parse entry count from label file, invalid file.\n";
-            exit(1);
+            throw std::domain_error("Could not parse entry count from label file, invalid format.\n");
           } 
         } else {
           int vertex; float x, y, z, value;
           if (!(iss >> vertex >> x >> y >> z >> value)) { 
-            std::cerr << "Could not parse line " << (line_idx+1) << " of label file, invalid file.\n";
-            exit(1);
+            throw std::domain_error("Could not parse line " + std::to_string(line_idx+1) + " of label file, invalid format.\n");
           }
           //std::cout << "Line " << (line_idx+1) << ": vertex=" << vertex << ", x=" << x << ", y=" << y << ", z=" << z << ", value=" << value << ".\n";
           label->vertex.push_back(vertex);
@@ -1121,11 +1116,10 @@ namespace fs {
       }        
     }
     if(num_entries != num_entries_header) {
-      std::cerr << "Expected " << num_entries_header << " entries from label file header, but found " << num_entries << " in file, invalid label file.\n";
-      exit(1);
+      throw std::domain_error("Expected " + std::to_string(num_entries_header) + " entries from label file header, but found " + std::to_string(num_entries) + " in file, invalid label file.\n");
     }
     if(label->vertex.size() != num_entries || label->coord_x.size() != num_entries || label->coord_y.size() != num_entries || label->coord_z.size() != num_entries || label->value.size() != num_entries) {
-      std::cerr << "Expected " << num_entries << " entries in all Label vectors, but some did not match.\n";
+      throw std::domain_error("Expected " + std::to_string(num_entries) + " entries in all Label vectors, but some did not match.\n");
     }
   }
 
@@ -1135,14 +1129,14 @@ namespace fs {
   /// @param label A Label instance that should be filled.
   /// @param filename Path to the label file that should be read.
   /// @see There exists an overload to read from a stream instead.
+  /// @throws std::domain_error if the label data format is incorrect, std::runtime_error if the file cannot be opened.
   void read_label(Label* label, const std::string& filename) {
     std::ifstream infile(filename);
     if(infile.is_open()) {
       read_label(label, &infile);
       infile.close();
     } else {
-      std::cerr << "Could not open label file for reading.\n";
-      exit(1);
+      throw std::runtime_error("Could not open label file '" + filename + "' for reading.\n");
     }
   }
 
@@ -1151,7 +1145,7 @@ namespace fs {
   ///
   /// @param label The label to write.
   /// @param os An open output stream.
-  /// @see There exists an onverload of this function to write a label to a file.
+  /// @see There exists an onverload of this function to write a label to a file.  
   void write_label(const Label& label, std::ostream& os) {
     const size_t num_entries = label.num_entries();
     os << "#!ascii label from subject anonymous\n" << num_entries << "\n";
@@ -1164,6 +1158,7 @@ namespace fs {
   /// Write label data to a file.
   ///
   /// See also: swrite_label to write to a stream.
+  /// @throws std::runtime_error if the file cannot be opened.
   void write_label(const Label& label, const std::string& filename) {
     std::ofstream ofs;
     ofs.open(filename, std::ofstream::out);
@@ -1171,8 +1166,7 @@ namespace fs {
       write_label(label, ofs);
       ofs.close();
     } else {
-      std::cerr << "Unable to open label file '" << filename << "' for writing.\n";
-      exit(1);
+      throw std::runtime_error("Unable to open label file '" + filename + "' for writing.\n");
     }
   }
 
