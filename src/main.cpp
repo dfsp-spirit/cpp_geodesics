@@ -94,7 +94,7 @@ int test_stuff(const std::string& exec_mode) {
 
 
     // Compute geodesic circle stats
-    std::vector<int32_t> qv_cs;
+    std::vector<int32_t> qv_cs; // the query vertices.
     bool do_meandists = false;
     std::vector<std::vector<float>> circle_stats = geodesic_circles(m, qv_cs, 5.0, do_meandists);
     std::vector<float> radii = circle_stats[0];    
@@ -112,7 +112,40 @@ int test_stuff(const std::string& exec_mode) {
     return 0;
 }
 
+void run_geodesic_circles() {
+    std::string subject = "fsaverage3";
+    std::string hemi = "lh";
+    std::string surface_name = "white";
+        
+    std::string surf_file = "demo_data/subjects_dir/" + subject + "/surf/" + hemi + "." + surface_name;
+    std::cout << " Running Geodesic Circle Analysis for FreeSurfer subject '" + subject + "' using file '" + surf_file + "'.\n";
+    
+    fs::Mesh surface; 
+    fs::read_surf(&surface, surf_file);
+
+    MyMesh m;
+    vcgmesh_from_fs_surface(&m, surface);
+    
+    std::vector<int32_t> qv_cs = {0}; // the query vertices. Only a single vertex here.
+    bool do_meandists = false;
+    std::vector<std::vector<float>> circle_stats = geodesic_circles(m, qv_cs, 5.0, do_meandists);
+    std::vector<float> radii = circle_stats[0];    
+    std::vector<float> perimeters = circle_stats[1];
+
+    std::cout << "Radius: " << radii[0] << "\n";
+    std::cout << "Perimeter: " << perimeters[0] << "\n";
+
+    //std::string rad_filename = "lh." + subject + "_radius_s5.curv";
+    //std::string per_filename = "lh." + subject + "_perimeter_s5.curv";
+    //std::string mgd_filename = "lh." + subject + "_meangeodist_geocircles.curv";
+    //fs::write_curv(rad_filename, radii);
+    //fs::write_curv(per_filename, perimeters);
+}
+
 int main(int argc, char** argv) {
+
+    run_geodesic_circles();
+    exit(0);
 
     
     //if(argc != 2) {
