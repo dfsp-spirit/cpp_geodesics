@@ -123,28 +123,48 @@ int main(int argc, char** argv) {
     //test_stuff(argv[1]);
     //exit(0);
 
-    if(argc < 2 || argc > 4) {
+    if(argc < 2 || argc > 5) {
         std::cout << "== Compute mean geodesic distances for each vertex to all others for FreeSurfer meshes ==.\n";
-        std::cout << "Usage: " << argv[0] << " <subjects_file> [<subjects_dir> [<surface>]]\n";
+        std::cout << "Usage: " << argv[0] << " <subjects_file> [<subjects_dir> [<surface> [<do_circle_stats>]]]\n";
         std::cout << "  <subjects_file> : text file containing one subject identifier per line.\n";
         std::cout << "  <subjects_dir>  : directory containing the FreeSurfer recon-all output for the subjects. Defaults to current working directory.\n";
         std::cout << "  <surface>       : the surface file to load from the surf/ subdir of each subject, without hemi part. Defaults to 'pial'.\n";
+        std::cout << "  <do_circle_stat>: flag whether to compute geodesic circle stats as well, must be 0 (off), 1 (on) or 2 (on with mean dists). Defaults to 0.\n";
         exit(1);
     }
     std::string subjects_file = std::string(argv[1]);
-    std::string subjects_dir = "./";
+    std::string subjects_dir = ".";
     std::string surface_name = "pial";
+    bool do_circle_stats = false;
+    bool circle_stats_do_meandists = false;
     if(argc >= 3) {
         subjects_dir = std::string(argv[2]);
     }
-    if(argc == 4) {
+    if(argc >= 4) {
         surface_name = std::string(argv[3]);
+    }
+    if(argc == 5) {
+        if (std::string(argv[4]) == "1") {
+            do_circle_stats = true;
+        } else if (std::string(argv[4]) == "2") {
+            do_circle_stats = true;
+            circle_stats_do_meandists = true;
+        } else if((std::string(argv[4]) == "0")) {
+            // no-op, defaults.
+        }  else {
+            std::cerr << "Invalid value for parameter 'do_circle_stats'.\n";
+            exit(1);
+        }
     }
 
 
     std::vector<std::string> subjects = fs::read_subjectsfile(subjects_file);
     std::cout << "Found " << subjects.size() << " subjects listed in subjects file '" << subjects_file << "'.\n";
     std::cout << "Using subject directory '" << subjects_dir << "' and surface '" << surface_name << "'.\n";
+    std::cout << (do_circle_stats? "Computing" : "Not computing")  << " geodesic circle stats.\n";
+    if(do_circle_stats) {
+        std::cout << (circle_stats_do_meandists? "Also computing" : "Not computing")  << " geodesic mean distances while computing circle stats.\n";
+    }
     
     const std::vector<std::string> hemis = {"lh", "rh"};
     std::string surf_file, hemi, subject;
@@ -165,10 +185,26 @@ int main(int argc, char** argv) {
             vcgmesh_from_fs_surface(&m, surface);
 
             // Compute the geodesic mean distances and write result file.
-            std::vector<float> mean_dists = mean_geodist_p(m);
-            std::string mean_geodist_outfile = "./" + subject + "/surf/" + hemi + ".mean_geodist_vcglib_" + surface_name + ".curv";
-            fs::write_curv(mean_geodist_outfile, mean_dists);
-            std::cout << "   - Computation for hemi " << hemi << " done.\n";
+            if(do_circle_stats) {
+                std::vector<int32_t> qv_cs; // the query vertices.                
+                std::vector<std::vector<float>> circle_stats = geodesic_circles(m, qv_cs, 5.0, circle_stats_do_meandists);
+                std::vector<float> radii = circle_stats[0];    
+                std::vector<float> perimeters = circle_stats[1];
+                std::string rad_filename = subjects_dir + "/" + subject + "/surf/" + hemi + ".geocirc_radius_vcglib_" + surface_name + ".curv";
+                std::string per_filename = subjects_dir + "/" + subject + "/surf/" + hemi + ".geocirc_perimeter_vcglib_" + surface_name + ".curv";                
+                fs::write_curv(rad_filename, radii);
+                fs::write_curv(per_filename, perimeters);
+                if(circle_stats_do_meandists) {
+                    std::vector<float> mean_geodists_circ = circle_stats[2];
+                    std::string mgd_filename = subjects_dir + "/" + subject + "/surf/" + hemi + ".geocirc_meangeodist_vcglib_" + surface_name + ".curv";
+                    fs::write_curv(mgd_filename, mean_geodists_circ);
+                }
+            } else {            
+                std::vector<float> mean_dists = mean_geodist_p(m);
+                std::string mean_geodist_outfile = subjects_dir + "/" + subject + "/surf/" + hemi + ".mean_geodist_vcglib_" + surface_name + ".curv";
+                fs::write_curv(mean_geodist_outfile, mean_dists);
+                std::cout << "   - Computation for hemi " << hemi << " done.\n";
+            }
         }
     }
 
