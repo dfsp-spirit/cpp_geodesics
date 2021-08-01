@@ -14,6 +14,7 @@
 #include <vector>
 #include <algorithm>
 #include <iterator>
+#include <chrono>
 
 
 /// exec_mode must be 's' or 'p'.
@@ -174,10 +175,11 @@ int main(int argc, char** argv) {
         subject = subjects[i];
         std::cout << " * Handling subject '" << subject << "', # " << (i+1) << " of " << subjects.size() << ".\n";
         for (size_t hemi_idx=0; hemi_idx<hemis.size(); hemi_idx++) {
+            std::chrono::time_point<std::chrono::steady_clock> start_at = std::chrono::steady_clock::now();
             hemi = hemis[hemi_idx];
             
             // Load FreeSurfer mesh from file.
-            surf_file = "./" + subject + "/surf/" + hemi + "." + surface_name;
+            surf_file = subjects_dir + "/" + subject + "/surf/" + hemi + "." + surface_name;
             fs::read_surf(&surface, surf_file);
 
             // Create a VCGLIB mesh from the libfs Mesh.            
@@ -202,9 +204,11 @@ int main(int argc, char** argv) {
             } else {            
                 std::vector<float> mean_dists = mean_geodist_p(m);
                 std::string mean_geodist_outfile = subjects_dir + "/" + subject + "/surf/" + hemi + ".mean_geodist_vcglib_" + surface_name + ".curv";
-                fs::write_curv(mean_geodist_outfile, mean_dists);
-                std::cout << "   - Computation for hemi " << hemi << " done.\n";
+                fs::write_curv(mean_geodist_outfile, mean_dists);                
             }
+            std::chrono::time_point<std::chrono::steady_clock> end_at = std::chrono::steady_clock::now();
+            double duration_seconds = std::chrono::duration_cast<std::chrono::milliseconds>(end_at - start_at).count() / 1000.0;
+            std::cout << "   - Computation for hemi " << hemi << " done after " << duration_seconds << " seconds.\n";
         }
     }
 
