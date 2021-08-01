@@ -5,6 +5,7 @@
 
 #include "typedef_vcg.h"
 #include "mesh_area.h"
+#include "mesh_edges.h"
 #include "vec_math.h"
 
 #include <vcg/complex/complex.h>
@@ -299,11 +300,18 @@ std::vector<std::vector<float>> geodesic_circles(MyMesh& m, std::vector<int> que
   double area_scale = (scale * mesh_area) / 100.0;
   double r_cycle = sqrt(area_scale / M_PI);
   float max_possible_float = std::numeric_limits<float>::max();
-  
-  double extra_dist = 50.0;
+
+  std::vector<double> edge_lengths = mesh_edge_lengths(m);
+  double mean_len = std::accumulate(edge_lengths.begin(), edge_lengths.end(), 0.0) / (double)edge_lengths.size();
+  double max_edge_len = *std::max_element(edge_lengths.begin(), edge_lengths.end());
+  std::cout  << "     o Mesh has " << edge_lengths.size() << " edges with average length " << mean_len << " and maximal length " << max_edge_len << ".\n";
+   
+  double extra_dist = max_edge_len * 8.0;
   double max_dist = r_cycle + extra_dist; // Early termination of geodesic distance computation for dramatic speed-up.
   if(do_meandist) {
     max_dist = -1.0; // Compute full pairwise geodesic distances if meandist computation was requested.
+  } else {
+    std::cout  << "     o Using extra_dist=" << extra_dist << ", resulting in max_dist=" << max_dist << ".\n";
   }
 
   // Use all vertices if query_vertices is empty.
@@ -322,8 +330,7 @@ std::vector<std::vector<float>> geodesic_circles(MyMesh& m, std::vector<int> que
   meandist.resize(nqv);
   for(size_t i=0; i<nqv; i++) {
     int qv = query_vertices[i];
-    std::vector<int> query_vertex(1);
-    query_vertex[0] = qv;
+    std::vector<int> query_vertex = { qv };
     std::vector<float> v_geodist = geodist(m, query_vertex, max_dist);
 
     if(do_meandist) {
@@ -332,13 +339,16 @@ std::vector<std::vector<float>> geodesic_circles(MyMesh& m, std::vector<int> que
       // The geodist() function has been called with a positive max_dist setting, and it returned 0.0 for all vertices it
       // did not visit in that case. That is unfortunate, so we fix the returned distance values here.
       // If we do not fix this, the _compute_geodesic_circle_stats() function will produce wrong results based on the distances.
+      int num_adj = 0;
       for(size_t j=0; j<v_geodist.size(); j++) {
-        if(j!=(size_t)qv) { // If j==qv, the distance is *really* zero.
+        if(j != (size_t)qv) { // If j==qv, the distance is from the query vertex to itself, and it is *really* zero.
           if(v_geodist[j] <= 0.000000001) {
             v_geodist[j] = max_possible_float;
+            num_adj++;
           }
         }
       }
+      //std::cout << "Numadj=" << num_adj << ".\n";
       
     }
 
