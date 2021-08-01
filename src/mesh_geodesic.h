@@ -294,8 +294,6 @@ std::vector<std::vector<double>> _compute_geodesic_circle_stats(MyMesh& m, std::
 /// disabled for a dramatic speedup (how much depends on the 'scale' parameter).
 std::vector<std::vector<float>> geodesic_circles(MyMesh& m, std::vector<int> query_vertices, float scale=5.0, bool do_meandist=false) {
 
-  std::cerr << "This function is not done yet and should not be used. Compare results with R version.\n";
-
   double sampling = 10.0;
   double mesh_area = mesh_area_total(m);  
   double area_scale = (scale * mesh_area) / 100.0;
@@ -329,7 +327,7 @@ std::vector<std::vector<float>> geodesic_circles(MyMesh& m, std::vector<int> que
     std::vector<float> v_geodist = geodist(m, query_vertex, max_dist);
 
     if(do_meandist) {
-      meandist[i] = std::accumulate(v_geodist.begin(), v_geodist.end(), 0.0) / v_geodist.size(); 
+      meandist[i] = std::accumulate(v_geodist.begin(), v_geodist.end(), 0.0) / (float)v_geodist.size(); 
     } else {
       // The geodist() function has been called with a positive max_dist setting, and it returned 0.0 for all vertices it
       // did not visit in that case. That is unfortunate, so we fix the returned distance values here.

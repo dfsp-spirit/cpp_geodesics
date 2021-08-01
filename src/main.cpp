@@ -182,6 +182,8 @@ int main(int argc, char** argv) {
             surf_file = subjects_dir + "/" + subject + "/surf/" + hemi + "." + surface_name;
             fs::read_surf(&surface, surf_file);
 
+            std::cout << "   - Handling hemi " << hemi << " for surface '" << surface_name << "' with " << surface.num_vertices() << " vertices and " << surface.num_faces() << " faces.\n";
+
             // Create a VCGLIB mesh from the libfs Mesh.            
             MyMesh m;
             vcgmesh_from_fs_surface(&m, surface);
@@ -208,7 +210,7 @@ int main(int argc, char** argv) {
             }
             std::chrono::time_point<std::chrono::steady_clock> end_at = std::chrono::steady_clock::now();
             double duration_seconds = std::chrono::duration_cast<std::chrono::milliseconds>(end_at - start_at).count() / 1000.0;
-            std::cout << "   - Computation for hemi " << hemi << " done after " << duration_seconds << " seconds.\n";
+            std::cout << "     o Computation for hemi " << hemi << " done after " << duration_seconds << " seconds.\n";
         }
     }
 
