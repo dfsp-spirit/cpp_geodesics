@@ -112,40 +112,8 @@ int test_stuff(const std::string& exec_mode) {
     return 0;
 }
 
-void run_geodesic_circles() {
-    std::string subject = "fsaverage3";
-    std::string hemi = "lh";
-    std::string surface_name = "white";
-        
-    std::string surf_file = "demo_data/subjects_dir/" + subject + "/surf/" + hemi + "." + surface_name;
-    std::cout << " Running Geodesic Circle Analysis for FreeSurfer subject '" + subject + "' using file '" + surf_file + "'.\n";
-    
-    fs::Mesh surface; 
-    fs::read_surf(&surface, surf_file);
-
-    MyMesh m;
-    vcgmesh_from_fs_surface(&m, surface);
-    
-    std::vector<int32_t> qv_cs = {0}; // the query vertices. Only a single vertex here.
-    bool do_meandists = false;
-    std::vector<std::vector<float>> circle_stats = geodesic_circles(m, qv_cs, 5.0, do_meandists);
-    std::vector<float> radii = circle_stats[0];    
-    std::vector<float> perimeters = circle_stats[1];
-
-    std::cout << "Radius: " << radii[0] << "\n";
-    std::cout << "Perimeter: " << perimeters[0] << "\n";
-
-    //std::string rad_filename = "lh." + subject + "_radius_s5.curv";
-    //std::string per_filename = "lh." + subject + "_perimeter_s5.curv";
-    //std::string mgd_filename = "lh." + subject + "_meangeodist_geocircles.curv";
-    //fs::write_curv(rad_filename, radii);
-    //fs::write_curv(per_filename, perimeters);
-}
 
 int main(int argc, char** argv) {
-
-    run_geodesic_circles();
-    exit(0);
 
     
     //if(argc != 2) {
@@ -155,23 +123,28 @@ int main(int argc, char** argv) {
     //test_stuff(argv[1]);
     //exit(0);
 
-    if(argc < 2 || argc > 3) {
-        std::cout << "== Compute mean geodesic distances for each vertex to all others for ?h.pialsurface6 ==.\n";
-        std::cout << "Usage: " << argv[0] << " <subjects_file> [<subjects_dir>]\n";
+    if(argc < 2 || argc > 4) {
+        std::cout << "== Compute mean geodesic distances for each vertex to all others for FreeSurfer meshes ==.\n";
+        std::cout << "Usage: " << argv[0] << " <subjects_file> [<subjects_dir> [<surface>]]\n";
         std::cout << "  <subjects_file> : text file containing one subject identifier per line.\n";
         std::cout << "  <subjects_dir>  : directory containing the FreeSurfer recon-all output for the subjects. Defaults to current working directory.\n";
+        std::cout << "  <surface>       : the surface file to load from the surf/ subdir of each subject, without hemi part. Defaults to 'pial'.\n";
         exit(1);
     }
     std::string subjects_file = std::string(argv[1]);
     std::string subjects_dir = "./";
-    if(argc == 3) {
+    std::string surface_name = "pial";
+    if(argc >= 3) {
         subjects_dir = std::string(argv[2]);
+    }
+    if(argc == 4) {
+        surface_name = std::string(argv[3]);
     }
 
 
     std::vector<std::string> subjects = fs::read_subjectsfile(subjects_file);
     std::cout << "Found " << subjects.size() << " subjects listed in subjects file '" << subjects_file << "'.\n";
-    std::cout << "Using subject directory '" << subjects_dir << "'.\n";
+    std::cout << "Using subject directory '" << subjects_dir << "' and surface '" << surface_name << "'.\n";
     
     const std::vector<std::string> hemis = {"lh", "rh"};
     std::string surf_file, hemi, subject;
@@ -184,7 +157,7 @@ int main(int argc, char** argv) {
             hemi = hemis[hemi_idx];
             
             // Load FreeSurfer mesh from file.
-            surf_file = "./" + subject + "/surf/" + hemi + ".pialsurface6";
+            surf_file = "./" + subject + "/surf/" + hemi + "." + surface_name;
             fs::read_surf(&surface, surf_file);
 
             // Create a VCGLIB mesh from the libfs Mesh.            
@@ -193,7 +166,7 @@ int main(int argc, char** argv) {
 
             // Compute the geodesic mean distances and write result file.
             std::vector<float> mean_dists = mean_geodist_p(m);
-            std::string mean_geodist_outfile = "./" + subject + "/surf/" + hemi + ".mean_geodist_vcglib.curv";
+            std::string mean_geodist_outfile = "./" + subject + "/surf/" + hemi + ".mean_geodist_vcglib_" + surface_name + ".curv";
             fs::write_curv(mean_geodist_outfile, mean_dists);
             std::cout << "   - Computation for hemi " << hemi << " done.\n";
         }
