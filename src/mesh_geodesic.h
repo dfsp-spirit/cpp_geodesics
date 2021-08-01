@@ -172,6 +172,7 @@ std::vector<std::vector<double>> _compute_geodesic_circle_stats(MyMesh& m, std::
 
   fs::Mesh surf;
   fs_surface_from_vcgmesh(&surf, m);
+  float max_possible_float = std::numeric_limits<float>::max();
 
   int nr = sample_at_radii.size();
   std::vector<double> per_face_area = mesh_area_per_face(m);
@@ -181,9 +182,6 @@ std::vector<std::vector<double>> _compute_geodesic_circle_stats(MyMesh& m, std::
 
   for(int radius_idx=0; radius_idx<nr; radius_idx++) {
     double radius = sample_at_radii[radius_idx];
-
-    ///////////////////// WARNING: We have to double-check what the distance values is for vertices for which NO values was computed.
-    /////////////////////          If it is 0.0 instead of NA or INF, the following code will not work and we need to replace the values first.
 
     std::vector<bool> vert_in_radius(m.vn); // Whether vertex v is in radius, i.e., whether its geodesic distance value is < radius.
     for(int i=0; i<m.vn; i++) {
@@ -248,6 +246,11 @@ std::vector<std::vector<double>> _compute_geodesic_circle_stats(MyMesh& m, std::
         face_vertex_dists[1] = geodist[face_verts[1]] - radius;
         face_vertex_dists[2] = geodist[face_verts[2]] - radius;
 
+        // If these asserts fail, the extra_dist added to the radius to create max_dist in the geodesic_circles() function is too small.
+        assert(geodist[face_verts[0]] < (max_possible_float - 0.01));
+        assert(geodist[face_verts[1]] < (max_possible_float - 0.01));
+        assert(geodist[face_verts[2]] < (max_possible_float - 0.01));
+
         // The following 3 vectors should be a matrix.
         std::vector<float> coords_v0 = surf.vertex_coords(face_verts[0]);
         std::vector<float> coords_v1 = surf.vertex_coords(face_verts[1]);
@@ -299,7 +302,8 @@ std::vector<std::vector<float>> geodesic_circles(MyMesh& m, std::vector<int> que
   double r_cycle = sqrt(area_scale / M_PI);
   float max_possible_float = std::numeric_limits<float>::max();
   
-  double max_dist = r_cycle + 10.0; // Early termination of geodesic distance computation for dramatic speed-up.
+  double extra_dist = 50.0;
+  double max_dist = r_cycle + extra_dist; // Early termination of geodesic distance computation for dramatic speed-up.
   if(do_meandist) {
     max_dist = -1.0; // Compute full pairwise geodesic distances if meandist computation was requested.
   }
