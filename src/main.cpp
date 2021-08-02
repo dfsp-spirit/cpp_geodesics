@@ -163,7 +163,8 @@ int main(int argc, char** argv) {
     std::vector<std::string> subjects = fs::read_subjectsfile(subjects_file);
     std::cout << "Found " << subjects.size() << " subjects listed in subjects file '" << subjects_file << "'.\n";
     std::cout << "Using subject directory '" << subjects_dir << "' and surface '" << surface_name << "'.\n";
-    std::cout << (do_circle_stats? "Computing" : "Not computing")  << " geodesic circle stats.\n";
+    float circ_scale = 5.0; // The fraction of the total surface that the circles for the geodesic circle stats should have (in percent).
+    std::cout << (do_circle_stats? "Computing" : "Not computing")  << " geodesic circle stats" << (do_circle_stats? " with scale " + std::to_string(circ_scale) : "") << ".\n";
     if(do_circle_stats) {
         std::cout << (circle_stats_do_meandists? "Also computing" : "Not computing")  << " geodesic mean distances while computing circle stats.\n";
     }
@@ -192,26 +193,26 @@ int main(int argc, char** argv) {
             // Compute the geodesic mean distances and write result file.
             if(do_circle_stats) {
                 std::vector<int32_t> qv_cs; // the query vertices.                
-                std::vector<std::vector<float>> circle_stats = geodesic_circles(m, qv_cs, 5.0, circle_stats_do_meandists);
+                std::vector<std::vector<float>> circle_stats = geodesic_circles(m, qv_cs, circ_scale, circle_stats_do_meandists);
                 std::vector<float> radii = circle_stats[0];    
                 std::vector<float> perimeters = circle_stats[1];
-                std::string rad_filename = fs::util::fullpath({subjects_dir, subject , "surf" , hemi + ".geocirc_radius_vcglib_" + surface_name + ".curv"});
-                std::string per_filename = fs::util::fullpath({subjects_dir, subject , "surf" , hemi + ".geocirc_perimeter_vcglib_" + surface_name + ".curv"});
+                std::string rad_filename = fs::util::fullpath({subjects_dir, subject, "surf", hemi + ".geocirc_radius_vcglib_" + surface_name + ".curv"});
+                std::string per_filename = fs::util::fullpath({subjects_dir, subject, "surf", hemi + ".geocirc_perimeter_vcglib_" + surface_name + ".curv"});
                 fs::write_curv(rad_filename, radii);
                 std::cout << "     o Geodesic circle radius results for hemi " << hemi << " written to file '" << rad_filename << "'.\n";
                 fs::write_curv(per_filename, perimeters);
                 std::cout << "     o Geodesic circle perimeter results for hemi " << hemi << " written to file '" << per_filename << "'.\n";
                 if(circle_stats_do_meandists) {
                     std::vector<float> mean_geodists_circ = circle_stats[2];
-                    std::string mgd_filename = fs::util::fullpath({subjects_dir, subject , "surf" , hemi + ".geocirc_meangeodist_vcglib_" + surface_name + ".curv"});                    
+                    std::string mgd_filename = fs::util::fullpath({subjects_dir, subject, "surf", hemi + ".mean_geodist_vcglib_" + surface_name + ".curv"});                    
                     fs::write_curv(mgd_filename, mean_geodists_circ);
                     std::cout << "     o Geodesic mean distance results for hemi " << hemi << " written to file '" << mgd_filename << "'.\n";
                 }
             } else {            
                 std::vector<float> mean_dists = mean_geodist_p(m);                
-                std::string mean_geodist_outfile = fs::util::fullpath({subjects_dir, subject , "surf" , hemi + ".mean_geodist_vcglib_" + surface_name + ".curv"});                    
+                std::string mean_geodist_outfile = fs::util::fullpath({subjects_dir, subject, "surf", hemi + ".mean_geodist_vcglib_" + surface_name + ".curv"});                    
                 fs::write_curv(mean_geodist_outfile, mean_dists);
-                std::cout << "     o Geodesic meand distance results for hemi " << hemi << " written to file '" << mean_geodist_outfile << "'.\n";
+                std::cout << "     o Geodesic mean distance results for hemi " << hemi << " written to file '" << mean_geodist_outfile << "'.\n";
             }
             std::chrono::time_point<std::chrono::steady_clock> end_at = std::chrono::steady_clock::now();
             double duration_seconds = std::chrono::duration_cast<std::chrono::milliseconds>(end_at - start_at).count() / 1000.0;
