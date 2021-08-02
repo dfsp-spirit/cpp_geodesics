@@ -205,7 +205,7 @@ int main(int argc, char** argv) {
                     std::vector<float> mean_geodists_circ = circle_stats[2];
                     std::string mgd_filename = fs::util::fullpath({subjects_dir, subject , "surf" , hemi + ".geocirc_meangeodist_vcglib_" + surface_name + ".curv"});                    
                     fs::write_curv(mgd_filename, mean_geodists_circ);
-                    std::cout << "     o Geodesic meand distance results for hemi " << hemi << " written to file '" << mgd_filename << "'.\n";
+                    std::cout << "     o Geodesic mean distance results for hemi " << hemi << " written to file '" << mgd_filename << "'.\n";
                 }
             } else {            
                 std::vector<float> mean_dists = mean_geodist_p(m);                
