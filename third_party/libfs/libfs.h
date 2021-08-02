@@ -25,7 +25,71 @@
  */ 
 
 
+
 namespace fs {
+
+  namespace util {
+    /// Check whether a string ends with the given suffix.
+    inline bool ends_with(std::string const & value, std::string const & suffix) {
+        if (suffix.size() > value.size()) return false;
+        return std::equal(suffix.rbegin(), suffix.rend(), value.rbegin());
+    }
+
+    /// Check whether a string starts with the given prefix.
+    inline bool starts_with(std::string const & value, std::string const & prefix) {
+        if (prefix.length() > value.length()) return false;
+        return value.rfind(prefix, 0) == 0;
+    }
+
+
+    /// Construct a UNIX file system path from the given path_components.
+    /// @details Any trailing or leading slash (path_sep) will be stripped from the individual components and replaced with a single one between two components. If the first path component started with a slash, that slash will be kept (absolute paths are left intact).
+    /// @param path_components init list of strings, the path components.
+    /// @throws std::invalid_argument on empty path_components
+    std::string fullpath( std::initializer_list<std::string> path_components, std::string path_sep = std::string("/") ) {
+      std::string fp;
+      if(path_components.size() == 0) {
+          throw std::invalid_argument("The 'path_components' must not be empty.");
+      }
+      
+      std::string comp;
+      std::string comp_mod;
+      size_t idx = 0;    
+      for(auto comp : path_components) {
+        comp_mod = comp;
+        if(idx != 0) { // We keep a leading slash intact for the first element (absolute path).
+          if (starts_with(comp, path_sep)) {
+            comp_mod = comp.substr(1, comp.size()-1);
+          }        
+        }
+        
+        if(ends_with(comp_mod, path_sep)) {
+            comp_mod = comp_mod.substr(0, comp_mod.size()-1);
+        }
+
+        fp += comp_mod;
+        if(idx < path_components.size()-1) {
+          fp += path_sep;
+        }
+        idx++;
+      }
+      return fp;
+    }
+
+    /// Write the given text representation (any string) to a file.
+    /// @throws st::runtime_error if the file cannot be opened.
+    void str_to_file(const std::string& filename, const std::string rep) {
+      std::ofstream ofs;
+      ofs.open(filename, std::ofstream::out);
+      if(ofs.is_open()) {
+          ofs << rep;
+          ofs.close();
+      } else {
+          throw std::runtime_error("Unable to open file '" + filename + "' for writing.\n");
+      }
+    }
+  }
+
   
   // MRI data types, used by the MGH functions.
 
@@ -67,18 +131,194 @@ namespace fs {
     Mesh() {}
 
     std::vector<_Float32> vertices;
-    std::vector<int32_t> faces;
+    std::vector<int32_t> faces;    
 
     /// Return string representing the mesh in Wavefront Object (.obj) format.
     std::string to_obj() const {
       std::stringstream objs;
-      for(size_t vidx=0; vidx<this->vertices.size();vidx+=3) { // vertex coords
+      for(size_t vidx=0; vidx<this->vertices.size(); vidx+=3) { // vertex coords
         objs << "v " << vertices[vidx] << " " << vertices[vidx+1] << " " << vertices[vidx+2] << "\n";
       }
-      for(size_t fidx=0; fidx<this->faces.size();fidx+=3) { // faces: vertex indices, 1-based
+      for(size_t fidx=0; fidx<this->faces.size(); fidx+=3) { // faces: vertex indices, 1-based
         objs << "f " << faces[fidx]+1 << " " << faces[fidx+1]+1 << " " << faces[fidx+2]+1 << "\n";
       }        
       return(objs.str());
+    }
+
+    /// Export this mesh to a file in Wavefront OBJ format.
+    /// @throws st::runtime_error if the target file cannot be opened.
+    void to_obj_file(const std::string& filename) const {
+      fs::util::str_to_file(filename, this->to_obj());
+    }
+
+    
+
+    /// Read a brainmesh from a Wavefront object format stream.
+    static void from_obj(Mesh* mesh, std::ifstream* is) {
+      std::string line;
+      int line_idx = -1;
+
+      std::vector<float> vertices;
+      std::vector<int> faces;
+      size_t num_lines_ignored = 0;
+
+      while (std::getline(*is, line)) {
+        line_idx += 1;
+        std::istringstream iss(line);
+        if(fs::util::starts_with(line, "#")) {
+          continue; // skip comment.
+        } else {
+          if(fs::util::starts_with(line, "v ")) {
+            std::string elem_type_identifier; float x, y, z;
+            if (!(iss >> elem_type_identifier >> x >> y >> z)) { 
+              throw std::domain_error("Could not parse vertex line " + std::to_string(line_idx+1) + " of OBJ data, invalid format.\n");
+            }
+            assert(elem_type_identifier == "v");
+            vertices.push_back(x);
+            vertices.push_back(y);
+            vertices.push_back(z);
+          } else if(fs::util::starts_with(line, "f ")) {
+            std::string elem_type_identifier, v0raw, v1raw, v2raw; int v0, v1, v2;
+            if (!(iss >> elem_type_identifier >> v0raw >> v1raw >> v2raw)) { 
+              throw std::domain_error("Could not parse face line " + std::to_string(line_idx+1) + " of OBJ data, invalid format.\n");
+            }
+            assert(elem_type_identifier == "f");
+
+            // The OBJ format allows to specifiy face indices with slashes to also set normal and material indices.
+            // So instead of a line like 'f 22 34 45', we could get 'f 3/1 4/2 5/3' or 'f 6/4/1 3/5/3 7/6/5' or 'f 7//1 8//2 9//3'.
+            // We need to extract the stuff before the first slash and interprete it as int to get the vertex index we are looking for.
+            std::size_t found_v0 = v0raw.find("/");
+            std::size_t found_v1 = v1raw.find("/");
+            std::size_t found_v2 = v2raw.find("/");
+            if (found_v0 != std::string::npos) {
+              v0raw = v0raw.substr(0, found_v0);              
+            }
+            if (found_v1 != std::string::npos) {
+              v1raw = v1raw.substr(0, found_v1);              
+            }
+            if (found_v2 != std::string::npos) {
+              v2raw = v0raw.substr(0, found_v2);              
+            }
+            v0 = std::stoi(v0raw);
+            v1 = std::stoi(v1raw);
+            v2 = std::stoi(v2raw);
+
+            // The vertex indices in Wavefront OBJ files are 1-based, so we have to substract 1 here.
+            faces.push_back(v0 - 1);
+            faces.push_back(v1 - 1);
+            faces.push_back(v2 - 1);
+
+          } else {
+            num_lines_ignored++;
+            continue;
+          }
+          
+        }        
+      }
+      if(num_lines_ignored > 0) {
+        std::cerr << "Ignored " << num_lines_ignored << " lines in Wavefront OBJ format mesh file.\n";
+      }
+      mesh->vertices = vertices;
+      mesh->faces = faces;
+    }
+
+    /// Read a brainmesh from a Wavefront object format mesh file.
+    /// @throws std::runtime_error if the file cannot be read.
+    static void from_obj(Mesh* mesh, const std::string& filename) {
+      std::ifstream input(filename);
+      if(input.is_open()) {
+        Mesh::from_obj(mesh, &input);
+        input.close();
+      } else {
+        throw std::runtime_error("Could not open Wavefront object format mesh file '" + filename + "' for reading.\n");
+      }
+    }
+
+
+    /// Read a brainmesh from a Stanford PLY format stream.
+    static void from_ply(Mesh* mesh, std::ifstream* is) {
+      std::string line;
+      int line_idx = -1;
+      int noncomment_line_idx = -1;
+
+      std::vector<float> vertices;
+      std::vector<int> faces;
+
+      bool in_header = true; // current status
+      int num_verts = -1;
+      int num_faces = -1;
+      while (std::getline(*is, line)) {
+        line_idx += 1;
+        std::istringstream iss(line);
+        if(fs::util::starts_with(line, "comment")) {
+          continue; // skip comment.
+        } else {
+          noncomment_line_idx++;
+          if(in_header) {
+            if(noncomment_line_idx == 0) {
+              if(line != "ply") throw std::domain_error("Invalid PLY file");
+            } else if(noncomment_line_idx == 1) {
+              if(line != "format ascii 1.0") throw std::domain_error("Unsupported PLY file format, only format 'format ascii 1.0' is supported.");
+            }
+
+            if(line == "end_header") {
+              in_header = false;
+            } else if(fs::util::starts_with(line, "element vertex")) {
+              std::string elem, elem_type_identifier;
+              if (!(iss >> elem >> elem_type_identifier >> num_verts)) { 
+                throw std::domain_error("Could not parse element vertex line of PLY header, invalid format.\n");
+              }
+            } else if(fs::util::starts_with(line, "element face")) {
+              std::string elem, elem_type_identifier;
+              if (!(iss >> elem >> elem_type_identifier >> num_faces)) { 
+                throw std::domain_error("Could not parse element face line of PLY header, invalid format.\n");
+              }
+            } // Other properties like vertex colors and normals are ignored for now.
+
+          } else {  // in data part.
+            if(num_verts < 1 || num_faces < 1) {
+              throw std::domain_error("Invalid PLY file: missing element count lines of header.");
+            }
+            // Read vertices
+            if(vertices.size() < (size_t)num_verts * 3) {
+              float x,y,z;
+              if (!(iss >> x >> y >> z)) { 
+                throw std::domain_error("Could not parse vertex line of PLY data, invalid format.\n");
+              }
+              vertices.push_back(x);
+              vertices.push_back(y);
+              vertices.push_back(z);
+            } else {
+              if(faces.size() < (size_t)num_faces * 3) {
+                int verts_per_face, v0, v1, v2;
+                if (!(iss >> verts_per_face >> v0 >> v1 >> v2)) { 
+                  throw std::domain_error("Could not parse face line of PLY data, invalid format.\n");
+                }
+                if(verts_per_face != 3) {
+                  throw std::domain_error("Only triangular meshes are supported: PLY faces lines must contain exactly 3 vertex indices.\n");
+                }
+                faces.push_back(v0);
+                faces.push_back(v1);
+                faces.push_back(v2);
+              }
+            }
+          }
+        }
+      }
+      mesh->vertices = vertices;
+      mesh->faces = faces;
+    }
+
+    /// Read a brainmesh from a Stanford PLY format mesh file.
+    /// @throws std::runtime_error if the file cannot be read.
+    static void from_ply(Mesh* mesh, const std::string& filename) {
+      std::ifstream input(filename);
+      if(input.is_open()) {
+        Mesh::from_ply(mesh, &input);
+        input.close();
+      } else {
+        throw std::runtime_error("Could not open Stanford PLY format mesh file '" + filename + "' for reading.\n");
+      }
     }
 
     /// Return the number of vertices in this mesh.
@@ -162,6 +402,12 @@ namespace fs {
         plys << num_vertices_per_face << " " << faces[fidx] << " " << faces[fidx+1] << " " << faces[fidx+2] << "\n";
       }        
       return(plys.str());
+    }
+
+    /// Export this mesh to a file in Stanford PLY format.
+    /// @throws st::runtime_error if the target file cannot be opened.
+    void to_ply_file(const std::string& filename) const {
+      fs::util::str_to_file(filename, this->to_ply());
     }
   };
 
@@ -625,7 +871,8 @@ namespace fs {
   ///
   /// @param surface a Mesh instance representing a vertex-indexed tri-mesh. This will be filled.
   /// @param filename The path to the file from which to read the mesh. Must be in binary FreeSurfer surf format. An example file is `surf/lh.white`.
-  /// @throws runtime_error if the file cannot be opened, domain_error if the surf file magic mismatches.  
+  /// @throws runtime_error if the file cannot be opened, domain_error if the surf file magic mismatches.
+  /// @see read_mesh, a generalized version that supports other file formats as well.
   void read_surf(Mesh* surface, const std::string& filename) {
     const int SURF_TRIS_MAGIC = 16777214;
     std::ifstream is;
@@ -653,6 +900,22 @@ namespace fs {
       surface->faces = fdata;
     } else {
       throw std::runtime_error("Unable to open surface file '" + filename + "'.\n");
+    }
+  }
+
+
+  /// Read a triangular mesh from a surf, obj, or ply file into the given Mesh instance.
+  ///
+  /// @param surface a Mesh instance representing a vertex-indexed tri-mesh. This will be filled.
+  /// @param filename The path to the file from which to read the mesh. The format will be determined from the file extension as follows. File names ending with '.obj' are loaded as Wavefront OBJ files. File names ending with '.ply' are loaded as Stanford PLY files in format version 'ascii 1.0'. All other files are loaded as FreeSurfer binary surf files.
+  /// @throws runtime_error if the file cannot be opened, domain_error if the surf file magic mismatches.  
+  void read_mesh(Mesh* surface, const std::string& filename) {
+    if(fs::util::ends_with(filename, ".obj")) {
+      fs::Mesh::from_obj(surface, filename);
+    } else if(fs::util::ends_with(filename, ".ply")) {
+      fs::Mesh::from_ply(surface, filename);
+    } else {
+      read_surf(surface, filename);
     }
   }
 
@@ -1171,4 +1434,5 @@ namespace fs {
   }
 
 } // End namespace fs
+
 
