@@ -339,17 +339,13 @@ std::vector<std::vector<float>> geodesic_circles(MyMesh& m, std::vector<int> que
       // The geodist() function has been called with a positive max_dist setting, and it returned 0.0 for all vertices it
       // did not visit in that case. That is unfortunate, so we fix the returned distance values here.
       // If we do not fix this, the _compute_geodesic_circle_stats() function will produce wrong results based on the distances.
-      int num_adj = 0;
       for(size_t j=0; j<v_geodist.size(); j++) {
         if(j != (size_t)qv) { // If j==qv, the distance is from the query vertex to itself, and it is *really* zero.
           if(v_geodist[j] <= 0.000000001) {
             v_geodist[j] = max_possible_float;
-            num_adj++;
           }
         }
-      }
-      //std::cout << "Numadj=" << num_adj << ".\n";
-      
+      }      
     }
 
     std::vector<double> sample_at_radii = linspace<double>(r_cycle-10.0, r_cycle+10.0, sampling);
