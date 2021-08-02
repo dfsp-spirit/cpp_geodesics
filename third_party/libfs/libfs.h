@@ -305,6 +305,12 @@ namespace fs {
           }
         }
       }
+      if(vertices.size() != (size_t)num_verts * 3) {
+        std::cerr << "PLY header mentions " << num_verts << " vertices, but found " << vertices.size() / 3 << ".\n";
+      }
+      if(faces.size() != (size_t)num_faces * 3) {
+        std::cerr << "PLY header mentions " << num_faces << " faces, but found " << faces.size() / 3 << ".\n";
+      }
       mesh->vertices = vertices;
       mesh->faces = faces;
     }
