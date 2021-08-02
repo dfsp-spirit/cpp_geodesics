@@ -17,51 +17,6 @@
 #include <chrono>
 
 
-/// Check whether a string ends with the given suffix.
-inline bool ends_with(std::string const & value, std::string const & suffix) {
-    if (suffix.size() > value.size()) return false;
-    return std::equal(suffix.rbegin(), suffix.rend(), value.rbegin());
-}
-
-/// Check whether a string starts with the given prefix.
-inline bool starts_with(std::string const & value, std::string const & prefix) {
-    if (prefix.length() > value.length()) return false;
-    return value.rfind(prefix, 0) == 0;
-}
-
-
-/// Construct a UNIX file system path from the given path_components.
-/// @details Any trailing or leading slash (path_sep) will be stripped from the individual components and replaced with a single one between two components. If the first path component started with a slash, that slash will be kept (absolute paths are left intact).
-/// @param path_components init list of strings, the path components.
-/// @throws std::invalid_argument on empty path_components
-std::string fullpath( std::initializer_list<std::string> path_components, std::string path_sep = std::string("/") ) {
-    std::string fp;
-    if(path_components.size() == 0) {
-        throw std::invalid_argument("The 'path_components' must not be empty.");
-    }
-    
-    std::string comp;
-    std::string comp_mod;
-    size_t idx = 0;    
-    for(auto comp : path_components) {
-        comp_mod = comp;
-        if(idx != 0) { // We keep a leading slash intact for the first element (absolute path).
-            if (starts_with(comp_mod, path_sep)) {
-                comp_mod = comp_mod.substr(1, comp_mod.size()-1);
-            }        
-        }
-        if(ends_with(comp_mod, path_sep)) {
-            comp_mod = comp_mod.substr(0, comp_mod.size()-2);
-        }
-        fp += comp_mod;
-        if(idx < path_components.size()-1) {
-            fp += path_sep;
-        }
-        idx++;
-    }
-    return fp;
-}
-
 
 /// exec_mode must be 's' or 'p'.
 int test_stuff(const std::string& exec_mode) {        
@@ -225,7 +180,7 @@ int main(int argc, char** argv) {
             hemi = hemis[hemi_idx];
             
             // Load FreeSurfer mesh from file.
-            surf_file = subjects_dir + "/" + subject + "/surf/" + hemi + "." + surface_name;
+            surf_file = fs::util::fullpath({subjects_dir, subject, "surf", hemi + "." + surface_name});
             fs::read_surf(&surface, surf_file);
 
             std::cout << "   - Handling hemi " << hemi << " for surface '" << surface_name << "' with " << surface.num_vertices() << " vertices and " << surface.num_faces() << " faces.\n";
@@ -240,21 +195,21 @@ int main(int argc, char** argv) {
                 std::vector<std::vector<float>> circle_stats = geodesic_circles(m, qv_cs, 5.0, circle_stats_do_meandists);
                 std::vector<float> radii = circle_stats[0];    
                 std::vector<float> perimeters = circle_stats[1];
-                std::string rad_filename = subjects_dir + "/" + subject + "/surf/" + hemi + ".geocirc_radius_vcglib_" + surface_name + ".curv";
-                std::string per_filename = subjects_dir + "/" + subject + "/surf/" + hemi + ".geocirc_perimeter_vcglib_" + surface_name + ".curv";                
+                std::string rad_filename = fs::util::fullpath({subjects_dir, subject , "surf" , hemi + ".geocirc_radius_vcglib_" + surface_name + ".curv"});
+                std::string per_filename = fs::util::fullpath({subjects_dir, subject , "surf" , hemi + ".geocirc_perimeter_vcglib_" + surface_name + ".curv"});
                 fs::write_curv(rad_filename, radii);
                 std::cout << "     o Geodesic circle radius results for hemi " << hemi << " written to file '" << rad_filename << "'.\n";
                 fs::write_curv(per_filename, perimeters);
                 std::cout << "     o Geodesic circle perimeter results for hemi " << hemi << " written to file '" << per_filename << "'.\n";
                 if(circle_stats_do_meandists) {
                     std::vector<float> mean_geodists_circ = circle_stats[2];
-                    std::string mgd_filename = subjects_dir + "/" + subject + "/surf/" + hemi + ".geocirc_meangeodist_vcglib_" + surface_name + ".curv";
+                    std::string mgd_filename = fs::util::fullpath({subjects_dir, subject , "surf" , hemi + ".geocirc_meangeodist_vcglib_" + surface_name + ".curv"});                    
                     fs::write_curv(mgd_filename, mean_geodists_circ);
                     std::cout << "     o Geodesic meand distance results for hemi " << hemi << " written to file '" << mgd_filename << "'.\n";
                 }
             } else {            
-                std::vector<float> mean_dists = mean_geodist_p(m);
-                std::string mean_geodist_outfile = subjects_dir + "/" + subject + "/surf/" + hemi + ".mean_geodist_vcglib_" + surface_name + ".curv";
+                std::vector<float> mean_dists = mean_geodist_p(m);                
+                std::string mean_geodist_outfile = fs::util::fullpath({subjects_dir, subject , "surf" , hemi + ".mean_geodist_vcglib_" + surface_name + ".curv"});                    
                 fs::write_curv(mean_geodist_outfile, mean_dists);
                 std::cout << "     o Geodesic meand distance results for hemi " << hemi << " written to file '" << mean_geodist_outfile << "'.\n";
             }
