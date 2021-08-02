@@ -159,8 +159,7 @@ std::vector<double> linspace(T start_in, T end_in, int num_in) {
   for(int i=0; i < num-1; ++i) {
       linspaced.push_back(start + delta * i);
   }
-  linspaced.push_back(end); // I want to ensure that start and end
-                            // are exactly the same as the input
+  linspaced.push_back(end); // Ensure that start and end are exactly the same as the input.
   return linspaced;
 }
 
@@ -328,10 +327,17 @@ std::vector<std::vector<float>> geodesic_circles(MyMesh& m, std::vector<int> que
   radius.resize(nqv);
   perimeter.resize(nqv);
   meandist.resize(nqv);
+
+  fs::Mesh surf;  // Create FreeSurfer mesh that is copyable for OpenMP.
+  fs_surface_from_vcgmesh(&surf, m);
+
+  # pragma omp parallel for shared(surf, radius, perimeter, meandist)
   for(size_t i=0; i<nqv; i++) {
+    MyMesh mt; // per thread, recreated from FreeSurfer mesh
+    vcgmesh_from_fs_surface(&mt, surf);
     int qv = query_vertices[i];
     std::vector<int> query_vertex = { qv };
-    std::vector<float> v_geodist = geodist(m, query_vertex, max_dist);
+    std::vector<float> v_geodist = geodist(mt, query_vertex, max_dist);
 
     if(do_meandist) {
       meandist[i] = std::accumulate(v_geodist.begin(), v_geodist.end(), 0.0) / (float)v_geodist.size(); 
