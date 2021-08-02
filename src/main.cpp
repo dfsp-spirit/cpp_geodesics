@@ -181,7 +181,7 @@ int main(int argc, char** argv) {
             
             // Load FreeSurfer mesh from file.
             surf_file = fs::util::fullpath({subjects_dir, subject, "surf", hemi + "." + surface_name});
-            fs::read_surf(&surface, surf_file);
+            fs::read_mesh(&surface, surf_file);
 
             std::cout << "   - Handling hemi " << hemi << " for surface '" << surface_name << "' with " << surface.num_vertices() << " vertices and " << surface.num_faces() << " faces.\n";
 
