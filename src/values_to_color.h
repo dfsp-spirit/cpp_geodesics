@@ -26,7 +26,7 @@ std::vector<T> normalize(const std::vector<T> data) {
     T range = max - min;
 
     std::vector<T> scaled(data.size());
-    for(size_t i=0; i<data.size; i++) {
+    for(size_t i=0; i<data.size(); i++) {
         scaled[i] = (data[i] - min) / range;
     }
     return(scaled);
@@ -36,13 +36,12 @@ std::vector<T> normalize(const std::vector<T> data) {
 /// @details In the returned vector, three consecutive values describe the RGB data for one value.
 /// @throws std::invalid_argument if values are empty or max is equal to min.
 template<class T>
-std::vector<uint8_t> to_colors(const std::vector<T> data, const tinycolormap::ColormapType cmap = tinycolormap::ColormapType::Viridis) {
+std::vector<uint8_t> data_to_colors(const std::vector<T> data, const tinycolormap::ColormapType cmap = tinycolormap::ColormapType::Viridis) {
     std::vector<T> dnorm = normalize(data);
     std::vector<uint8_t> colors;
-    colors.reserve(data.size() * 3);
-    tinycolormap::Color color;
+    colors.reserve(data.size() * 3);    
     for(size_t i=0; i<dnorm.size(); i++) {
-        color = tinycolormap::GetColor(dnorm[i], cmap);
+        tinycolormap::Color color = tinycolormap::GetColor(dnorm[i], cmap);
         colors.push_back(color.ri());
         colors.push_back(color.gi());
         colors.push_back(color.bi());

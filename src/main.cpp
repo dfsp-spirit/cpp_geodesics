@@ -116,7 +116,29 @@ int test_stuff(const std::string& exec_mode) {
 }
 
 
+void export_brain(const std::string& surf_file, const std::string& curv_file, const std::string& output_ply_file = "colored_brain.ply") {
+    // Load mesh and data.
+    fs::Mesh surface;
+    fs::read_mesh(&surface, surf_file);
+    std::vector<float> morph_data = fs::read_curv_data(curv_file);
+
+    // Map data to colors
+    std::vector<u_int8_t> colors = data_to_colors(std::vector<double>(morph_data.begin(), morph_data.end()));
+    surface.to_ply_file(output_ply_file, colors);
+    std::cout << "Vertex-colored brain mesh written to file '" << output_ply_file << "'.\n";    
+}
+
+
 int main(int argc, char** argv) {
+
+    if(argc != 4) {
+        std::cout << "== Export colored brain mesh ==.\n";
+        std::cout << "Usage: " << argv[0] << " <surf_file> <curv_file> <output_ply_file>\n";
+        std::cout << "  Example: " << argv[0] << " demo_data/subjects_dir/subject1/surf/lh.white demo_data/subjects_dir/subject1/surf/lh.thickness colored_brain.ply\n";
+        exit(1);
+    }
+    export_brain(argv[1], argv[2], argv[3]);
+    exit(0);
 
     
     //if(argc != 2) {

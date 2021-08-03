@@ -341,7 +341,7 @@ namespace fs {
     /// @param i the row index, valid values are 0..num_faces.
     /// @param j the column index, valid values are 0..2 (for the 3 vertices of a face).
     /// @throws std::range_error on invalid index
-    const int32_t& fm_at(size_t i, size_t j) const {
+    const int32_t& fm_at(const size_t i, const size_t j) const {
       size_t idx = _vidx_2d(i, j, 3);
       if(idx > this->faces.size()-1) {        
         throw std::range_error("Indices (" + std::to_string(i) + "," + std::to_string(j) + ") into Mesh.faces out of bounds. Hit " + std::to_string(idx) + " with max valid index " + std::to_string(this->faces.size()-1) + ".\n");
@@ -352,7 +352,7 @@ namespace fs {
 
     /// Get all vertex indices of the face, given by its index.
     /// @throws std::range_error on invalid index
-    std::vector<int32_t> face_vertices(size_t face) const {
+    std::vector<int32_t> face_vertices(const size_t face) const {
       if(face > this->num_faces()-1) {
         throw std::range_error("Index " + std::to_string(face) + " into Mesh.faces out of bounds, max valid index is " + std::to_string(this->num_faces()-1) + ".\n");
       }
@@ -365,7 +365,7 @@ namespace fs {
 
     /// Get all coordinates of the vertex, given by its index.
     /// @throws std::range_error on invalid index
-    std::vector<_Float32> vertex_coords(size_t vertex) const {
+    std::vector<_Float32> vertex_coords(const size_t vertex) const {
       if(vertex > this->num_vertices()-1) {
         throw std::range_error("Index " + std::to_string(vertex) + " into Mesh.vertices out of bounds, max valid index is " + std::to_string(this->num_vertices()-1) + ".\n");
       }
@@ -380,7 +380,7 @@ namespace fs {
     /// @param i the row index, valid values are 0..num_vertices.
     /// @param j the column index, valid values are 0..2 (for the x,y,z coordinates).
     /// @throws std::range_error on invalid index
-    const _Float32& vm_at(size_t i, size_t j) const {
+    const _Float32& vm_at(const size_t i, const size_t j) const {
       size_t idx = _vidx_2d(i, j, 3);
       if(idx > this->vertices.size()-1) {
         throw std::range_error("Indices (" + std::to_string(i) + "," + std::to_string(j) + ") into Mesh.vertices out of bounds. Hit " + std::to_string(idx) + " with max valid index " + std::to_string(this->vertices.size()-1) + ".\n");
@@ -388,19 +388,37 @@ namespace fs {
       return(this->vertices[idx]);
     }
     
+    /// Return string representing the mesh in PLY format. Overload that works without passing a color vector.
+    std::string to_ply() const {
+      std::vector<uint8_t> empty_col;
+      return(this->to_ply(empty_col));
+    }
 
     /// Return string representing the mesh in PLY format.
-    std::string to_ply() const {
+    /// @param col u_char vector of RGB color values, 3 per vertex. They must appear by vertex, i.e. in order v0_red, v0_green, v0_blue, v1_red, v1_green, v1_blue. Leave empty if you do not want colors.
+    /// @throws std::invalid_argument if the number of vertex colors does not match the number of vertices. 
+    std::string to_ply(const std::vector<uint8_t> col) const {
+      bool use_vertex_colors = col.size() != 0;
       std::stringstream plys;
       plys << "ply\nformat ascii 1.0\n";
       plys << "element vertex " << this->num_vertices() << "\n";
       plys << "property float x\nproperty float y\nproperty float z\n";
+      if(use_vertex_colors) {
+        if(col.size() != this->vertices.size()) {
+          throw std::invalid_argument("Number of vertex coordinates and vertex colors must match when writing PLY file.");
+        }
+        plys << "property uchar red\nproperty uchar green\nproperty uchar blue\n";
+      }
       plys << "element face " << this->num_faces() << "\n";
       plys << "property list uchar int vertex_index\n";
       plys << "end_header\n";
       
       for(size_t vidx=0; vidx<this->vertices.size();vidx+=3) {  // vertex coords
-        plys << vertices[vidx] << " " << vertices[vidx+1] << " " << vertices[vidx+2] << "\n";
+        plys << vertices[vidx] << " " << vertices[vidx+1] << " " << vertices[vidx+2];
+        if(use_vertex_colors) {
+          plys << " " << (int)col[vidx] << " " << (int)col[vidx+1] << " " << (int)col[vidx+2];
+        }
+        plys << "\n";
       }
 
       const int num_vertices_per_face = 3;
@@ -414,6 +432,12 @@ namespace fs {
     /// @throws st::runtime_error if the target file cannot be opened.
     void to_ply_file(const std::string& filename) const {
       fs::util::str_to_file(filename, this->to_ply());
+    }
+
+    /// Export this mesh to a file in Stanford PLY format with vertex colors.
+    /// @throws st::runtime_error if the target file cannot be opened, std::invalid_argument if the number of vertex colors does not match the number of vertices.
+    void to_ply_file(const std::string& filename, const std::vector<uint8_t> col) const {
+      fs::util::str_to_file(filename, this->to_ply(col));
     }
   };
 
@@ -507,6 +531,24 @@ namespace fs {
       return(reg_verts);
     }
 
+    /// Get the vertex colors as an array of uchar values, 3 consecutive values are the red, green and blue channel values for a single vertex.
+    /// @param alpha whether to include the alpha channel and return 4 values per vertex instead of 3.
+    std::vector<uint8_t> vertex_colors(bool alpha = false) const {
+      int num_channels = alpha ? 4 : 3;
+      std::vector<uint8_t> col;
+      col.reserve(this->num_vertices() * num_channels);
+      std::vector<size_t> vertex_region_indices = this->vertex_regions();
+      for(size_t i=0; i<this->num_vertices(); i++) {
+        col.push_back(this->colortable.r[vertex_region_indices[i]]);
+        col.push_back(this->colortable.g[vertex_region_indices[i]]);
+        col.push_back(this->colortable.b[vertex_region_indices[i]]);
+        if(alpha) {
+          col.push_back(this->colortable.a[vertex_region_indices[i]]);
+        }
+      }
+      return(col);
+    }
+
     /// Get the number of vertices of this parcellation (or the associated surface).
     /// @throws std::runtime_error on invalid annot
     size_t num_vertices() const {
@@ -517,7 +559,7 @@ namespace fs {
       return nv;
     }
 
-    /// Compute the region indices in the Colortable for all vertices in this brain surface parcellation. With the region indices, it becomes very easy to obtain all region names, labels, and coolor channel values from the Colortable.
+    /// Compute the region indices in the Colortable for all vertices in this brain surface parcellation. With the region indices, it becomes very easy to obtain all region names, labels, and color channel values from the Colortable.
     /// @see The function `vertex_region_names` uses this function to get the region names for all vertices.
     std::vector<size_t> vertex_regions() const {
       std::vector<size_t> vert_reg;
@@ -538,7 +580,7 @@ namespace fs {
     std::vector<std::string> vertex_region_names() const {
       std::vector<std::string> region_names;
       std::vector<size_t> vertex_region_indices = this->vertex_regions();
-      for(size_t i=0; i<vertex_region_indices.size(); i++) {
+      for(size_t i=0; i<this->num_vertices(); i++) {
         region_names.push_back(this->colortable.name[vertex_region_indices[i]]);
       }
       return(region_names);
@@ -587,7 +629,7 @@ namespace fs {
   };
 
   /// A simple 4D array datastructure, useful for representing volume data.
-  template<class T> 
+  template<class T>
   struct Array4D {
     Array4D(unsigned int d1, unsigned int d2, unsigned int d3, unsigned int d4) :
       d1(d1), d2(d2), d3(d3), d4(d4), data(d1*d2*d3*d4) {}
