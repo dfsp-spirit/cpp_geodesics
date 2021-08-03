@@ -33,7 +33,7 @@ std::vector<T> normalize(const std::vector<T> data) {
 }
 
 /// Map n data values to a vector of 3n unit_8 values, which represent the RGB channels of the respective colors.
-/// @details In the returned vector, three consecutive values describe the RGB data for one value.
+/// @details In the returned vector, three consecutive values describe the RGB data for one value. This must currently be called with double data, as the colormap function only works with double.
 /// @throws std::invalid_argument if values are empty or max is equal to min.
 template<class T>
 std::vector<uint8_t> data_to_colors(const std::vector<T> data, const tinycolormap::ColormapType cmap = tinycolormap::ColormapType::Viridis) {
@@ -47,6 +47,12 @@ std::vector<uint8_t> data_to_colors(const std::vector<T> data, const tinycolorma
         colors.push_back(color.bi());
     }
     return(colors);
+}
+
+/// Template specialization for float, so users do not need to do the conversion themselves on each usage.
+template<>
+std::vector<uint8_t> data_to_colors(const std::vector<float> data, const tinycolormap::ColormapType cmap) {
+    return(data_to_colors(std::vector<double>(data.begin(), data.end()), cmap));
 }
 
 

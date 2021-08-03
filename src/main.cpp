@@ -115,7 +115,7 @@ int test_stuff(const std::string& exec_mode) {
     return 0;
 }
 
-
+/// Export a colored PLY brain mesh, can be viewed in Meshlab.
 void export_brain(const std::string& surf_file, const std::string& curv_file, const std::string& output_ply_file = "colored_brain.ply") {
     // Load mesh and data.
     fs::Mesh surface;
@@ -123,7 +123,7 @@ void export_brain(const std::string& surf_file, const std::string& curv_file, co
     std::vector<float> morph_data = fs::read_curv_data(curv_file);
 
     // Map data to colors
-    std::vector<u_int8_t> colors = data_to_colors(std::vector<double>(morph_data.begin(), morph_data.end()));
+    std::vector<u_int8_t> colors = data_to_colors(morph_data);
     surface.to_ply_file(output_ply_file, colors);
     std::cout << "Vertex-colored brain mesh written to file '" << output_ply_file << "'.\n";    
 }
