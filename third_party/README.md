@@ -4,6 +4,9 @@
 * `libfs/`: https://github.com/dfsp-spirit/libfs
 * `spline`: https://github.com/ttk592/spline. retrieved 2021-07, last commit hash was 5894bea from Apr 18, 2021
 * `geodesic`: https://github.com/mojocorp/geodesic/, which is based on http://code.google.com/p/geodesic/. retrieved 2021-07-30, last commit hash was 7b08bfb from Feb 25, 2020
+* `tinycolormap`: https://github.com/yuki-koyama/tinycolormap, commit hash fe59727 from 2021-05-28. MIT License.
+
+
 
 
 
