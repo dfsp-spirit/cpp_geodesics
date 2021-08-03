@@ -7,6 +7,7 @@
 #include "mesh_export.h"
 #include "mesh_adj.h"
 #include "mesh_geodesic.h"
+#include "values_to_color.h"
 
 
 #include <string>
