@@ -38,7 +38,7 @@ std::vector<T> normalize(const std::vector<T> data) {
 template<class T>
 std::vector<uint8_t> to_colors(const std::vector<T> data, const tinycolormap::ColormapType cmap = tinycolormap::ColormapType::Viridis) {
     std::vector<T> dnorm = normalize(data);
-    std::vector<uint8_t> colors();
+    std::vector<uint8_t> colors;
     colors.reserve(data.size() * 3);
     tinycolormap::Color color;
     for(size_t i=0; i<dnorm.size(); i++) {
