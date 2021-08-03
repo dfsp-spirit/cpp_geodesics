@@ -10,7 +10,7 @@
 
 
 /// Normalize values to range 0..1.
-/// @param data vector of at least two finite numbers
+/// @param data vector of at least two unqiue and finite numbers
 /// @param force whether to return zeros instead of throwing exceptions in corner cases.
 /// @throws std::invalid_argument if values are empty or max is equal to min.
 template<class T>
@@ -21,7 +21,7 @@ std::vector<T> normalize(const std::vector<T> data) {
     T min = *std::min_element(data.begin(), data.end());
     T max = *std::max_element(data.begin(), data.end());
     if(min == max) {
-        throw std::invalid_argument("The 'data' must contain at least 2 elements.");
+        throw std::invalid_argument("The 'data' must contain at least 2 unique elements.");
     }
     T range = max - min;
 
@@ -32,8 +32,9 @@ std::vector<T> normalize(const std::vector<T> data) {
     return(scaled);
 }
 
+ 
 /// Map n data values to a vector of 3n unit_8 values, which represent the RGB channels of the respective colors.
-/// @details In the returned vector, three consecutive values describe the RGB data for one value. This must currently be called with double data, as the colormap function only works with double.
+/// @details In the returned vector, three consecutive values describe the RGB data for one value. This must currently be called with double data, as the colormap function only works with double. See specializations below, which enable usage with float and int.
 /// @throws std::invalid_argument if values are empty or max is equal to min.
 template<class T>
 std::vector<uint8_t> data_to_colors(const std::vector<T> data, const tinycolormap::ColormapType cmap = tinycolormap::ColormapType::Viridis) {
