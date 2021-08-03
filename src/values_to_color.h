@@ -55,6 +55,12 @@ std::vector<uint8_t> data_to_colors(const std::vector<float> data, const tinycol
     return(data_to_colors(std::vector<double>(data.begin(), data.end()), cmap));
 }
 
+/// Template specialization for int, so users do not need to do the conversion themselves on each usage.
+template<>
+std::vector<uint8_t> data_to_colors(const std::vector<int> data, const tinycolormap::ColormapType cmap) {
+    return(data_to_colors(std::vector<double>(data.begin(), data.end()), cmap));
+}
+
 
 
 
