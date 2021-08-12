@@ -22,13 +22,10 @@
 
 
 /// exec_mode must be 's' for sequential or 'p' for parallel (via openMP).
-int test_stuff(const std::string& exec_mode) {        
+int demo_vcglibbrain(const std::string& exec_mode, const std::string& subject) {        
 
-    std::string subject = "fsaverage3";
-    //std::string subject = "subject1";
     std::cout << " Reading FreeSurfer surfaces and labels for subject '" + subject + "'...\n";
-
-    
+   
     std::string lh_surf_file = "demo_data/subjects_dir/" + subject + "/surf/lh.white";
     std::string rh_surf_file = "demo_data/subjects_dir/" + subject + "/surf/rh.white";
     std::string lh_label_file = "demo_data/subjects_dir/" + subject + "/label/lh.cortex.label";
@@ -119,12 +116,24 @@ int test_stuff(const std::string& exec_mode) {
 
 
 int main(int argc, char** argv) {
-    if(argc != 2) {
-        std::cout << "Usage: " << argv[0] << " s|p\n";
-        std::cout << "   s: run in sequential mode (1 core)\n";
-        std::cout << "   p: run in parallel mode via OpenMP\n";
+    std::string mode = "s";
+    std::string subject = "fsaverage3";
+    if(argc < 1 || argc > 3) {
+        std::cout << "===" << argv[0] << " -- Demo that runs VCGLIB algorithms on brain meshes. ===\n";
+        std::cout << "Usage: " << argv[0] << " mode [<subject>]\n";
+        std::cout << "   mode    : 's' to run in sequential mode (1 core), 'p' to run in parallel mode via OpenMP\n";
+        std::cout << "   subject : the subject to use, must be in demo_data\n";
         exit(1);
     }
-    test_stuff(argv[1]);
+    if(argc >= 2) {
+        if(std::string(argv[1]) == "p") {
+            mode = std::string(argv[1]);
+        }        
+    }
+    if(argc == 3) {
+        subject = argv[2];
+    }
+    
+    demo_vcglibbrain(mode, subject);
     exit(0);
 }
