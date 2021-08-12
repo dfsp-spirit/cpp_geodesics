@@ -1,55 +1,84 @@
 cmake_minimum_required(VERSION 3.8.2)
 project(cpp_geodesics)
 
-# Build the geodesic_vcg application that uses VCGLIB
+# Build the geodcircles application that uses VCGLIB and computes geodesic circle stats and/or geodesic mean distances.
 set(SOURCE_FILES_COMMON_VCG third_party/vcglib/wrap/ply/plylib.cpp)
-set(SOURCE_FILES_GEODESIC_VCG src/geodcircles/main.cpp ${SOURCE_FILES_COMMON_VCG})
-add_executable(geodesics_vcg ${SOURCE_FILES_GEODESIC_VCG})
-target_include_directories(geodesics_vcg PUBLIC include src/common_vcg)
-target_include_directories(geodesics_vcg PUBLIC include src/common)
-target_include_directories(geodesics_vcg PUBLIC include third_party/libfs)
-target_include_directories(geodesics_vcg PUBLIC include third_party/vcglib)
-target_include_directories(geodesics_vcg PUBLIC include third_party/vcglib/eigenlib)
-target_include_directories(geodesics_vcg PUBLIC include third_party/spline)
-target_include_directories(geodesics_vcg PUBLIC include third_party/tinycolormap)
+set(SOURCE_FILES_GEODCIRCLES_VCG src/geodcircles/main.cpp ${SOURCE_FILES_COMMON_VCG})
+add_executable(geodcircles ${SOURCE_FILES_GEODCIRCLES_VCG})
+target_include_directories(geodcircles PUBLIC include src/common_vcg)
+target_include_directories(geodcircles PUBLIC include src/common)
+target_include_directories(geodcircles PUBLIC include third_party/libfs)
+target_include_directories(geodcircles PUBLIC include third_party/vcglib)
+target_include_directories(geodcircles PUBLIC include third_party/vcglib/eigenlib)
+target_include_directories(geodcircles PUBLIC include third_party/spline)
+target_include_directories(geodcircles PUBLIC include third_party/tinycolormap)
 
-set_property(TARGET geodesics_vcg PROPERTY CXX_STANDARD 11)
-set_property(TARGET geodesics_vcg PROPERTY CXX_STANDARD_REQUIRED ON)
-set_property(TARGET geodesics_vcg PROPERTY CXX_EXTENSIONS OFF)
+set_property(TARGET geodcircles PROPERTY CXX_STANDARD 11)
+set_property(TARGET geodcircles PROPERTY CXX_STANDARD_REQUIRED ON)
+set_property(TARGET geodcircles PROPERTY CXX_EXTENSIONS OFF)
 
 find_package(OpenMP)
 if(OpenMP_CXX_FOUND)
-    target_link_libraries(geodesics_vcg PUBLIC OpenMP::OpenMP_CXX)
+    target_link_libraries(geodcircles PUBLIC OpenMP::OpenMP_CXX)
 endif()
 
 
 if( CMAKE_CXX_COMPILER_ID MATCHES "Clang|AppleClang|GNU" )
-    target_compile_options( geodesics_vcg PRIVATE -Wall -Wextra)
+    target_compile_options( geodcircles PRIVATE -Wall -Wextra)
 endif()
 if( CMAKE_CXX_COMPILER_ID MATCHES "MSVC" )
-	target_compile_options( geodesics_vcg PRIVATE /W4 /WX )
+	target_compile_options( geodcircles PRIVATE /W4 /WX )
 endif()
 
 
-# Build the geodesic_gd app that uses the the 'geodesic' lib
-set(SOURCE_FILES_GEODESIC_GEO src/demo_geolib/main_geo.cpp)
-add_executable(geodesics_geo ${SOURCE_FILES_GEODESIC_GEO})
-target_include_directories(geodesics_geo PUBLIC include third_party/libfs)
-target_include_directories(geodesics_geo PUBLIC include third_party/geodesic )
+# Build the demo_vcglibbrain application that uses VCGLIB.
+set(SOURCE_FILES_DEMO_VCGLIB src/demo_vcglib/main.cpp ${SOURCE_FILES_COMMON_VCG})
+add_executable(demo_vcglibbrain ${SOURCE_FILES_DEMO_VCGLIB})
+target_include_directories(demo_vcglibbrain PUBLIC include src/common_vcg)
+target_include_directories(demo_vcglibbrain PUBLIC include src/common)
+target_include_directories(demo_vcglibbrain PUBLIC include third_party/libfs)
+target_include_directories(demo_vcglibbrain PUBLIC include third_party/vcglib)
+target_include_directories(demo_vcglibbrain PUBLIC include third_party/vcglib/eigenlib)
+target_include_directories(demo_vcglibbrain PUBLIC include third_party/spline)
+target_include_directories(demo_vcglibbrain PUBLIC include third_party/tinycolormap)
 
-set_property(TARGET geodesics_geo PROPERTY CXX_STANDARD 11)
-set_property(TARGET geodesics_geo PROPERTY CXX_STANDARD_REQUIRED ON)
-set_property(TARGET geodesics_geo PROPERTY CXX_EXTENSIONS OFF)
+set_property(TARGET demo_vcglibbrain PROPERTY CXX_STANDARD 11)
+set_property(TARGET demo_vcglibbrain PROPERTY CXX_STANDARD_REQUIRED ON)
+set_property(TARGET demo_vcglibbrain PROPERTY CXX_EXTENSIONS OFF)
 
 find_package(OpenMP)
 if(OpenMP_CXX_FOUND)
-    target_link_libraries(geodesics_geo PUBLIC OpenMP::OpenMP_CXX)
+    target_link_libraries(demo_vcglibbrain PUBLIC OpenMP::OpenMP_CXX)
 endif()
 
 
 if( CMAKE_CXX_COMPILER_ID MATCHES "Clang|AppleClang|GNU" )
-    target_compile_options( geodesics_geo PRIVATE -Wall -Wextra)
+    target_compile_options( demo_vcglibbrain PRIVATE -Wall -Wextra)
 endif()
 if( CMAKE_CXX_COMPILER_ID MATCHES "MSVC" )
-	target_compile_options( geodesics_geo PRIVATE /W4 /WX )
+	target_compile_options( demo_vcglibbrain PRIVATE /W4 /WX )
+endif()
+
+
+# Build the demo_geolibbrain demo app that uses the the 'geodesic' lib
+set(SOURCE_FILES_DEMO_GEOLIB src/demo_geolib/main_geo.cpp)
+add_executable(demo_geolibbrain ${SOURCE_FILES_DEMO_GEOLIB})
+target_include_directories(demo_geolibbrain PUBLIC include third_party/libfs)
+target_include_directories(demo_geolibbrain PUBLIC include third_party/geodesic )
+
+set_property(TARGET demo_geolibbrain PROPERTY CXX_STANDARD 11)
+set_property(TARGET demo_geolibbrain PROPERTY CXX_STANDARD_REQUIRED ON)
+set_property(TARGET demo_geolibbrain PROPERTY CXX_EXTENSIONS OFF)
+
+find_package(OpenMP)
+if(OpenMP_CXX_FOUND)
+    target_link_libraries(demo_geolibbrain PUBLIC OpenMP::OpenMP_CXX)
+endif()
+
+
+if( CMAKE_CXX_COMPILER_ID MATCHES "Clang|AppleClang|GNU" )
+    target_compile_options( demo_geolibbrain PRIVATE -Wall -Wextra)
+endif()
+if( CMAKE_CXX_COMPILER_ID MATCHES "MSVC" )
+	target_compile_options( demo_geolibbrain PRIVATE /W4 /WX )
 endif()
