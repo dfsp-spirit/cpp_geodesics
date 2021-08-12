@@ -30,7 +30,11 @@
 *.exe
 *.out
 *.app
-geodesics
+geodcircles
+export_brainmesh
+demo_geolibbrain
+demo_vcglibbrain
+
 
 # Cmake stuff
 CMakeCache.txt
