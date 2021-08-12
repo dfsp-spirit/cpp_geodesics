@@ -75,6 +75,11 @@ set_property(TARGET export_brainmesh PROPERTY CXX_STANDARD 11)
 set_property(TARGET export_brainmesh PROPERTY CXX_STANDARD_REQUIRED ON)
 set_property(TARGET export_brainmesh PROPERTY CXX_EXTENSIONS OFF)
 
+find_package(OpenMP)
+if(OpenMP_CXX_FOUND)
+    target_link_libraries(geodcircles PUBLIC OpenMP::OpenMP_CXX)
+endif()
+
 if( CMAKE_CXX_COMPILER_ID MATCHES "Clang|AppleClang|GNU" )
     target_compile_options( export_brainmesh PRIVATE -Wall -Wextra)
 endif()
