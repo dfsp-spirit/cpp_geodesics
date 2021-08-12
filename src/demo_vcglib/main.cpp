@@ -1,5 +1,5 @@
 
-// The main for the demo_vcg program. This main file uses the VCGLIB algorithm.
+// The main for the demo_vcglibbrain program. This main file uses the VCGLIB algorithm.
 // This file illustrates how to compute various things on FreeSurfer brain surface
 // meshes using VCGLIB.
 

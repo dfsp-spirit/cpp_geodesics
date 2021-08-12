@@ -60,6 +60,30 @@ if( CMAKE_CXX_COMPILER_ID MATCHES "MSVC" )
 endif()
 
 
+# Build the export_brainmesh application that uses VCGLIB.
+set(SOURCE_FILES_EXPORT_BRAINMESH src/export_brainmesh/main.cpp ${SOURCE_FILES_COMMON_VCG})
+add_executable(export_brainmesh ${SOURCE_FILES_EXPORT_BRAINMESH})
+target_include_directories(export_brainmesh PUBLIC include src/common_vcg)
+target_include_directories(export_brainmesh PUBLIC include src/common)
+target_include_directories(export_brainmesh PUBLIC include third_party/libfs)
+target_include_directories(export_brainmesh PUBLIC include third_party/vcglib)
+target_include_directories(export_brainmesh PUBLIC include third_party/vcglib/eigenlib)
+target_include_directories(export_brainmesh PUBLIC include third_party/spline)
+target_include_directories(export_brainmesh PUBLIC include third_party/tinycolormap)
+
+set_property(TARGET export_brainmesh PROPERTY CXX_STANDARD 11)
+set_property(TARGET export_brainmesh PROPERTY CXX_STANDARD_REQUIRED ON)
+set_property(TARGET export_brainmesh PROPERTY CXX_EXTENSIONS OFF)
+
+if( CMAKE_CXX_COMPILER_ID MATCHES "Clang|AppleClang|GNU" )
+    target_compile_options( export_brainmesh PRIVATE -Wall -Wextra)
+endif()
+if( CMAKE_CXX_COMPILER_ID MATCHES "MSVC" )
+	target_compile_options( export_brainmesh PRIVATE /W4 /WX )
+endif()
+
+
+
 # Build the demo_geolibbrain demo app that uses the the 'geodesic' lib
 set(SOURCE_FILES_DEMO_GEOLIB src/demo_geolib/main_geo.cpp)
 add_executable(demo_geolibbrain ${SOURCE_FILES_DEMO_GEOLIB})
