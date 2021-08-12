@@ -2,8 +2,11 @@ cmake_minimum_required(VERSION 3.8.2)
 project(cpp_geodesics)
 
 # Build the geodesic_vcg application that uses VCGLIB
-set(SOURCE_FILES_GEODESIC_VCG src/main.cpp src/typedef_vcg.h third_party/vcglib/wrap/ply/plylib.cpp)
+set(SOURCE_FILES_COMMON_VCG third_party/vcglib/wrap/ply/plylib.cpp)
+set(SOURCE_FILES_GEODESIC_VCG src/geodcircles/main.cpp ${SOURCE_FILES_COMMON_VCG})
 add_executable(geodesics_vcg ${SOURCE_FILES_GEODESIC_VCG})
+target_include_directories(geodesics_vcg PUBLIC include src/common_vcg)
+target_include_directories(geodesics_vcg PUBLIC include src/common)
 target_include_directories(geodesics_vcg PUBLIC include third_party/libfs)
 target_include_directories(geodesics_vcg PUBLIC include third_party/vcglib)
 target_include_directories(geodesics_vcg PUBLIC include third_party/vcglib/eigenlib)
@@ -29,7 +32,7 @@ endif()
 
 
 # Build the geodesic_gd app that uses the the 'geodesic' lib
-set(SOURCE_FILES_GEODESIC_GEO src/main_geo.cpp)
+set(SOURCE_FILES_GEODESIC_GEO src/demo_geolib/main_geo.cpp)
 add_executable(geodesics_geo ${SOURCE_FILES_GEODESIC_GEO})
 target_include_directories(geodesics_geo PUBLIC include third_party/libfs)
 target_include_directories(geodesics_geo PUBLIC include third_party/geodesic )
