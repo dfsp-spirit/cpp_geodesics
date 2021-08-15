@@ -77,7 +77,7 @@ set_property(TARGET export_brainmesh PROPERTY CXX_EXTENSIONS OFF)
 
 find_package(OpenMP)
 if(OpenMP_CXX_FOUND)
-    target_link_libraries(geodcircles PUBLIC OpenMP::OpenMP_CXX)
+    target_link_libraries(export_brainmesh PUBLIC OpenMP::OpenMP_CXX)
 endif()
 
 if( CMAKE_CXX_COMPILER_ID MATCHES "Clang|AppleClang|GNU" )

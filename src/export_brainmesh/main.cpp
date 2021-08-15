@@ -19,7 +19,7 @@
 
 
 /// Export a colored PLY brain mesh, can be viewed in Meshlab.
-void export_brain(const std::string& surf_file, const std::string& curv_file, const std::string& output_ply_file = "colored_brain.ply") {
+void export_brain(const std::string& surf_file, const std::string& curv_file, const std::string& output_ply_file) {
     // Load mesh and data.
     fs::Mesh surface;
     fs::read_mesh(&surface, surf_file);
@@ -32,17 +32,33 @@ void export_brain(const std::string& surf_file, const std::string& curv_file, co
 }
 
 
+/// Export a non-colored or plain brain mesh.
+void export_brain(const std::string& surf_file, const std::string& output_ply_file) {
+    // Load mesh and data.
+    fs::Mesh surface;
+    fs::read_mesh(&surface, surf_file);    
+
+    // Map data to colors
+    surface.to_ply_file(output_ply_file);
+    std::cout << "Plain brain mesh written to file '" << output_ply_file << "'.\n";    
+}
+
+
 int main(int argc, char** argv) {
 
-    if(argc != 4) {
+    if(argc < 3 || argc > 4) {
         std::cout << "== Export colored brain mesh ==.\n";
-        std::cout << "Usage: " << argv[0] << " <surf_file> <curv_file> <output_ply_file>\n";
+        std::cout << "Usage: " << argv[0] << " <surf_file> [<curv_file>] <output_ply_file>\n";
         std::cout << "  <surf_file>       : path to a brain mesh file, typically in FreeSurfer surf format.\n";
-        std::cout << "  <curv_file>       : path to a file containing per-vertex data for the mesh, typically in FreeSurfer curv format.\n";
+        std::cout << "  <curv_file>       : optional, path to a file containing per-vertex data for the mesh, typically in FreeSurfer curv format. If omitted, no colors will be produced.\n";
         std::cout << "  <output_ply_file> : path to the output file in PLY format, will be created (or overwritten in case it exists).\n";
-        std::cout << "  Example: " << argv[0] << " demo_data/subjects_dir/subject1/surf/lh.white demo_data/subjects_dir/subject1/surf/lh.thickness colored_brain.ply\n";
+        std::cout << "  Examples: " << argv[0] << " demo_data/subjects_dir/subject1/surf/lh.white demo_data/subjects_dir/subject1/surf/lh.thickness colored_brain.ply\n";
+        std::cout << "            " << argv[0] << " demo_data/subjects_dir/subject1/surf/lh.white plain_brain.ply\n";
         exit(1);
-    }
-    export_brain(argv[1], argv[2], argv[3]);
+    } else if (argc == 3) {
+        export_brain(argv[1], argv[2]);
+    } else { // argc = 4
+        export_brain(argv[1], argv[2], argv[3]);
+    }        
     exit(0);
 }

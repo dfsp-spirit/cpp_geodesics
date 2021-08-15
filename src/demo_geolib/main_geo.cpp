@@ -42,7 +42,7 @@ int main(int argc, char** argv) {
     std::cout << " Reading FreeSurfer lh.white surface for subject '" + subject + "'...\n";    
     std::string surf_file = "demo_data/subjects_dir/" + subject + "/surf/lh.white";
     fs::Mesh surface;
-    fs::read_surf(&surface, surf_file);
+    fs::read_mesh(&surface, surf_file);
 
     geodesic::Mesh mesh;
     mesh.initialize_mesh_data(surface.vertices, surface.faces); // create 'geodesic' lib mesh data structure
