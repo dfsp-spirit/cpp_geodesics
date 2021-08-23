@@ -4,7 +4,7 @@
 subjects_dir="$FREESURFER_HOME/subjects"
 apptag="[GEOD_DIST]"
 
-for subject in fsaverage; do
+for subject in fsaverage6 fsaverage; do
     if [ ! -d "${subjects_dir}/${subject}" ]; then
       echo "$apptag ERROR: Cannot read directory '${subjects_dir}/${subject}', exiting."
       exit 1
@@ -17,7 +17,7 @@ for subject in fsaverage; do
                 echo "$apptag ERROR: Cannot read mesh file '${mesh_file}', exiting."
                 exit 1
             fi
-            ./meshneigh_geod "${mesh_file}" ${distance} "${subject}_meshdist_geod_${distance}.json" true
+            ./meshneigh_geod "${mesh_file}" ${distance} "${subject}_meshdist_geod_${distance}" true
         done
     done
 done

@@ -17,7 +17,7 @@ for subject in fsaverage fsaverage6; do
                 echo "$apptag ERROR: Cannot read mesh file '${mesh_file}', exiting."
                 exit 1
             fi
-            ./meshneigh_edge "${mesh_file}" ${distance} "${subject}_meshdist_edge_${distance}.json" true
+            ./meshneigh_edge "${mesh_file}" ${distance} "${subject}_meshdist_edge_${distance}" true
         done
     done
 done
