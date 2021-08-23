@@ -66,7 +66,7 @@ void mesh_neigh_geod(const std::string& input_mesh_file, const float max_dist = 
     std::string output_dist_file_dist = output_dist_file + "_dist.vv";
     write_vv<int32_t>(output_dist_file_index, neigh_idx);
     std::cout << "Geodesic Neighborhood information indices written to file '" + output_dist_file_index + "'.\n";
-    write_vv<_Float32>(output_dist_file_index, neigh_dist);
+    write_vv<_Float32>(output_dist_file_dist, neigh_dist);
     std::cout << "Geodesic Neighborhood information distances written to file '" + output_dist_file_dist + "'.\n";
 }
 
