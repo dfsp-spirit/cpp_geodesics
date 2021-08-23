@@ -96,6 +96,7 @@ target_include_directories(meshneigh_edge PUBLIC include src/common)
 target_include_directories(meshneigh_edge PUBLIC include third_party/libfs)
 target_include_directories(meshneigh_edge PUBLIC include third_party/vcglib)
 target_include_directories(meshneigh_edge PUBLIC include third_party/vcglib/eigenlib)
+target_include_directories(meshneigh_edge PUBLIC include third_party/spline)
 
 set_property(TARGET meshneigh_edge PROPERTY CXX_STANDARD 11)
 set_property(TARGET meshneigh_edge PROPERTY CXX_STANDARD_REQUIRED ON)
