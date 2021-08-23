@@ -111,7 +111,8 @@ struct GeodNeighbor {
   float distance;
 };
 
-/// Compute for each mesh vertex the mean geodesic distance to all others, parallel using OpenMP.
+
+/// Compute for each mesh vertex all vertices in a given distance (and that distance), parallel using OpenMP.
 std::vector<std::vector<GeodNeighbor>> geod_neighborhood(MyMesh &m, float max_dist = 5.0, bool include_self = true) {
   
   // The MyMesh instance cannot be shared between the processes because it
