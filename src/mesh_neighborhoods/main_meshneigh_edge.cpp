@@ -58,7 +58,7 @@ int main(int argc, char** argv) {
     size_t k = 1;
     
     if(argc < 2 || argc > 5) {
-        std::cout << "===" << argv[0] << " -- Compute mesh distances. ===\n";
+        std::cout << "===" << argv[0] << " -- Compute edge neighborhoods for mesh vertices. ===\n";
         std::cout << "Usage: " << argv[0] << " <input_mesh> [<k> [<output_file] [<include_self>]]]>\n";
         std::cout << "   <input_mesh>    : str, a mesh file in a format supported by libfs, e.g., FreeSurfer, PLY, OBJ, OFF.\n";
         std::cout << "   <k>             : int, the k for the k-ring neighborhood computation. Defaults to 1.\n";

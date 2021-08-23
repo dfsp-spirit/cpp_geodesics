@@ -148,6 +148,47 @@ std::vector<std::vector<GeodNeighbor>> geod_neighborhood(MyMesh &m, float max_di
 }
 
 
+/// Dont roll your own JSON, they told us.
+std::string geod_neigh_to_json(std::vector<std::vector<GeodNeighbor>> neigh) {
+    std::stringstream is;
+    is << "{\n";
+    is << "  { neighbors:\n";
+    for(size_t i=0; i < neigh.size(); i++) {
+        is << "  " << i << ": [";
+        for(size_t j=0; j < neigh[i].size(); j++) {
+            is << " " << neigh[i][j].index;
+            if(j < neigh[i].size()-1) {
+                is << ",";
+            }
+        }
+        is << " ]";
+        if(i < neigh.size()-1) {
+            is <<",";    
+        }
+        is <<"\n";
+    }
+    is << "  },\n";
+    is << "  { distances:\n";
+    for(size_t i=0; i < neigh.size(); i++) {
+        is << "  " << i << ": [";
+        for(size_t j=0; j < neigh[i].size(); j++) {
+            is << " " << neigh[i][j].distance;
+            if(j < neigh[i].size()-1) {
+                is << ",";
+            }
+        }
+        is << " ]";
+        if(i < neigh.size()-1) {
+            is <<",";    
+        }
+        is <<"\n";
+    }
+    is << "  }\n";
+    is << "}\n";
+    return is.str();
+}
+
+
 /// Compute for each mesh vertex the mean geodesic distance to all others, sequentially.
 std::vector<float> mean_geodist(MyMesh &m) {
   std::vector<float> meandists;

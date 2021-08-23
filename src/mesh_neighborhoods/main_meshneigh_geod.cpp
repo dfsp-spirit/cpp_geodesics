@@ -21,9 +21,14 @@
 
 /// Compute geodesic neighborhood up to max dist for the mesh.
 /// @param max_dist float, the distance defining the geodesic neighborhood circle.
-void mesh_neigh_geod(const std::string& input_mesh_file, const float max_dist = 5.0, const std::string& output_dist_file="geod_distances.json") {        
+void mesh_neigh_geod(const std::string& input_mesh_file, const float max_dist = 5.0, const std::string& output_dist_file="geod_distances.json", bool include_self = true) {        
 
     std::cout << "Reading mesh '" + input_mesh_file + "' to compute geodesic distance up to " + std::to_string(max_dist) + " along mesh...\n";
+    if(include_self) {
+        std::cout << " * Neighborhoods will include the query vertex itself.\n";
+    } else {
+        std::cout << " * Neighborhoods will NOT include the query vertex itself.\n";
+    }
    
     fs::Mesh surface;
     fs::read_surf(&surface, input_mesh_file);
@@ -39,20 +44,21 @@ void mesh_neigh_geod(const std::string& input_mesh_file, const float max_dist = 
     for(int i=0; i<m.vn; i++) {
         query_vertices[i] = i;
     }
-    std::vector<std::vector<int>> neigh = mesh_adj(m, query_vertices, k, include_self);
+    std::vector<std::vector<GeodNeighbor>> neigh = geod_neighborhood(m, max_dist, include_self);
+    
     // Write it to a JSON file.
-    strtofile(neigh_to_json(neigh), output_dist_file);
-    std::cout << "Neighborhood information written to file '" + output_dist_file + "'.\n";
+    strtofile(geod_neigh_to_json(neigh), output_dist_file);
+    std::cout << "Geodesic Neighborhood information written to file '" + output_dist_file + "'.\n";
 }
 
 
 int main(int argc, char** argv) {
     std::string input_mesh_file;
-    std::string output_dist_file = "edge_distances.json";    
+    std::string output_dist_file = "geod_distances.json";    
     float max_dist = 5.0;
     
     if(argc < 2 || argc > 4) {
-        std::cout << "===" << argv[0] << " -- Compute mesh distances. ===\n";
+        std::cout << "===" << argv[0] << " -- Compute geodesic neighborhoods for mesh vertices. ===\n";
         std::cout << "Usage: " << argv[0] << " <input_mesh> [<max_dist> [<output_file]]]>\n";
         std::cout << "   <input_mesh>    : str, a mesh file in a format supported by libfs, e.g., FreeSurfer, PLY, OBJ, OFF.\n";
         std::cout << "   <max_dist>      : float, the maximal distance to travel along the mesh when defining neighbors. Defaults to 5.0.\n";
