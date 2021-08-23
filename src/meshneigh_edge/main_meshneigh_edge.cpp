@@ -9,6 +9,7 @@
 #include "mesh_export.h"
 #include "mesh_adj.h"
 #include "mesh_geodesic.h"
+#include "write_data.h"
 
 
 #include <string>
@@ -21,7 +22,7 @@
 
 /// Compute edge neighborhood (or graph k ring) for the mesh.
 /// @param k The 'k' for computing the k-ring neighborhood.
-void mesh_neigh_edge(const std::string& input_mesh_file, const size_t k = 1, const std::string& output_dist_file="edge_distances.json", const bool include_self=true) {        
+void mesh_neigh_edge(const std::string& input_mesh_file, const size_t k = 1, const std::string& output_dist_file="edge_distances", const bool include_self=true) {        
 
     std::cout << "Reading mesh '" + input_mesh_file + "' to compute graph " + std::to_string(k) + "-ring edge neighborhoods...\n";
     if(include_self) {
@@ -44,16 +45,23 @@ void mesh_neigh_edge(const std::string& input_mesh_file, const size_t k = 1, con
     for(int i=0; i<m.vn; i++) {
         query_vertices[i] = i;
     }
-    std::vector<std::vector<int>> neigh = mesh_adj(m, query_vertices, k, include_self);
+    std::vector<std::vector<int32_t>> neigh = mesh_adj(m, query_vertices, k, include_self);
+    
     // Write it to a JSON file.
-    strtofile(neigh_to_json(neigh), output_dist_file);
-    std::cout << "Neighborhood information written to file '" + output_dist_file + "'.\n";
+    //std::string output_file_json = output_dist_file + ".json";
+    //strtofile(neigh_to_json(neigh), output_file_json);
+    //std::cout << "Neighborhood information written to JSON file '" + output_file_json + "'.\n";
+
+    // Write it to a VV file.
+    std::string output_dist_file_vv = output_dist_file + ".vv";
+    write_vv<int32_t>(output_dist_file_vv, neigh);
+    std::cout << "Neighborhood information written to file '" + output_dist_file_vv + "'.\n";    
 }
 
 
 int main(int argc, char** argv) {
     std::string input_mesh_file;
-    std::string output_dist_file = "edge_distances.json";
+    std::string output_dist_file = "edge_distances";
     bool include_self = true;
     size_t k = 1;
     
@@ -62,7 +70,7 @@ int main(int argc, char** argv) {
         std::cout << "Usage: " << argv[0] << " <input_mesh> [<k> [<output_file] [<include_self>]]]>\n";
         std::cout << "   <input_mesh>    : str, a mesh file in a format supported by libfs, e.g., FreeSurfer, PLY, OBJ, OFF.\n";
         std::cout << "   <k>             : int, the k for the k-ring neighborhood computation. Defaults to 1.\n";
-        std::cout << "   <output_file>   : str, file name for the output JSON file (will be overwritten if existing). Default: edge_distances.json.\n";
+        std::cout << "   <output_file>   : str, file name for the output file (suffix gets added, will be overwritten if existing). Default: edge_distances.\n";
         std::cout << "   <include_self>  : bool, whether to include vertex itself in neighborhood, must be 'true' or 'false'. Default: 'true'.\n";
         exit(1);
     }

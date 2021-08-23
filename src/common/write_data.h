@@ -47,6 +47,7 @@ void _fwritet(std::ostream& os, T t) {
 }
 
 /// Write vector of vectors to binary big endian file.
+/// The format is: 2 magic int32 numbers followed by size of outer vec (also as int32). Then, for each inner vec: int32 size of vec, then the values.
 template <typename T>
 void write_vv(const std::string& filename, std::vector<std::vector<T>> data) {
     std::ofstream ofs;

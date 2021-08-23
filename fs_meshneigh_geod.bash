@@ -4,7 +4,7 @@
 subjects_dir="$FREESURFER_HOME/subjects"
 apptag="[GEOD_DIST]"
 
-for subject in fsaverage6; do
+for subject in fsaverage; do
     if [ ! -d "${subjects_dir}/${subject}" ]; then
       echo "$apptag ERROR: Cannot read directory '${subjects_dir}/${subject}', exiting."
       exit 1
