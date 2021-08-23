@@ -88,7 +88,7 @@ std::vector<float> mean_geodist_p(MyMesh &m) {
   float max_dist = -1.0;
   meandists.resize(nv);  
   
-  # pragma omp parallel for firstprivate(max_dist) shared(surf)
+  # pragma omp parallel for firstprivate(max_dist) shared(surf, meandists)
   for(size_t i=0; i<nv; i++) {
     MyMesh m;
     vcgmesh_from_fs_surface(&m, surf);
@@ -103,6 +103,48 @@ std::vector<float> mean_geodist_p(MyMesh &m) {
     meandists[i] = (float)(dist_sum / nv);
   }
   return meandists;
+}
+
+struct GeodNeighbor {
+  GeodNeighbor(size_t index, float distance) : index(index), distance(distance) {}
+  size_t index;
+  float distance;
+};
+
+/// Compute for each mesh vertex the mean geodesic distance to all others, parallel using OpenMP.
+std::vector<std::vector<GeodNeighbor>> geod_neighborhood(MyMesh &m, float max_dist = 5.0, bool include_self = true) {
+  
+  // The MyMesh instance cannot be shared between the processes because it
+  // gets changed when the geodist function is run (distances are stored in
+  // the vertices' quality field). See the comment in mean_geodist_p() for 
+  // details.
+  fs::Mesh surf;
+  fs_surface_from_vcgmesh(&surf, m);
+
+  size_t nv = surf.num_vertices();  
+  std::vector<std::vector<GeodNeighbor>> neighborhoods(nv, std::vector<GeodNeighbor>());
+  
+  # pragma omp parallel for firstprivate(max_dist) shared(surf, neighborhoods)
+  for(size_t i=0; i<nv; i++) {
+    MyMesh m;
+    vcgmesh_from_fs_surface(&m, surf);
+    std::vector<int> query_vert= {(int)i};
+    std::vector<float> gdists = geodist(m, query_vert, max_dist);
+    
+    for(size_t j=0; j<gdists.size(); j++) {
+      if(i == j) {
+        if(include_self) {
+          neighborhoods[i].push_back(GeodNeighbor(j, 0.0)); // The vertex itself (in distance 0).
+        }
+      } else {
+        if(gdists[j] > 0.0 && gdists[j] <= max_dist) {
+          neighborhoods[i].push_back(GeodNeighbor(j, gdists[j]));
+        }        
+      }      
+    }
+    
+  }
+  return neighborhoods;
 }
 
 

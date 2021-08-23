@@ -1,7 +1,7 @@
 
-// The main for the meshneigh_edge program. This main file uses the VCGLIB algorithm.
+// The main for the meshneigh_geod program. This main file uses the VCGLIB algorithm.
 // The program computes neighborhoods of vertices on meshes and saves them to files.
-// The neighborhood is defined by edge distance in the mesh (aka graph distance).
+// The neighborhood is defined by geodesic distance along the mesh.
 
 #include "libfs.h"
 #include "typedef_vcg.h"
@@ -19,16 +19,11 @@
 #include <chrono>
 
 
-/// Compute edge neighborhood (or graph k ring) for the mesh.
-/// @param k The 'k' for computing the k-ring neighborhood.
-void mesh_neigh_edge(const std::string& input_mesh_file, const size_t k = 1, const std::string& output_dist_file="edge_distances.json", const bool include_self=true) {        
+/// Compute geodesic neighborhood up to max dist for the mesh.
+/// @param max_dist float, the distance defining the geodesic neighborhood circle.
+void mesh_neigh_geod(const std::string& input_mesh_file, const float max_dist = 5.0, const std::string& output_dist_file="geod_distances.json") {        
 
-    std::cout << "Reading mesh '" + input_mesh_file + "' to compute graph " + std::to_string(k) + "-ring edge neighborhoods...\n";
-    if(include_self) {
-        std::cout << " * Neighborhoods will include the query vertex itself.\n";
-    } else {
-        std::cout << " * Neighborhoods will NOT include the query vertex itself.\n";
-    }
+    std::cout << "Reading mesh '" + input_mesh_file + "' to compute geodesic distance up to " + std::to_string(max_dist) + " along mesh...\n";
    
     fs::Mesh surface;
     fs::read_surf(&surface, input_mesh_file);
@@ -53,40 +48,31 @@ void mesh_neigh_edge(const std::string& input_mesh_file, const size_t k = 1, con
 
 int main(int argc, char** argv) {
     std::string input_mesh_file;
-    std::string output_dist_file = "edge_distances.json";
-    bool include_self = true;
-    size_t k = 1;
+    std::string output_dist_file = "edge_distances.json";    
+    float max_dist = 5.0;
     
-    if(argc < 2 || argc > 5) {
+    if(argc < 2 || argc > 4) {
         std::cout << "===" << argv[0] << " -- Compute mesh distances. ===\n";
-        std::cout << "Usage: " << argv[0] << " <input_mesh> [<k> [<output_file] [<include_self>]]]>\n";
+        std::cout << "Usage: " << argv[0] << " <input_mesh> [<max_dist> [<output_file]]]>\n";
         std::cout << "   <input_mesh>    : str, a mesh file in a format supported by libfs, e.g., FreeSurfer, PLY, OBJ, OFF.\n";
-        std::cout << "   <k>             : int, the k for the k-ring neighborhood computation. Defaults to 1.\n";
+        std::cout << "   <max_dist>      : float, the maximal distance to travel along the mesh when defining neighbors. Defaults to 5.0.\n";
         std::cout << "   <output_file>   : str, file name for the output JSON file (will be overwritten if existing). Default: edge_distances.json.\n";
-        std::cout << "   <include_self>  : bool, whether to include vertex itself in neighborhood, must be 'true' or 'false'. Default: 'true'.\n";
         exit(1);
     }
     input_mesh_file = argv[1];
     if(argc >= 3) {
         std::istringstream iss( argv[2] );        
-        if(!(iss >> k)) {
-            throw std::runtime_error("Could not convert argument k to positive integer.\n");
-        }        
+        if(!(iss >> max_dist)) {
+            throw std::runtime_error("Could not convert argument max_dist to float.\n");
+        }
+        if(max_dist < 0.0) {
+            throw std::runtime_error("Value of argument max_dist must not be negative.\n");
+        }
     }
     if(argc >= 4) {
         output_dist_file = argv[3];                
     }
-    if(argc >= 5) {
-        std::string inc = argv[4];
-        if(inc == "true") {
-            include_self = true;
-        } else if(inc == "false") {
-            include_self = false;
-        } else {
-            throw std::runtime_error("Argument include_self must be 'true' or 'false'.\n");
-        }
-    }
         
-    mesh_neigh_edge(input_mesh_file, k, output_dist_file, include_self);
+    mesh_neigh_geod(input_mesh_file, max_dist, output_dist_file);
     exit(0);
 }
