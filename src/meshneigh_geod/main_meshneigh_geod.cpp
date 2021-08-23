@@ -56,13 +56,15 @@ int main(int argc, char** argv) {
     std::string input_mesh_file;
     std::string output_dist_file = "geod_distances.json";    
     float max_dist = 5.0;
+    bool include_self = true;
     
-    if(argc < 2 || argc > 4) {
+    if(argc < 2 || argc > 5) {
         std::cout << "===" << argv[0] << " -- Compute geodesic neighborhoods for mesh vertices. ===\n";
-        std::cout << "Usage: " << argv[0] << " <input_mesh> [<max_dist> [<output_file]]]>\n";
+        std::cout << "Usage: " << argv[0] << " <input_mesh> [<max_dist> [<output_file> [<include_self>]]]>\n";
         std::cout << "   <input_mesh>    : str, a mesh file in a format supported by libfs, e.g., FreeSurfer, PLY, OBJ, OFF.\n";
         std::cout << "   <max_dist>      : float, the maximal distance to travel along the mesh when defining neighbors. Defaults to 5.0.\n";
         std::cout << "   <output_file>   : str, file name for the output JSON file (will be overwritten if existing). Default: edge_distances.json.\n";
+        std::cout << "   <include_self>  : bool, whether to include vertex itself in neighborhood, must be 'true' or 'false'. Default: 'true'.\n";
         exit(1);
     }
     input_mesh_file = argv[1];
@@ -78,7 +80,17 @@ int main(int argc, char** argv) {
     if(argc >= 4) {
         output_dist_file = argv[3];                
     }
+    if(argc >= 5) {
+        std::string inc = argv[4];
+        if(inc == "true") {
+            include_self = true;
+        } else if(inc == "false") {
+            include_self = false;
+        } else {
+            throw std::runtime_error("Argument include_self must be 'true' or 'false'.\n");
+        }
+    }        
         
-    mesh_neigh_geod(input_mesh_file, max_dist, output_dist_file);
+    mesh_neigh_geod(input_mesh_file, max_dist, output_dist_file, include_self);
     exit(0);
 }
