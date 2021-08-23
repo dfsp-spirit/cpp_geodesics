@@ -59,7 +59,7 @@ std::string neigh_to_json(std::vector<std::vector<int>> neigh) {
     std::stringstream is;
     is << "{\n";
     for(size_t i=0; i < neigh.size(); i++) {
-        is << "  " << i << ": [";
+        is << "  \"" << i << "\": [";
         for(size_t j=0; j < neigh[i].size(); j++) {
             is << " " << neigh[i][j];
             if(j < neigh[i].size()-1) {

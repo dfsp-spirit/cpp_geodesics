@@ -152,9 +152,9 @@ std::vector<std::vector<GeodNeighbor>> geod_neighborhood(MyMesh &m, float max_di
 std::string geod_neigh_to_json(std::vector<std::vector<GeodNeighbor>> neigh) {
     std::stringstream is;
     is << "{\n";
-    is << "  { neighbors:\n";
+    is << "  \"neighbors\": {\n";
     for(size_t i=0; i < neigh.size(); i++) {
-        is << "  " << i << ": [";
+        is << "  \"" << i << "\": [";
         for(size_t j=0; j < neigh[i].size(); j++) {
             is << " " << neigh[i][j].index;
             if(j < neigh[i].size()-1) {
@@ -168,9 +168,9 @@ std::string geod_neigh_to_json(std::vector<std::vector<GeodNeighbor>> neigh) {
         is <<"\n";
     }
     is << "  },\n";
-    is << "  { distances:\n";
+    is << "  \"distances\": {\n";
     for(size_t i=0; i < neigh.size(); i++) {
-        is << "  " << i << ": [";
+        is << "  \"" << i << "\": [";
         for(size_t j=0; j < neigh[i].size(); j++) {
             is << " " << neigh[i][j].distance;
             if(j < neigh[i].size()-1) {

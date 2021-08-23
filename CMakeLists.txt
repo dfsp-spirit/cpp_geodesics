@@ -89,7 +89,7 @@ endif()
 
 
 # Build the meshneigh_edge application that uses VCGLIB.
-set(SOURCE_FILES_MESHNEIGH_EDGE src/mesh_neighborhoods/main_meshneigh_edge.cpp ${SOURCE_FILES_COMMON_VCG})
+set(SOURCE_FILES_MESHNEIGH_EDGE src/meshneigh_edge/main_meshneigh_edge.cpp ${SOURCE_FILES_COMMON_VCG})
 add_executable(meshneigh_edge ${SOURCE_FILES_MESHNEIGH_EDGE})
 target_include_directories(meshneigh_edge PUBLIC include src/common_vcg)
 target_include_directories(meshneigh_edge PUBLIC include src/common)
@@ -116,8 +116,8 @@ endif()
 
 
 # Build the meshneigh_geod application that uses VCGLIB.
-set(SOURCE_FILES_MESHNEIGH_GEOD src/mesh_neighborhoods/main_meshneigh_geod.cpp ${SOURCE_FILES_COMMON_VCG})
-add_executable(meshneigh_geod ${SOURCE_FILES_MESHNEIGH_EDGE})
+set(SOURCE_FILES_MESHNEIGH_GEOD src/meshneigh_geod/main_meshneigh_geod.cpp ${SOURCE_FILES_COMMON_VCG})
+add_executable(meshneigh_geod ${SOURCE_FILES_MESHNEIGH_GEOD})
 target_include_directories(meshneigh_geod PUBLIC include src/common_vcg)
 target_include_directories(meshneigh_geod PUBLIC include src/common)
 target_include_directories(meshneigh_geod PUBLIC include third_party/libfs)
