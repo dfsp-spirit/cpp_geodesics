@@ -133,6 +133,7 @@ namespace fs {
     std::vector<_Float32> vertices;
     std::vector<int32_t> faces;    
 
+
     /// Return string representing the mesh in Wavefront Object (.obj) format.
     std::string to_obj() const {
       std::stringstream objs;
@@ -145,22 +146,24 @@ namespace fs {
       return(objs.str());
     }
 
+
     /// Export this mesh to a file in Wavefront OBJ format.
     /// @throws st::runtime_error if the target file cannot be opened.
     void to_obj_file(const std::string& filename) const {
       fs::util::str_to_file(filename, this->to_obj());
     }
-
     
 
     /// Read a brainmesh from a Wavefront object format stream.
+    /// @details This only reads the geometry, optional format extensions like materials are ignored (but files including them should parse fine).
+    /// @throws std::domain_error if the file format is invalid.
     static void from_obj(Mesh* mesh, std::ifstream* is) {
       std::string line;
       int line_idx = -1;
 
       std::vector<float> vertices;
       std::vector<int> faces;
-      size_t num_lines_ignored = 0;
+      size_t num_lines_ignored = 0; // Not comments, but custom extensions or material data lines which are ignored by libfs.
 
       while (std::getline(*is, line)) {
         line_idx += 1;
@@ -222,8 +225,11 @@ namespace fs {
       mesh->faces = faces;
     }
 
+
     /// Read a brainmesh from a Wavefront object format mesh file.
+    /// @details This only reads the geometry, optional format extensions like materials are ignored (but files including them should parse fine).
     /// @throws std::runtime_error if the file cannot be read.
+    /// @throws std::domain_error if the file format is invalid.
     static void from_obj(Mesh* mesh, const std::string& filename) {
       std::ifstream input(filename);
       if(input.is_open()) {
@@ -235,7 +241,98 @@ namespace fs {
     }
 
 
+    /// Read a brainmesh from an Object File format (OFF) stream.
+    /// @throws std::domain_error if the file format is invalid.
+    static void from_off(Mesh* mesh, std::ifstream* is) {
+      std::string line;
+      int line_idx = -1;
+      int noncomment_line_idx = -1;
+
+      std::vector<float> vertices;
+      std::vector<int> faces;
+      size_t num_vertices, num_faces, num_edges;
+      size_t num_verts_parsed = 0;
+      size_t num_faces_parsed = 0;
+      float x, y, z;    // vertex xyz coords
+      //bool has_color;
+      //int r, g, b, a;   // vertex colors
+      int num_verts_this_face, v0, v1, v2;   // face, defined by number of vertices and vertex indices.
+
+      while (std::getline(*is, line)) {
+        line_idx++;
+        std::istringstream iss(line);
+        if(fs::util::starts_with(line, "#")) {
+          continue; // skip comment.
+        } else {
+          noncomment_line_idx++;
+          if(noncomment_line_idx == 0) {
+            std::string off_header_magic;
+            if (!(iss >> off_header_magic)) {
+              throw std::domain_error("Could not parse first header line " + std::to_string(line_idx+1) + " of OFF data, invalid format.\n");
+            }
+            if(!(off_header_magic == "OFF" || off_header_magic == "COFF")) {
+              throw std::domain_error("OFF magic string invalid, file not in OFF format.\n");
+            }
+            //has_color = off_header_magic == "COFF";
+          } else if (noncomment_line_idx == 1) {
+            if (!(iss >> num_vertices >> num_faces >> num_edges)) {
+              throw std::domain_error("Could not parse element count header line " + std::to_string(line_idx+1) + " of OFF data, invalid format.\n");
+            }
+          } else {
+            
+            if(num_verts_parsed < num_vertices) {
+              if (!(iss >> x >> y >> z)) {
+                throw std::domain_error("Could not parse vertex coordinate line " + std::to_string(line_idx+1) + " of OFF data, invalid format.\n");
+              }
+              vertices.push_back(x);
+              vertices.push_back(y);
+              vertices.push_back(z);
+              num_verts_parsed++;
+            } else {
+              if(num_faces_parsed < num_faces) {
+                if (!(iss >> num_verts_this_face >> v0 >> v1 >> v2)) {
+                  throw std::domain_error("Could not parse face line " + std::to_string(line_idx+1) + " of OFF data, invalid format.\n");
+                }
+                if(num_verts_this_face != 3) {
+                  throw std::domain_error("At OFF line " + std::to_string(line_idx+1) + ": only triangular meshes supported.\n");
+                }
+                faces.push_back(v0);
+                faces.push_back(v1);
+                faces.push_back(v2);
+                num_faces_parsed++;
+              }
+            }
+          }         
+        }        
+      }
+      if(num_verts_parsed < num_vertices) {
+        throw std::domain_error("Vertex count mismatch between OFF header (" + std::to_string(num_vertices) + ") and data (" + std::to_string(num_verts_parsed) + ").\n");
+      }
+      if(num_faces_parsed < num_faces) {
+        throw std::domain_error("Face count mismatch between OFF header  (" + std::to_string(num_faces) + ") and data (" + std::to_string(num_faces_parsed) + ").\n");
+      }
+      mesh->vertices = vertices;
+      mesh->faces = faces;
+    }
+
+
+    /// Read a brainmesh from an OFF format mesh file.
+    /// @details The OFF is the Object File Format (file extension .off) is a simple text-based mesh file format. Not to be confused with the Wavefront Object format (.obj).
+    /// @throws std::runtime_error if the file cannot be read.
+    /// @throws std::domain_error if the file format is invalid.
+    static void from_off(Mesh* mesh, const std::string& filename) {
+      std::ifstream input(filename);
+      if(input.is_open()) {
+        Mesh::from_off(mesh, &input);
+        input.close();
+      } else {
+        throw std::runtime_error("Could not open Object file format (OFF) mesh file '" + filename + "' for reading.\n");
+      }
+    }
+
+
     /// Read a brainmesh from a Stanford PLY format stream.
+    /// @throws std::domain_error if the file format is invalid.
     static void from_ply(Mesh* mesh, std::ifstream* is) {
       std::string line;
       int line_idx = -1;
@@ -291,7 +388,7 @@ namespace fs {
             } else {
               if(faces.size() < (size_t)num_faces * 3) {
                 int verts_per_face, v0, v1, v2;
-                if (!(iss >> verts_per_face >> v0 >> v1 >> v2)) { 
+                if (!(iss >> verts_per_face >> v0 >> v1 >> v2)) {
                   throw std::domain_error("Could not parse face line of PLY data, invalid format.\n");
                 }
                 if(verts_per_face != 3) {
@@ -317,6 +414,7 @@ namespace fs {
 
     /// Read a brainmesh from a Stanford PLY format mesh file.
     /// @throws std::runtime_error if the file cannot be read.
+    /// @throws std::domain_error if the file format is invalid.
     static void from_ply(Mesh* mesh, const std::string& filename) {
       std::ifstream input(filename);
       if(input.is_open()) {
@@ -326,6 +424,7 @@ namespace fs {
         throw std::runtime_error("Could not open Stanford PLY format mesh file '" + filename + "' for reading.\n");
       }
     }
+
 
     /// Return the number of vertices in this mesh.
     size_t num_vertices() const {
@@ -438,6 +537,55 @@ namespace fs {
     /// @throws st::runtime_error if the target file cannot be opened, std::invalid_argument if the number of vertex colors does not match the number of vertices.
     void to_ply_file(const std::string& filename, const std::vector<uint8_t> col) const {
       fs::util::str_to_file(filename, this->to_ply(col));
+    }
+
+    /// Return string representing the mesh in OFF format. Overload that works without passing a color vector.
+    std::string to_off() const {
+      std::vector<uint8_t> empty_col;
+      return(this->to_off(empty_col));
+    }
+
+    /// Return string representing the mesh in PLY format.
+    /// @param col u_char vector of RGB color values, 3 per vertex. They must appear by vertex, i.e. in order v0_red, v0_green, v0_blue, v1_red, v1_green, v1_blue. Leave empty if you do not want colors.
+    /// @throws std::invalid_argument if the number of vertex colors does not match the number of vertices. 
+    std::string to_off(const std::vector<uint8_t> col) const {
+      bool use_vertex_colors = col.size() != 0;
+      std::stringstream offs;
+      if(use_vertex_colors) {
+        if(col.size() != this->vertices.size()) {
+          throw std::invalid_argument("Number of vertex coordinates and vertex colors must match when writing OFF file.");
+        }
+        offs << "COFF\n";
+      } else {
+        offs << "OFF\n";
+      }
+      offs << this->num_vertices() << " " << this->num_faces() << " 0\n";
+      
+      for(size_t vidx=0; vidx<this->vertices.size();vidx+=3) {  // vertex coords
+        offs << vertices[vidx] << " " << vertices[vidx+1] << " " << vertices[vidx+2];
+        if(use_vertex_colors) {
+          offs << " " << (int)col[vidx] << " " << (int)col[vidx+1] << " " << (int)col[vidx+2] << " 255";
+        }
+        offs << "\n";
+      }
+
+      const int num_vertices_per_face = 3;
+      for(size_t fidx=0; fidx<this->faces.size();fidx+=3) { // faces: vertex indices, 0-based
+        offs << num_vertices_per_face << " " << faces[fidx] << " " << faces[fidx+1] << " " << faces[fidx+2] << "\n";
+      }        
+      return(offs.str());
+    }
+
+    /// Export this mesh to a file in OFF format.
+    /// @throws st::runtime_error if the target file cannot be opened.
+    void to_off_file(const std::string& filename) const {
+      fs::util::str_to_file(filename, this->to_off());
+    }
+
+    /// Export this mesh to a file in OFF format with vertex colors (COFF).
+    /// @throws st::runtime_error if the target file cannot be opened, std::invalid_argument if the number of vertex colors does not match the number of vertices.
+    void to_off_file(const std::string& filename, const std::vector<uint8_t> col) const {
+      fs::util::str_to_file(filename, this->to_off(col));
     }
   };
 
@@ -616,10 +764,12 @@ namespace fs {
     MghData() {}
     MghData(std::vector<int32_t> curv_data) { data_mri_int = curv_data; }
     explicit MghData(std::vector<uint8_t> curv_data) { data_mri_uchar = curv_data; }
+    explicit MghData(std::vector<short> curv_data) { data_mri_short = curv_data; }
     MghData(std::vector<float> curv_data) { data_mri_float = curv_data; }
     std::vector<int32_t> data_mri_int;
     std::vector<uint8_t> data_mri_uchar;
     std::vector<float> data_mri_float;
+    std::vector<short> data_mri_short;
   };
 
   /// Models a whole MGH file.
@@ -675,6 +825,8 @@ namespace fs {
   std::vector<int32_t> _read_mgh_data_int(MghHeader*, std::istream*);
   std::vector<uint8_t> _read_mgh_data_uchar(MghHeader*, const std::string&);
   std::vector<uint8_t> _read_mgh_data_uchar(MghHeader*, std::istream*);
+  std::vector<short> _read_mgh_data_short(MghHeader*, const std::string&);
+  std::vector<short> _read_mgh_data_short(MghHeader*, std::istream*);
   std::vector<float> _read_mgh_data_float(MghHeader*, const std::string&);
   std::vector<float> _read_mgh_data_float(MghHeader*, std::istream*);
 
@@ -698,6 +850,9 @@ namespace fs {
     } else if(mgh->header.dtype == MRI_FLOAT) {
       std::vector<float> data = _read_mgh_data_float(&mgh_header, filename);
       mgh->data.data_mri_float = data;
+    } else if(mgh->header.dtype == MRI_SHORT) {
+      std::vector<short> data = _read_mgh_data_short(&mgh_header, filename);
+      mgh->data.data_mri_short = data;
     } else {      
       if(_ends_with(filename, ".mgz")) {
         std::cout << "Note: your MGH filename ends with '.mgz'. Keep in mind that MGZ format is not supported directly. You can ignore this message if you wrapped a gz stream.\n";  
@@ -743,6 +898,9 @@ namespace fs {
     } else if(mgh->header.dtype == MRI_FLOAT) {
       std::vector<float> data = _read_mgh_data_float(&mgh_header, is);
       mgh->data.data_mri_float = data;
+    } else if(mgh->header.dtype == MRI_SHORT) {
+      std::vector<short> data = _read_mgh_data_short(&mgh_header, is);
+      mgh->data.data_mri_short = data;
     } else {      
       throw std::runtime_error("Not reading data from MGH stream, data type " + std::to_string(mgh->header.dtype) + " not supported yet.\n");
     }
@@ -816,6 +974,26 @@ namespace fs {
       std::cerr << "Expected MRI data type " << MRI_INT << ", but found " << mgh_header->dtype << ".\n";
     }
     return(_read_mgh_data<int32_t>(mgh_header, is));
+  }
+
+  /// Read MRI_SHORT data from MGH file
+  ///
+  /// THIS FUNCTION IS INTERNAL AND SHOULD NOT BE CALLED BY API CLIENTS.
+  std::vector<short> _read_mgh_data_short(MghHeader* mgh_header, const std::string& filename) {
+    if(mgh_header->dtype != MRI_SHORT) {
+      std::cerr << "Expected MRI data type " << MRI_SHORT << ", but found " << mgh_header->dtype << ".\n";
+    }
+    return(_read_mgh_data<short>(mgh_header, filename));
+  }
+
+  /// Read MRI_SHORT data from a stream.
+  ///
+  /// THIS FUNCTION IS INTERNAL AND SHOULD NOT BE CALLED BY API CLIENTS.
+  std::vector<short> _read_mgh_data_short(MghHeader* mgh_header, std::istream* is) {
+    if(mgh_header->dtype != MRI_SHORT) {
+      std::cerr << "Expected MRI data type " << MRI_SHORT << ", but found " << mgh_header->dtype << ".\n";
+    }
+    return(_read_mgh_data<short>(mgh_header, is));
   }
 
 
@@ -962,6 +1140,8 @@ namespace fs {
       fs::Mesh::from_obj(surface, filename);
     } else if(fs::util::ends_with(filename, ".ply")) {
       fs::Mesh::from_ply(surface, filename);
+    } else if(fs::util::ends_with(filename, ".off")) {
+      fs::Mesh::from_off(surface, filename);
     } else {
       read_surf(surface, filename);
     }
@@ -1332,6 +1512,13 @@ namespace fs {
       }
       for(size_t i=0; i<num_values; i++) {
          _fwritet<uint8_t>(os, mgh.data.data_mri_uchar[i]);
+      }
+    } else if(mgh.header.dtype == MRI_SHORT) {
+      if(mgh.data.data_mri_short.size() != num_values) {
+        throw std::logic_error("Detected mismatch of MRI_SHORT data size and MGH header dim length values.\n");
+      }
+      for(size_t i=0; i<num_values; i++) {
+         _fwritet<short>(os, mgh.data.data_mri_short[i]);
       }
     } else {
       throw std::domain_error("Unsupported MRI data type " + std::to_string(mgh.header.dtype) + ", cannot write MGH data.\n");
