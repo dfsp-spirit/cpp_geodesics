@@ -88,6 +88,32 @@ if( CMAKE_CXX_COMPILER_ID MATCHES "MSVC" )
 endif()
 
 
+# Build the meshneigh_edge application that uses VCGLIB.
+set(SOURCE_FILES_MESHNEIGH_EDGE src/mesh_neighborhoods/main_meshneigh_edge.cpp ${SOURCE_FILES_COMMON_VCG})
+add_executable(meshneigh_edge ${SOURCE_FILES_MESHNEIGH_EDGE})
+target_include_directories(meshneigh_edge PUBLIC include src/common_vcg)
+target_include_directories(meshneigh_edge PUBLIC include src/common)
+target_include_directories(meshneigh_edge PUBLIC include third_party/libfs)
+target_include_directories(meshneigh_edge PUBLIC include third_party/vcglib)
+target_include_directories(meshneigh_edge PUBLIC include third_party/vcglib/eigenlib)
+
+set_property(TARGET meshneigh_edge PROPERTY CXX_STANDARD 11)
+set_property(TARGET meshneigh_edge PROPERTY CXX_STANDARD_REQUIRED ON)
+set_property(TARGET meshneigh_edge PROPERTY CXX_EXTENSIONS OFF)
+
+find_package(OpenMP)
+if(OpenMP_CXX_FOUND)
+    target_link_libraries(meshneigh_edge PUBLIC OpenMP::OpenMP_CXX)
+endif()
+
+if( CMAKE_CXX_COMPILER_ID MATCHES "Clang|AppleClang|GNU" )
+    target_compile_options( meshneigh_edge PRIVATE -Wall -Wextra)
+endif()
+if( CMAKE_CXX_COMPILER_ID MATCHES "MSVC" )
+	target_compile_options( meshneigh_edge PRIVATE /W4 /WX )
+endif()
+
+
 
 # Build the demo_geolibbrain demo app that uses the the 'geodesic' lib
 set(SOURCE_FILES_DEMO_GEOLIB src/demo_geolib/main_geo.cpp)
