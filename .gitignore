@@ -34,7 +34,8 @@ geodcircles
 export_brainmesh
 demo_geolibbrain
 demo_vcglibbrain
-
+meshneigh_edge
+meshneigh_geod
 
 # Cmake stuff
 CMakeCache.txt
