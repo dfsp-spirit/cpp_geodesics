@@ -22,7 +22,7 @@
 
 /// Compute geodesic neighborhood up to max dist for the mesh.
 /// @param max_dist float, the distance defining the geodesic neighborhood circle.
-void mesh_neigh_geod(const std::string& input_mesh_file, const float max_dist = 5.0, const std::string& output_dist_file="geod_distances", bool include_self = true) {        
+void mesh_neigh_geod(const std::string& input_mesh_file, const float max_dist = 5.0, const std::string& output_dist_file="geod_distances", bool include_self = true, const bool json=false) {        
 
     std::cout << "Reading mesh '" + input_mesh_file + "' to compute geodesic distance up to " + std::to_string(max_dist) + " along mesh...\n";
     if(include_self) {
@@ -48,9 +48,11 @@ void mesh_neigh_geod(const std::string& input_mesh_file, const float max_dist = 
     std::vector<std::vector<GeodNeighbor>> neigh = geod_neighborhood(m, max_dist, include_self);
     
     // Write it to a JSON file.
-    //std::string output_dist_file_json = output_dist_file + ".json";
-    //strtofile(geod_neigh_to_json(neigh), output_dist_file_json);    
-    //std::cout << "Neighborhood information written to file '" + output_dist_file_json + "'.\n";
+    if(json) {
+        std::string output_dist_file_json = output_dist_file + ".json";
+        strtofile(geod_neigh_to_json(neigh), output_dist_file_json);    
+        std::cout << "Neighborhood information written to JSON file '" + output_dist_file_json + "'.\n";
+    }
 
     // Write it to VV files.
     std::vector<std::vector<int32_t>> neigh_idx(neigh.size(), std::vector<int32_t>());
@@ -65,9 +67,9 @@ void mesh_neigh_geod(const std::string& input_mesh_file, const float max_dist = 
     std::string output_dist_file_index = output_dist_file + "_index.vv";
     std::string output_dist_file_dist = output_dist_file + "_dist.vv";
     write_vv<int32_t>(output_dist_file_index, neigh_idx);
-    std::cout << "Geodesic Neighborhood information indices written to file '" + output_dist_file_index + "'.\n";
+    std::cout << "Geodesic Neighborhood information indices written to vv file '" + output_dist_file_index + "'.\n";
     write_vv<_Float32>(output_dist_file_dist, neigh_dist);
-    std::cout << "Geodesic Neighborhood information distances written to file '" + output_dist_file_dist + "'.\n";
+    std::cout << "Geodesic Neighborhood information distances written to vv file '" + output_dist_file_dist + "'.\n";
 }
 
 
@@ -76,14 +78,16 @@ int main(int argc, char** argv) {
     std::string output_dist_file = "geod_distances";    
     float max_dist = 5.0;
     bool include_self = true;
+    bool json = false;
     
-    if(argc < 2 || argc > 5) {
+    if(argc < 2 || argc > 6) {
         std::cout << "===" << argv[0] << " -- Compute geodesic neighborhoods for mesh vertices. ===\n";
-        std::cout << "Usage: " << argv[0] << " <input_mesh> [<max_dist> [<output_file> [<include_self>]]]>\n";
+        std::cout << "Usage: " << argv[0] << " <input_mesh> [<max_dist> [<output_file> [<include_self> [json]]]]>\n";
         std::cout << "   <input_mesh>    : str, a mesh file in a format supported by libfs, e.g., FreeSurfer, PLY, OBJ, OFF.\n";
         std::cout << "   <max_dist>      : float, the maximal distance to travel along the mesh when defining neighbors. Defaults to 5.0.\n";
         std::cout << "   <output_file>   : str, file name for the output file (suffix gets added, will be overwritten if existing). Default: geod_distances.\n";
         std::cout << "   <include_self>  : bool, whether to include vertex itself in neighborhood, must be 'true' or 'false'. Default: 'true'.\n";
+        std::cout << "   <json>          : bool, whether to also write JSON output, must be 'true' or 'false'. Default: 'false'.\n";
         exit(1);
     }
     input_mesh_file = argv[1];
@@ -108,8 +112,18 @@ int main(int argc, char** argv) {
         } else {
             throw std::runtime_error("Argument include_self must be 'true' or 'false'.\n");
         }
-    }        
+    }
+    if(argc >= 6) {
+        std::string jout = argv[5];
+        if(jout == "true") {
+            json = true;
+        } else if(jout == "false") {
+            json = false;
+        } else {
+            throw std::runtime_error("Argument json must be 'true' or 'false'.\n");
+        }
+    }
         
-    mesh_neigh_geod(input_mesh_file, max_dist, output_dist_file, include_self);
+    mesh_neigh_geod(input_mesh_file, max_dist, output_dist_file, include_self, json);
     exit(0);
 }
