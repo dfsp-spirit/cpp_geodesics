@@ -46,6 +46,12 @@ void _fwritet(std::ostream& os, T t) {
     os.write( reinterpret_cast<const char*>( &t ), sizeof(t));
 }
 
+template <typename T>
+int32_t _vv_data_type_code() { return(14); }
+
+template <int32_t>
+int32_t _vv_data_type_code() { return(13); }
+
 /// Write vector of vectors to binary big endian file.
 /// The format is: 2 magic int32 numbers followed by size of outer vec (also as int32). Then, for each inner vec: int32 size of vec, then the values.
 template <typename T>
@@ -53,8 +59,8 @@ void write_vv(const std::string& filename, std::vector<std::vector<T>> data) {
     std::ofstream ofs;
     ofs.open(filename, std::ofstream::out | std::ofstream::binary);
     if(ofs.is_open()) {
-        _fwritet<int32_t>(ofs, 42); // write magic number 1
-        _fwritet<int32_t>(ofs, 13); // write magic number 2
+        _fwritet<int32_t>(ofs, 42); // write magic number
+        _fwritet<int32_t>(ofs, _vv_data_type_code<T>()); // write data-type code. 13=int_32, 14=float_32.
         _fwritet<int32_t>(ofs, data.size());
         for(size_t i=0; i<data.size(); i++) {
             _fwritet<int32_t>(ofs, data[i].size());
