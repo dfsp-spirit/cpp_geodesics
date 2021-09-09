@@ -38,7 +38,18 @@ int main(int argc, char** argv) {
     std::vector<unsigned> faces;    
 
     std::string subject = "fsaverage3";
-    //std::string subject = "subject1";
+
+    
+    if(argc > 2) {
+        std::cout << "===" << argv[0] << " -- Demo that runs geodesic lib algorithms on brain meshes. ===\n";
+        std::cout << "Usage: " << argv[0] << " [<subject>]\n";
+        std::cout << "   subject : the subject to use, must be in demo_data\n";
+        exit(1);
+    }
+    if(argc == 2) {
+        subject = argv[1];
+    }
+
     std::cout << " Reading FreeSurfer lh.white surface for subject '" + subject + "'...\n";    
     std::string surf_file = "demo_data/subjects_dir/" + subject + "/surf/lh.white";
     fs::Mesh surface;
