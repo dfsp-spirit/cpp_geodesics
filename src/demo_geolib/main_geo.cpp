@@ -76,14 +76,14 @@ int main(int argc, char** argv) {
 
         //-------------first task: compute the pathes to the targets -----
         std::vector<geodesic::SurfacePoint> path;
-        for (int i = 0; i < targets.size(); ++i) {
+        for (size_t i = 0; i < targets.size(); ++i) {
             algorithm->trace_back(targets[i], path);
             print_info_about_path(path);
         }
 
         //-------------second task: for each source, find the furthest vertex that it covers -----
         std::vector<double> max_distance(sources.size(), 0.0); // distance to the furthest vertex that is covered by the given source
-        for (int i = 0; i < mesh.vertices().size(); ++i) {
+        for (size_t i = 0; i < mesh.vertices().size(); ++i) {
             geodesic::SurfacePoint p(&mesh.vertices()[i]);
             double distance;
             unsigned best_source = algorithm->best_source(p, distance);
@@ -92,7 +92,7 @@ int main(int argc, char** argv) {
         }
 
         std::cout << std::endl;
-        for (int i = 0; i < max_distance.size(); ++i) {
+        for (size_t i = 0; i < max_distance.size(); ++i) {
             std::cout << "distance to the furthest vertex that is covered by source " << i << " is " << max_distance[i] << std::endl;
         }
     }
