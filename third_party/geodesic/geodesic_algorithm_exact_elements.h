@@ -148,7 +148,7 @@ class IntervalList // list of the of intervals of the given edge
         m_first = nullptr;
     }
 
-    const interval_pointer covering_interval(
+    interval_pointer covering_interval(
       double offset) const // returns the interval that covers the offset
     {
         assert(offset >= 0.0 && offset <= m_edge->length());
