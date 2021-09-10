@@ -123,14 +123,14 @@ namespace fs {
   struct Mesh {
 
     /// Construct a Mesh from the given vertices and faces.
-    Mesh(std::vector<_Float32> cvertices, std::vector<int32_t> cfaces) { 
+    Mesh(std::vector<float> cvertices, std::vector<int32_t> cfaces) { 
       vertices = cvertices; faces = cfaces; 
     }
 
     /// Construct an empty Mesh.
     Mesh() {}
 
-    std::vector<_Float32> vertices;
+    std::vector<float> vertices;
     std::vector<int32_t> faces;    
 
 
@@ -464,11 +464,11 @@ namespace fs {
 
     /// Get all coordinates of the vertex, given by its index.
     /// @throws std::range_error on invalid index
-    std::vector<_Float32> vertex_coords(const size_t vertex) const {
+    std::vector<float> vertex_coords(const size_t vertex) const {
       if(vertex > this->num_vertices()-1) {
         throw std::range_error("Index " + std::to_string(vertex) + " into Mesh.vertices out of bounds, max valid index is " + std::to_string(this->num_vertices()-1) + ".\n");
       }
-      std::vector<_Float32> vc(3);
+      std::vector<float> vc(3);
       vc[0] = this->vm_at(vertex, 0);
       vc[1] = this->vm_at(vertex, 1);
       vc[2] = this->vm_at(vertex, 2);
@@ -479,7 +479,7 @@ namespace fs {
     /// @param i the row index, valid values are 0..num_vertices.
     /// @param j the column index, valid values are 0..2 (for the x,y,z coordinates).
     /// @throws std::range_error on invalid index
-    const _Float32& vm_at(const size_t i, const size_t j) const {
+    const float& vm_at(const size_t i, const size_t j) const {
       size_t idx = _vidx_2d(i, j, 3);
       if(idx > this->vertices.size()-1) {
         throw std::range_error("Indices (" + std::to_string(i) + "," + std::to_string(j) + ") into Mesh.vertices out of bounds. Hit " + std::to_string(idx) + " with max valid index " + std::to_string(this->vertices.size()-1) + ".\n");
@@ -594,7 +594,7 @@ namespace fs {
   struct Curv {
 
     /// Construct a Curv instance from the given per-vertex data.
-    Curv(std::vector<_Float32> curv_data) :
+    Curv(std::vector<float> curv_data) :
       num_faces(100000), num_vertices(0), num_values_per_vertex(1) { data = curv_data; num_vertices = data.size(); }
     
     /// Construct an empty Curv instance.
@@ -602,7 +602,7 @@ namespace fs {
       num_faces(100000), num_vertices(0), num_values_per_vertex(1) {}
 
     int32_t num_faces;
-    std::vector<_Float32> data;
+    std::vector<float> data;
     int32_t num_vertices;
     int32_t num_values_per_vertex;
     
@@ -933,15 +933,15 @@ namespace fs {
 
     // Read the RAS part of the header.
     if(mgh_header->ras_good_flag == 1) {
-      mgh_header->xsize =  _freadt<_Float32>(*is);
-      mgh_header->ysize =  _freadt<_Float32>(*is);
-      mgh_header->zsize =  _freadt<_Float32>(*is);
+      mgh_header->xsize =  _freadt<float>(*is);
+      mgh_header->ysize =  _freadt<float>(*is);
+      mgh_header->zsize =  _freadt<float>(*is);
 
       for(int i=0; i<9; i++) {
-        mgh_header->Mdc.push_back( _freadt<_Float32>(*is));
+        mgh_header->Mdc.push_back( _freadt<float>(*is));
       }
       for(int i=0; i<3; i++) {
-        mgh_header->Pxyz_c.push_back( _freadt<_Float32>(*is));
+        mgh_header->Pxyz_c.push_back( _freadt<float>(*is));
       }
       unused_header_space_size_left -= 60;
     }
@@ -1056,21 +1056,21 @@ namespace fs {
   /// Read MRI_FLOAT data from MGH file
   ///
   /// THIS FUNCTION IS INTERNAL AND SHOULD NOT BE CALLED BY API CLIENTS.
-  std::vector<_Float32> _read_mgh_data_float(MghHeader* mgh_header, const std::string& filename) {
+  std::vector<float> _read_mgh_data_float(MghHeader* mgh_header, const std::string& filename) {
     if(mgh_header->dtype != MRI_FLOAT) {
       std::cerr << "Expected MRI data type " << MRI_FLOAT << ", but found " << mgh_header->dtype << ".\n";
     }
-    return(_read_mgh_data<_Float32>(mgh_header, filename));
+    return(_read_mgh_data<float>(mgh_header, filename));
   }
 
   /// Read MRI_FLOAT data from an MGH stream
   ///
   /// THIS FUNCTION IS INTERNAL AND SHOULD NOT BE CALLED BY API CLIENTS.
-  std::vector<_Float32> _read_mgh_data_float(MghHeader* mgh_header, std::istream* is) {
+  std::vector<float> _read_mgh_data_float(MghHeader* mgh_header, std::istream* is) {
     if(mgh_header->dtype != MRI_FLOAT) {
       std::cerr << "Expected MRI data type " << MRI_FLOAT << ", but found " << mgh_header->dtype << ".\n";
     }
-    return(_read_mgh_data<_Float32>(mgh_header, is));
+    return(_read_mgh_data<float>(mgh_header, is));
   }
 
   /// Read MRI_UCHAR data from MGH file
@@ -1115,7 +1115,7 @@ namespace fs {
       //std::cout << "Read surface file with " << num_verts << " vertices, " << num_faces << " faces.\n";
       std::vector<float> vdata;
       for(int i=0; i<(num_verts*3); i++) {
-        vdata.push_back( _freadt<_Float32>(is));
+        vdata.push_back( _freadt<float>(is));
       }
       std::vector<int> fdata;
       for(int i=0; i<(num_faces*3); i++) {
@@ -1177,7 +1177,7 @@ namespace fs {
     }
     std::vector<float> data;
     for(int i=0; i<curv->num_vertices; i++) {
-      data.push_back( _freadt<_Float32>(*is));
+      data.push_back( _freadt<float>(*is));
     }
     curv->data = data;
   }  
@@ -1429,7 +1429,7 @@ namespace fs {
     _fwritet<int32_t>(os, num_faces);
     _fwritet<int32_t>(os, 1); // Number of values per vertex.
     for(size_t i=0; i<curv_data.size(); i++) {
-       _fwritet<_Float32>(os, curv_data[i]);
+       _fwritet<float>(os, curv_data[i]);
     }
   }
 
@@ -1472,15 +1472,15 @@ namespace fs {
 
     // Write RAS part of of header if flag is 1.
     if(mgh.header.ras_good_flag == 1) {
-       _fwritet<_Float32>(os, mgh.header.xsize);
-       _fwritet<_Float32>(os, mgh.header.ysize);
-       _fwritet<_Float32>(os, mgh.header.zsize);
+       _fwritet<float>(os, mgh.header.xsize);
+       _fwritet<float>(os, mgh.header.ysize);
+       _fwritet<float>(os, mgh.header.zsize);
 
       for(int i=0; i<9; i++) {
-         _fwritet<_Float32>(os, mgh.header.Mdc[i]);
+         _fwritet<float>(os, mgh.header.Mdc[i]);
       }
       for(int i=0; i<3; i++) {
-         _fwritet<_Float32>(os, mgh.header.Pxyz_c[i]);
+         _fwritet<float>(os, mgh.header.Pxyz_c[i]);
       }
 
       unused_header_space_size_left -= 60;
@@ -1504,7 +1504,7 @@ namespace fs {
         throw std::logic_error("Detected mismatch of MRI_FLOAT data size and MGH header dim length values.\n");
       }
       for(size_t i=0; i<num_values; i++) {
-         _fwritet<_Float32>(os, mgh.data.data_mri_float[i]);
+         _fwritet<float>(os, mgh.data.data_mri_float[i]);
       }
     } else if(mgh.header.dtype == MRI_UCHAR) {
       if(mgh.data.data_mri_uchar.size() != num_values) {
