@@ -1,5 +1,5 @@
 #!/bin/bash
-# Pre-compute mesh geodesic distances for FreeSurfer meshes and save them in JSON format.
+# Pre-compute mesh geodesic distances for FreeSurfer meshes and save them to files.
 
 subjects_dir="$FREESURFER_HOME/subjects"
 apptag="[GEOD_DIST]"
@@ -11,7 +11,7 @@ for subject in fsaverage6 fsaverage; do
     fi
     for hemi in lh rh; do
         for surface in white; do
-            for distance in 55; do
+            for distance in 25; do
                 echo "$apptag === Handling subject ${subject} hemi ${hemi} at distance ${distance}... ==="
                 mesh_file="${subjects_dir}/${subject}/surf/${hemi}.${surface}"
                 if [ ! -f "${mesh_file}" ]; then
