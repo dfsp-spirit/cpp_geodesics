@@ -56,7 +56,7 @@ void mesh_neigh_geod(const std::string& input_mesh_file, const float max_dist = 
 
     // Write it to VV files.
     std::vector<std::vector<int32_t>> neigh_idx(neigh.size(), std::vector<int32_t>());
-    std::vector<std::vector<float>> neigh_dist(neigh.size(), std::vector<_Float32>());
+    std::vector<std::vector<float>> neigh_dist(neigh.size(), std::vector<float>());
     for(size_t i=0; i<neigh.size(); i++) {
         for(size_t j=0; j<neigh[i].size(); j++) {
             neigh_idx[i].push_back(neigh[i][j].index);
