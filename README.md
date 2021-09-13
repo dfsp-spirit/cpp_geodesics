@@ -35,7 +35,7 @@ cmake .
 make
 ```
 
-You can also build a single app only, e.g., `make geodcircles` or `make geodpath`. The resulting binaries are placed into the repo root.
+In the last step, you can also build a single app only, e.g., `make geodcircles` or `make geodpath`. The resulting binaries are placed into the repo root.
 
 
 ## Usage
