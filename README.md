@@ -29,11 +29,13 @@ I would recommend `sudo apt install build-essential cmake git`
 To build with cmake:
 
 ```
+git clone https://github.com/dfsp-spirit/cpp_geodesics
+cd cpp_geodesics
 cmake .
 make
 ```
 
-You can also build a single app only, e.g., `make geodcircles` or `make geodpath`.
+You can also build a single app only, e.g., `make geodcircles` or `make geodpath`. The resulting binaries are placed into the repo root.
 
 
 ## Usage
