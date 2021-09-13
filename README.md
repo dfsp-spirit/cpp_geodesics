@@ -45,10 +45,10 @@ Just run the apps without command line arguments to get help. E.g.,
 ```shell
 ./geodpath 
 ===./geodpath -- Compute geodesic path and distance on a mesh. ===
-Usage: ./geodpath [<mesh> [<source> [<target>]]]
+Usage: ./geodpath <mesh> [<source> [<target>]]
   <mesh>   : str, path to the input mesh file.
-  <source> : int >= 0, the source vertex (0-based index).
-  <target> : int >= 0, the target vertex (0-based index).
+  <source> : int >= 0, the source vertex (0-based index). Defaults to 0.
+  <target> : int >= 0, the target vertex (0-based index). Defaults to 100.
 ```
 
 
