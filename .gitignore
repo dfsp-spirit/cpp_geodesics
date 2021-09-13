@@ -36,6 +36,7 @@ demo_geolibbrain
 demo_vcglibbrain
 meshneigh_edge
 meshneigh_geod
+geodpath
 
 # Cmake stuff
 CMakeCache.txt
