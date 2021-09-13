@@ -31,6 +31,12 @@ make
 
 You can also build a single app only, e.g., `make geodcircles` or `make geodpath`.
 
+
+## Usage
+
+Just run the apps without command line arguments to get help.
+
+
 ## Algorithms
 
 The applications use algorithms from the the following libraries:
