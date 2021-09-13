@@ -45,7 +45,7 @@ The applications use algorithms from the the following libraries:
 * [geodesic](https://github.com/mojocorp/geodesic/) based on [code.google.com/p/geodesic/geodesic_geo](http://code.google.com/p/geodesic/geodesic_geo): provides 3 geodesic distance algorithms, including:
     - Exact geodesics
     - Dijkstra
-    - Subdivision version of Dijkstra that splits edges (becomes Dijkstra algo for num_extra_splits=0 and approaches exact version with increasing number of splits)
+    - Subdivision version of Dijkstra that splits edges (becomes Dijkstra algo for `num_extra_splits=0` and approaches exact version with increasing number of splits)
 
 
 
