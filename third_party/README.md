@@ -1,4 +1,4 @@
-# Directory contents info
+# Third party directory: contents info
 
 * `vcglib/`: the vcglib 2020-09 release, see https://github.com/cnr-isti-vclab/vcglib. (Retrieved 2021-07, but I used the mentioned release.)
 * `libfs/`: https://github.com/dfsp-spirit/libfs. Frequently updated as it evolves, check the commit messages.
