@@ -6,7 +6,7 @@ This repo contains C++ applications to compute geodesic distances on triangular 
 
 ## Applications
 
-All applications work with connected triangular meshes in standard mesh formats (PLY, OFF, OBJ) as well as [FreeSurfer](https://freesurfer.net/) brain surface meshes used in computational neuroimaging (see [libfs](https://github.com/dfsp-spirit/libfs) for details).
+All applications work with connected triangular meshes in standard mesh formats (PLY, OFF, OBJ) as well as [FreeSurfer](https://freesurfer.net/) brain surface meshes used in computational neuroimaging. See [libfs](https://github.com/dfsp-spirit/libfs) for details.
 
 
 * `geodpath`: Computes geodesic paths on a mesh from a source vertex to a target vertex. Ouputs coordinates of intermediate points and the total distance. Algorithm can be selected (see `Algorithms` below).
