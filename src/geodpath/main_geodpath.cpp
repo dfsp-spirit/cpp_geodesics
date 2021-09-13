@@ -59,12 +59,12 @@ int main(int argc, char** argv) {
     
     if(argc < 2 || argc > 6) {
         std::cout << "===" << argv[0] << " -- Compute geodesic path and distance on a mesh. ===\n";
-        std::cout << "Usage: " << argv[0] << " [<mesh> [<source> [<target>]]]\n";
+        std::cout << "Usage: " << argv[0] << " <mesh> [<source> [<target> [<algo> [<subd>]]]]\n";
         std::cout << "  <mesh>   : str, path to the input mesh file.\n";
-        std::cout << "  <source> : int >= 0, the source vertex (0-based index).\n";
-        std::cout << "  <target> : int >= 0, the target vertex (0-based index).\n";
-        std::cout << "  <algo>   : int >= 0, alogorithm to run. 0=all, 1=exact, 2=dijksta, 3=subdivision dijksta. Default 2.\n";
-        std::cout << "  <subd>   : int >= 1, number of edge subdivisions for algo 3. Defaults to 3.\n";
+        std::cout << "  <source> : int >= 0, the source vertex (0-based index). Defaults to 0.\n";
+        std::cout << "  <target> : int >= 0, the target vertex (0-based index). Defaults to 100.\n";
+        std::cout << "  <algo>   : int >= 0, alogorithm to run. 0=all, 1=exact, 2=dijksta, 3=subdivision dijksta. Defaults to 2.\n";
+        std::cout << "  <subd>   : int >= 1, number of edge subdivisions for algo #3. Defaults to 3.\n";
         exit(1);
     }
     if(argc >= 2) {
