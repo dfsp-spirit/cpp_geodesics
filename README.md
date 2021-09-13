@@ -34,7 +34,16 @@ You can also build a single app only, e.g., `make geodcircles` or `make geodpath
 
 ## Usage
 
-Just run the apps without command line arguments to get help.
+Just run the apps without command line arguments to get help. E.g.,
+
+```shell
+./geodpath 
+===./geodpath -- Compute geodesic path and distance on a mesh. ===
+Usage: ./geodpath [<mesh> [<source> [<target>]]]
+  <mesh>   : str, path to the input mesh file.
+  <source> : int >= 0, the source vertex (0-based index).
+  <target> : int >= 0, the target vertex (0-based index).
+```
 
 
 ## Algorithms
