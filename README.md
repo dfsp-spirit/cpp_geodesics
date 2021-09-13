@@ -1,7 +1,10 @@
 # cpp_geodesics
 Fast computation of geodesic distances on brain surface meshes in C++.
 
-This repo contains C++ applications to compute geodesic distances on triangular meshes.
+
+## About 
+
+This repo contains fast C++ applications to compute geodesic distances on triangular meshes. We use them to compute distances on the human cortex in computational neuroimaging, but they work with any connected trimesh. Geodesics computation is computationally expensive and the focus of these applications is mostly on speed.
 
 
 ## Applications
