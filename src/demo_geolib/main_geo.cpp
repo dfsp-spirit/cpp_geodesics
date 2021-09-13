@@ -56,7 +56,7 @@ int main(int argc, char** argv) {
     fs::read_mesh(&surface, surf_file);
 
     geodesic::Mesh mesh;
-    mesh.initialize_mesh_data(surface.vertices, surface.faces); // create 'geodesic' lib mesh data structure
+    mesh.initialize_mesh_data(surface.vertices, surface.faces, true); // create 'geodesic' lib mesh data structure
 
     geodesic::GeodesicAlgorithmExact exact_algorithm(&mesh); // exact algorithm
     geodesic::GeodesicAlgorithmDijkstra dijkstra_algorithm(&mesh); // simplest approximate algorithm: path only allowed on the edges of the mesh

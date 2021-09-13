@@ -153,15 +153,28 @@ set_property(TARGET demo_geolibbrain PROPERTY CXX_STANDARD 11)
 set_property(TARGET demo_geolibbrain PROPERTY CXX_STANDARD_REQUIRED ON)
 set_property(TARGET demo_geolibbrain PROPERTY CXX_EXTENSIONS OFF)
 
-find_package(OpenMP)
-if(OpenMP_CXX_FOUND)
-    target_link_libraries(demo_geolibbrain PUBLIC OpenMP::OpenMP_CXX)
-endif()
-
-
 if( CMAKE_CXX_COMPILER_ID MATCHES "Clang|AppleClang|GNU" )
     target_compile_options( demo_geolibbrain PRIVATE -Wall -Wextra)
 endif()
 if( CMAKE_CXX_COMPILER_ID MATCHES "MSVC" )
 	target_compile_options( demo_geolibbrain PRIVATE /W4 /WX )
+endif()
+
+
+# Build the geodpath app that uses the the 'geodesic' lib
+set(SOURCE_FILES_GEODPATH src/geodpath/main_geodpath.cpp)
+add_executable(geodpath ${SOURCE_FILES_GEODPATH})
+target_include_directories(geodpath PUBLIC include third_party/libfs)
+target_include_directories(geodpath PUBLIC include third_party/geodesic )
+
+set_property(TARGET geodpath PROPERTY CXX_STANDARD 11)
+set_property(TARGET geodpath PROPERTY CXX_STANDARD_REQUIRED ON)
+set_property(TARGET geodpath PROPERTY CXX_EXTENSIONS OFF)
+
+
+if( CMAKE_CXX_COMPILER_ID MATCHES "Clang|AppleClang|GNU" )
+    target_compile_options( geodpath PRIVATE -Wall -Wextra)
+endif()
+if( CMAKE_CXX_COMPILER_ID MATCHES "MSVC" )
+	target_compile_options( geodpath PRIVATE /W4 /WX )
 endif()

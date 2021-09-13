@@ -29,7 +29,8 @@ class Mesh
     template<class Points, class Faces>
     void initialize_mesh_data(
       const Points& p,
-      const Faces& tri); // build mesh from regular point-triangle representation
+      const Faces& tri,
+      const bool silent); // build mesh from regular point-triangle representation
 
     std::vector<Vertex>& vertices() { return m_vertices; }
     std::vector<Edge>& edges() { return m_edges; }
@@ -40,8 +41,8 @@ class Mesh
       std::vector<vertex_pointer>* storage = nullptr); // list vertices closest to the point
 
   private:
-    void build_adjacencies(); // build internal structure of the mesh
-    bool verify();            // verifies connectivity of the mesh and prints some debug info
+    void build_adjacencies(const bool silent); // build internal structure of the mesh
+    bool verify(const bool silent);            // verifies connectivity of the mesh and prints some debug info
 
     std::vector<Vertex> m_vertices;
     std::vector<Edge> m_edges;
@@ -90,7 +91,8 @@ template<class Points, class Faces>
 void
 Mesh::initialize_mesh_data(
   const Points& p,
-  const Faces& tri) // build mesh from regular point-triangle representation
+  const Faces& tri,
+  const bool silent) // build mesh from regular point-triangle representation
 {
     assert(p.size() % 3 == 0);
     unsigned const num_vertices = p.size() / 3;
@@ -122,11 +124,11 @@ Mesh::initialize_mesh_data(
         }
     }
 
-    build_adjacencies(); // build the structure of the mesh
+    build_adjacencies(silent); // build the structure of the mesh
 }
 
 inline void
-Mesh::build_adjacencies()
+Mesh::build_adjacencies(bool silent=true)
 {
     //		Vertex->adjacent Faces
     std::vector<unsigned> count(m_vertices.size()); // count adjacent vertices
@@ -305,13 +307,12 @@ Mesh::build_adjacencies()
         }
     }
 
-    assert(verify());
+    assert(verify(silent));
 }
 
 inline bool
-Mesh::verify() // verifies connectivity of the mesh and prints some debug info
-{
-    std::cout << std::endl;
+Mesh::verify(bool silent=true) // verifies connectivity of the mesh and prints some debug info
+{    
     // make sure that all vertices are mentioned at least once.
     // though the loose vertex is not a bug, it most likely indicates that something is wrong
     // with the mesh
@@ -348,8 +349,9 @@ Mesh::verify() // verifies connectivity of the mesh and prints some debug info
     assert(std::find(map.begin(), map.end(), false) == map.end());
 
     // print some mesh statistics that can be useful in debugging
-    std::cout << "mesh has " << m_vertices.size() << " vertices, " << m_faces.size() << " faces, "
-              << m_edges.size() << " edges\n";
+    if(! silent) {
+        std::cout << "mesh has " << m_vertices.size() << " vertices, " << m_faces.size() << " faces, " << m_edges.size() << " edges\n";
+    }
 
     unsigned total_boundary_edges = 0;
     double longest_edge = 0;
@@ -360,9 +362,12 @@ Mesh::verify() // verifies connectivity of the mesh and prints some debug info
         longest_edge = std::max(longest_edge, e.length());
         shortest_edge = std::min(shortest_edge, e.length());
     }
-    std::cout << total_boundary_edges << " edges are boundary edges\n";
-    std::cout << "shortest/longest edges are " << shortest_edge << "/" << longest_edge << " = "
+
+    if(! silent) {
+        std::cout << total_boundary_edges << " edges are boundary edges\n";
+        std::cout << "shortest/longest edges are " << shortest_edge << "/" << longest_edge << " = "
               << shortest_edge / longest_edge << std::endl;
+    }
 
     double minx = 1e100;
     double maxx = -1e100;
@@ -379,16 +384,21 @@ Mesh::verify() // verifies connectivity of the mesh and prints some debug info
         minz = std::min(minz, v.z());
         maxz = std::max(maxz, v.z());
     }
-    std::cout << "enclosing XYZ box:"
+
+    if(! silent) {
+        std::cout << "enclosing XYZ box:"
               << " X[" << minx << "," << maxx << "]"
               << " Y[" << miny << "," << maxy << "]"
               << " Z[" << minz << "," << maxz << "]" << std::endl;
+    }
 
     double dx = maxx - minx;
     double dy = maxy - miny;
     double dz = maxz - minz;
-    std::cout << "approximate diameter of the mesh is " << std::sqrt(dx * dx + dy * dy + dz * dz)
+    if(! silent) {
+        std::cout << "approximate diameter of the mesh is " << std::sqrt(dx * dx + dy * dy + dz * dz)
               << std::endl;
+    }
 
     double min_angle = 1e100;
     double max_angle = -1e100;
@@ -400,10 +410,12 @@ Mesh::verify() // verifies connectivity of the mesh and prints some debug info
             max_angle = std::max(max_angle, angle);
         }
     }
-    std::cout << "min/max face angles are " << min_angle / M_PI * 180.0 << "/"
-              << max_angle / M_PI * 180.0 << " degrees\n";
+    if(! silent) {
+        std::cout << "min/max face angles are " << min_angle / M_PI * 180.0 << "/"
+                << max_angle / M_PI * 180.0 << " degrees\n";
 
-    std::cout << std::endl;
+        std::cout << std::endl;
+    }
     return true;
 }
 
