@@ -1,5 +1,5 @@
 # cpp_geodesics
-Fast computation of geodesic distances on brain surface meshes in C++.
+Fast computation of geodesic distances on brain surface meshes in C++ and OpenMP.
 
 
 ## About 
@@ -10,7 +10,7 @@ This repo contains fast C++ applications to compute geodesic distances on triang
 
 ## Applications
 
-All applications work with connected triangular meshes in standard mesh formats (PLY, OFF, OBJ) as well as [FreeSurfer](https://freesurfer.net/) brain surface meshes used in computational neuroimaging. The mesh file format is auto-determined from the file extension. See [libfs](https://github.com/dfsp-spirit/libfs) for details.
+All applications that come in this repostiry work with connected triangular meshes in standard mesh formats (PLY, OFF, OBJ) as well as [FreeSurfer](https://freesurfer.net/) brain surface meshes used in computational neuroimaging. The mesh file format is auto-determined from the file extension. See [libfs](https://github.com/dfsp-spirit/libfs) for details.
 
 
 * `geodpath`: Computes geodesic paths on a mesh from a source vertex to a target vertex. Ouputs coordinates of intermediate points and the total distance. Algorithm can be selected (see `Algorithms` below).
@@ -62,5 +62,6 @@ The applications use algorithms from the the following libraries:
     - Dijkstra
     - Subdivision version of Dijkstra that splits edges (becomes Dijkstra algo for `num_extra_splits=0` and approaches exact version with increasing number of splits)
 
+FreeSurfer data is read and written with [libfs](https://github.com/dfsp-spirit/libfs).
 
 
