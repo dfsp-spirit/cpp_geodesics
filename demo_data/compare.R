@@ -4,7 +4,7 @@
 # an R implementation of the circle stats ('R_output), the Matlab implemenation 
 # by Gabriel Peyre ('ml_output'), and the C++ version from this repo ('cpp_vcg_output').
 #
-# This is for dev use, ignore it.
+# This is for dev use, ignore it. I should move this into a unit test.
 
 library("fsbrain");
 library("freesurferformats");
