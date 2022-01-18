@@ -1,15 +1,21 @@
 #!/usr/bin/env Rscript
+#
+# This script compares the output of the circle stats (perimeter and radius) of
+# an R implementation of the circle stats ('R_output), the Matlab implemenation 
+# by Gabriel Peyre ('ml_output'), and the C++ version from this repo ('cpp_vcg_output').
+#
+# This is for dev use, ignore it.
 
 library("fsbrain");
 library("freesurferformats");
 
-# MAKE SURE that you have run the cpp version for fsaverage3 lh before starting this.
+# MAKE SURE that you have run the cpp version from this repo for fsaverage3 lh before starting this.
 
 sjd = fsbrain::fsaverage.path(T);
 sj = "fsaverage3";
 do_vis = F;
 
-# Load results for fsaverage3 lh
+# Circle stats: radius -- Compare results for fsaverage3 lh
 r_rad = freesurferformats::read.fs.curv("~/develop/cpp_geodesics/demo_data/R_output/lh.fsaverage3_radius_s5.curv");
 ml_rad = freesurferformats::read.fs.curv("~/develop/cpp_geodesics/demo_data/ml_output/lh.fsaverage3_radius_s5.curv");
 cpp_rad = freesurferformats::read.fs.curv("~/develop/cpp_geodesics/demo_data/cpp_vcg_output/lh.fsaverage3_radius_s5.curv");
@@ -22,7 +28,7 @@ if(do_vis) {
     fsbrain::vis.data.on.subject(sjd, sj, morph_data_lh = cpp_rad);
 }
 
-# Load results for fsaverage3 lh
+# Circle stats: perimeter -- Compare results for fsaverage3 lh
 r_per = freesurferformats::read.fs.curv("~/develop/cpp_geodesics/demo_data/R_output/lh.fsaverage3_perimeter_s5.curv");
 ml_per = freesurferformats::read.fs.curv("~/develop/cpp_geodesics/demo_data/ml_output/lh.fsaverage3_perimeter_s5.curv");
 cpp_per = freesurferformats::read.fs.curv("~/develop/cpp_geodesics/demo_data/cpp_vcg_output/lh.fsaverage3_perimeter_s5.curv");
