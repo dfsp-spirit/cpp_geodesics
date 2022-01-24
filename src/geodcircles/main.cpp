@@ -146,7 +146,7 @@ int main(int argc, char** argv) {
             }
             const std::chrono::time_point<std::chrono::steady_clock> end_at = std::chrono::steady_clock::now();
             const double duration_seconds = std::chrono::duration_cast<std::chrono::milliseconds>(end_at - start_at).count() / 1000.0;
-            std::cout << "     o Computation for hemi " << hemi << " done after " << duration_seconds << " seconds.\n";
+            std::cout << "     o Computation for hemi " << hemi << " done after " << duration_seconds << " seconds (" << secduration(duration_seconds) << ").\n";
         }
     }
 
