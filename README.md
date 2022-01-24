@@ -14,7 +14,7 @@ All applications that come in this repostory work with connected triangular mesh
 
 The following apps are included:
 
-* `geodcircles`: Core app of this repo. Computes *geodesic circle stats* and optionally *geodesic mean distances* on meshes in parallel. These two descriptors are described in *Ecker, C., Ronan, L., Feng, Y., Daly, E., Murphy, C., Ginestet, C. E., ... & MRC AIMS Consortium. (2013). Intrinsic gray-matter connectivity of the brain in adults with autism spectrum disorder. Proceedings of the National Academy of Sciences, 110(32), 13222-13227. [doi:10.1001/jamapsychiatry.2013.265](https://jamanetwork.com/journals/jamapsychiatry/fullarticle/1393585)*. The paper used the implementation from the Fastmarching toolbox for Matlab by Gabriel Peyre. The `geodcircles` app in this repository is a C++ implementation using [OpenMP](https://www.openmp.org/) that is an order of magnitude faster on a single CPU core and scales well on multi-core systems.
+* `geodcircles`: Core app of this repo. Computes *geodesic circle stats* and optionally *geodesic mean distances* on meshes in parallel. These two descriptors are described in *Ecker, C., Ronan, L., Feng, Y., Daly, E., Murphy, C., Ginestet, C. E., ... & MRC AIMS Consortium. (2013). Intrinsic gray-matter connectivity of the brain in adults with autism spectrum disorder. Proceedings of the National Academy of Sciences, 110(32), 13222-13227. [doi:10.1001/jamapsychiatry.2013.265](https://jamanetwork.com/journals/jamapsychiatry/fullarticle/1393585)*. The paper used the implementation from the Fastmarching toolbox for Matlab by Gabriel Peyre. The `geodcircles` app in this repository is a C++ implementation using [OpenMP](https://www.openmp.org/) that is an order of magnitude faster on a single CPU core and scales well on multi-core systems. See below for descriptor visualizations.
 * `geodpath`: Simple app that computes [geodesic paths](https://en.wikipedia.org/wiki/Geodesic) on a mesh from a source vertex to a target vertex. It outputs coordinates of intermediate points and the total distance in machine-readbale formats. The algorithm can be selected (see `Algorithms` below).
 
 
@@ -25,6 +25,25 @@ Utility apps:
 * `meshneigh_edge`: Compute vertex neighborhoods for all vertices of a mesh and save them to JSON or binary files. This application computes the neighborhood using edge distance on the mesh, i.e., the vertex indices of all vertices within graph distance up to the query distance. (This is the adjacency list representation of the mesh for a distance of 1.)
 
 The utility apps can output to JSON or a dense, binary custom format.
+
+
+## Descriptor visualizations
+
+The following images show the three descriptors computed by the `geodcircles` app on a human brain mesh:
+
+
+#### Geodesic mean distance
+
+![geod_meandist](web/geod_meandist.png?raw=true "Geodesic mean distance from each vertex to all others.")
+
+#### Geodesic perimeter
+
+![geod_perimeter](web/geod_perimeter.png?raw=true "Geodesic perimeter.")
+
+#### Geodesic radius
+
+![geod_radius](web/geod_radius.png?raw=true "Geodesic radius.")
+
 
 
 ## Building
