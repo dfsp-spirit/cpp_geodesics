@@ -93,3 +93,8 @@ The applications use algorithms from the the following libraries:
 FreeSurfer data is read and written with [libfs](https://github.com/dfsp-spirit/libfs).
 
 
+## Contact and Author
+
+Please open an issue here on GitHub if you find a bug or have any question or comment.
+
+The programs in this repo were written by [Tim Schäfer](http://rcmd.org/ts). 
