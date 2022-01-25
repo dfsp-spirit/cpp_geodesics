@@ -54,7 +54,7 @@ The following images show the three descriptors computed by the `geodcircles` ap
 ![geod_radius](web/geod_radius.png?raw=true "Geodesic radius.")
 **Geodesic radius** The radius of a circle covering 5% of the total mesh area, computed at each vertex and visualized for a single subject on its white matter surface. This is a proxy measure for local, inter-areal wiring costs.
 
-
+All figures were produced in R with the [fsbrain](http://github.com/dfsp-spirit/fsbrain) package.
 
 ## Building
 
