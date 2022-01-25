@@ -7,6 +7,8 @@ Fast computation of geodesic distances and related mesh descriptors on (brain su
 This repo contains fast C++ applications to compute geodesic distances and related mesh descriptors on triangular meshes. We use them to compute distances on the human cortex in computational neuroimaging, but they work with any connected trimesh. Geodesics computation is computationally expensive and the focus of these applications is mostly on speed.
 
 ![Vis](web/fsbrain_geodesic_paths.jpg?raw=true "Geodesic paths on a human brain template. Visualization created with the fsbrain R package.")
+**Fig 1: Geodesic paths** *A human brain surface mesh and geodesic paths from a source vertex to several target points on the surface.*
+
 
 ## Applications
 
@@ -42,17 +44,17 @@ The following images show the three descriptors computed by the `geodcircles` ap
 ### Geodesic mean distance / Mean separation distance
 
 ![geod_meandist](web/geod_meandist.png?raw=true "Geodesic mean distance from each vertex to all others.")
-**Mean separation distance** The geodesic mean distance (aka mean separation distance), computed at each vertex and visualized for a single subject on its white matter surface. This is a proxy measure for global wiring costs.
+**Fig. 2: Mean separation distance** *The geodesic mean distance (aka mean separation distance), computed at each vertex and visualized for a single subject on its white matter surface. This is a proxy measure for global wiring costs.*
 
 ### Geodesic perimeter
 
 ![geod_perimeter](web/geod_perimeter.png?raw=true "Geodesic perimeter.")
-**Geodesic perimeter** The perimeter of a circle covering 5% of the total mesh area, computed at each vertex and visualized for a single subject on its white matter surface. This is a proxy measure for local, intra-areal wiring costs.
+**Fig. 3: Geodesic perimeter** *The perimeter of a circle covering 5% of the total mesh area, computed at each vertex and visualized for a single subject on its white matter surface. This is a proxy measure for local, intra-areal wiring costs.*
 
 ### Geodesic radius
 
 ![geod_radius](web/geod_radius.png?raw=true "Geodesic radius.")
-**Geodesic radius** The radius of a circle covering 5% of the total mesh area, computed at each vertex and visualized for a single subject on its white matter surface. This is a proxy measure for local, inter-areal wiring costs.
+**Fig 4: Geodesic radius** *The radius of a circle covering 5% of the total mesh area, computed at each vertex and visualized for a single subject on its white matter surface. This is a proxy measure for local, inter-areal wiring costs.*
 
 All figures were produced in R with the [fsbrain](http://github.com/dfsp-spirit/fsbrain) package.
 
