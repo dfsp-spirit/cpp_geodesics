@@ -31,7 +31,7 @@ Utility apps:
 * `meshneigh_geod`: Compute vertex neighborhoods for all vertices of a mesh and save them to JSON or binary files. This application computes the geodesic neighborhood, i.e., the vertex indices (and distances) of all vertices in a certain geodesic area around each query vertex.
 * `meshneigh_edge`: Compute vertex neighborhoods for all vertices of a mesh and save them to JSON or binary files. This application computes the neighborhood using edge distance on the mesh, i.e., the vertex indices of all vertices within graph distance up to the query distance. (This is the adjacency list representation of the mesh for a distance of 1.)
 
-The utility apps can output to JSON or a dense, binary custom format.
+The utility apps can output to JSON or a dense, binary [custom format](./src/common/write_data.h).
 
 
 ## Descriptor visualizations
