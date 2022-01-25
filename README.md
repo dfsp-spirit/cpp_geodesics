@@ -14,8 +14,12 @@ All applications that come in this repostory work with connected triangular mesh
 
 The following apps are included:
 
-* `geodcircles`: The core app of this repo. Computes *geodesic circle stats* and optionally *geodesic mean distances* on meshes in parallel. 
-    * These descriptors are described in the following publication:
+* `geodcircles`: The core app of this repo. Computes *geodesic circle stats* and optionally *geodesic mean distances* on meshes in parallel.
+    * The descriptors serve as proxy measures for *intrinsic wiring costs*, i.e., wiring with the gray matter (parallel to the brain surface) and are:
+      - mean separation distance: the average geodesic distance from a vertex to the rest of the surface, as a proxy measure for global wiring costs.
+      - geodesic radius: radius of a geodesic circle covering *n* percent of the mesh surface area, as a proxy measure for local, intra-areal wiring costs.
+      - geodesic perimeter: perimeter of a geodesic circle covering *n* percent of the mesh surface area, as a proxy measure for local, inter-areal wiring costs.
+    * These descriptors are described in mroe detail the following publication:
       - Ecker, C., Ronan, L., Feng, Y., Daly, E., Murphy, C., Ginestet, C. E., ... & MRC AIMS Consortium. (2013). *Intrinsic gray-matter connectivity of the brain in adults with autism spectrum disorder.* Proceedings of the National Academy of Sciences, 110(32), 13222-13227. [doi.org/10.1073/pnas.1221880110 ](https://doi.org/10.1073/pnas.1221880110)
     *  The paper used the implementation from the Fastmarching toolbox for Matlab by Gabriel Peyre. The `geodcircles` app in this repository is a C++ implementation using [OpenMP](https://www.openmp.org/) that is an order of magnitude faster on a single CPU core and scales well on multi-core systems. See below for descriptor visualizations.
 
@@ -35,17 +39,20 @@ The utility apps can output to JSON or a dense, binary custom format.
 The following images show the three descriptors computed by the `geodcircles` app on a human brain mesh:
 
 
-#### Geodesic mean distance
+#### Geodesic mean distance / Mean separation distance
 
 ![geod_meandist](web/geod_meandist.png?raw=true "Geodesic mean distance from each vertex to all others.")
+**Mean separation distance** The geodesic mean distance (aka mean separation distance), computed at each vertex and visualized for a single subject on its white matter surface. This is a proxy measure for global wiring costs.
 
 #### Geodesic perimeter
 
 ![geod_perimeter](web/geod_perimeter.png?raw=true "Geodesic perimeter.")
+**Geodesic perimeter** The perimeter of a circle covering 5% of the total mesh area, computed at each vertex and visualized for a single subject on its white matter surface. This is a proxy measure for local, intra-areal wiring costs.
 
 #### Geodesic radius
 
 ![geod_radius](web/geod_radius.png?raw=true "Geodesic radius.")
+**Geodesic radius** The radius of a circle covering 5% of the total mesh area, computed at each vertex and visualized for a single subject on its white matter surface. This is a proxy measure for local, inter-areal wiring costs.
 
 
 
