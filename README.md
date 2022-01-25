@@ -7,6 +7,7 @@ Fast computation of geodesic distances and related mesh descriptors on (brain su
 This repo contains fast C++ applications to compute geodesic distances and related mesh descriptors on triangular meshes. We use them to compute distances on the human cortex in computational neuroimaging, but they work with any connected trimesh. Geodesics computation is computationally expensive and the focus of these applications is mostly on speed.
 
 ![Vis](web/fsbrain_geodesic_paths.jpg?raw=true "Geodesic paths on a human brain template. Visualization created with the fsbrain R package.")
+
 **Fig 1: Geodesic paths** *A human brain surface mesh and geodesic paths from a source vertex to several target points on the surface.*
 
 
