@@ -39,17 +39,17 @@ The utility apps can output to JSON or a dense, binary custom format.
 The following images show the three descriptors computed by the `geodcircles` app on a human brain mesh:
 
 
-#### Geodesic mean distance / Mean separation distance
+### Geodesic mean distance / Mean separation distance
 
 ![geod_meandist](web/geod_meandist.png?raw=true "Geodesic mean distance from each vertex to all others.")
 **Mean separation distance** The geodesic mean distance (aka mean separation distance), computed at each vertex and visualized for a single subject on its white matter surface. This is a proxy measure for global wiring costs.
 
-#### Geodesic perimeter
+### Geodesic perimeter
 
 ![geod_perimeter](web/geod_perimeter.png?raw=true "Geodesic perimeter.")
 **Geodesic perimeter** The perimeter of a circle covering 5% of the total mesh area, computed at each vertex and visualized for a single subject on its white matter surface. This is a proxy measure for local, intra-areal wiring costs.
 
-#### Geodesic radius
+### Geodesic radius
 
 ![geod_radius](web/geod_radius.png?raw=true "Geodesic radius.")
 **Geodesic radius** The radius of a circle covering 5% of the total mesh area, computed at each vertex and visualized for a single subject on its white matter surface. This is a proxy measure for local, inter-areal wiring costs.
