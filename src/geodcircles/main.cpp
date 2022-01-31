@@ -85,6 +85,7 @@ int main(int argc, char** argv) {
     fs::Mesh surface;
 
     const std::chrono::time_point<std::chrono::steady_clock> all_subjects_start_at = std::chrono::steady_clock::now();
+    std::vector<std::string> failed_subjects; // To keep track of skipped subjects, e.g., because their required files could not be loaded.    
 
     for (size_t i=0; i<subjects.size(); i++) {
         subject = subjects[i];
@@ -96,7 +97,13 @@ int main(int argc, char** argv) {
             
             // Load FreeSurfer mesh from file.
             surf_file = fs::util::fullpath({subjects_dir, subject, "surf", hemi + "." + surface_name});
-            fs::read_mesh(&surface, surf_file);
+            try {
+                fs::read_mesh(&surface, surf_file);
+            } catch(const std::exception& e) {
+                std::cerr << "   - Failed to load surface '" << surf_file << "' for subject " << subject << ", skipping hemi. Details: " << e.what();
+                failed_subjects.push_back(subject); // This may result in subjects ending up twice in the list, if both hemis fail. That is fine with us for now, and handled at the end when reporting.
+                continue;
+            }
 
             std::cout << "   - Handling hemi " << hemi << " for surface '" << surface_name << "' with " << surface.num_vertices() << " vertices and " << surface.num_faces() << " faces.\n";
 
@@ -162,6 +169,18 @@ int main(int argc, char** argv) {
             std::cout << "   - Duration since start " << secduration(subjects_so_far_duration_seconds) << " for " << (i+1) << " subjects. Estimated time left " << secduration(estimated_time_left) << ".\n";
         }
         
+    }
+
+    // Report on failed subjects (e.g., failed due to missing files).
+    if(failed_subjects.size() > 0) {
+        // We need to make failed_subjects unique, as it may contain a subject twice if both of its hemispheres failed.
+        std::sort( failed_subjects.begin(), failed_subjects.end() );
+        failed_subjects.erase( unique( failed_subjects.begin(), failed_subjects.end() ), failed_subjects.end() );
+        std::cout << "Comutation failed for " << failed_subjects.size() << " of the " << subjects.size() << " subjects:\n";
+        for (const auto subj: failed_subjects) {        
+            std::cout << subj << ' ';
+        }
+        std::cout << '\n';
     }
 
 }
