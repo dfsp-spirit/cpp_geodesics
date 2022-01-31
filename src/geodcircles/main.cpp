@@ -85,7 +85,8 @@ int main(int argc, char** argv) {
     fs::Mesh surface;
 
     const std::chrono::time_point<std::chrono::steady_clock> all_subjects_start_at = std::chrono::steady_clock::now();
-    std::vector<std::string> failed_subjects; // To keep track of skipped subjects, e.g., because their required files could not be loaded.    
+    std::vector<std::string> failed_subjects; // To keep track of skipped subjects, e.g., because their required files could not be loaded. This does NOT include subjects which were skipped because the data was already there.
+    unsigned int num_skipped_hemis_for_far = 0; // This counts subject hemispheres for which no computation took place: the sum of failed subject hemis (e.g., due to missing surface files) and (if 'keep_existing_files' is true) subject hemis for which the output files already existed.
 
     for (size_t i=0; i<subjects.size(); i++) {
         subject = subjects[i];
@@ -102,6 +103,7 @@ int main(int argc, char** argv) {
             } catch(const std::exception& e) {
                 std::cerr << "   - Failed to load surface '" << surf_file << "' for subject " << subject << ", skipping hemi. Details: " << e.what();
                 failed_subjects.push_back(subject); // This may result in subjects ending up twice in the list, if both hemis fail. That is fine with us for now, and handled at the end when reporting.
+                num_skipped_hemis_for_far++;
                 continue;
             }
 
@@ -121,11 +123,13 @@ int main(int argc, char** argv) {
                     if(circle_stats_do_meandists) {
                         if(file_exists(rad_filename) && file_exists(per_filename) && file_exists(mgd_filename)) {
                             std::cout << "     o Skipping computation for hemi " << hemi << ", output files exist.\n";
+                            num_skipped_hemis_for_far++;
                             continue;                            
                         }
                     } else {
                         if(file_exists(rad_filename) && file_exists(per_filename)) {
                             std::cout << "     o Skipping computation for hemi " << hemi << ", output files exist.\n";
+                            num_skipped_hemis_for_far++;
                             continue;
                         }
                     }
@@ -149,6 +153,7 @@ int main(int argc, char** argv) {
                 if(keep_existing_files) {
                     if(file_exists(mean_geodist_outfile)) {
                         std::cout << "     o Skipping computation for hemi " << hemi << ", output file exists.\n";
+                        num_skipped_hemis_for_far++;
                         continue;
                     }
                 }                
@@ -164,8 +169,10 @@ int main(int argc, char** argv) {
         const double subject_duration_seconds = std::chrono::duration_cast<std::chrono::milliseconds>(subject_end_at - subject_start_at).count() / 1000.0;
         const double subjects_so_far_duration_seconds = std::chrono::duration_cast<std::chrono::milliseconds>(subject_end_at - all_subjects_start_at).count() / 1000.0;        
         std::cout << "   - Subject " << subject << " took " << secduration(subject_duration_seconds) << ".\n";
-        if(i < (subjects.size() - 1)) {            
-            const double estimated_time_left = subjects_so_far_duration_seconds / (i+1) * subjects.size();
+        const int num_hemis_computed = ((i+1) * 2) - num_skipped_hemis_for_far; // These are all hemispheres for which computational effort was needed (they were not skipped, for whatever reasons).
+        if(i < (subjects.size() - 1) && num_hemis_computed > 0) {   // We do not give a time left estimate if nothing was really done yet or if we are finished.
+            const double num_subjects_computed = num_hemis_computed / 2.0;
+            const double estimated_time_left = subjects_so_far_duration_seconds / num_subjects_computed * subjects.size();
             std::cout << "   - Duration since start " << secduration(subjects_so_far_duration_seconds) << " for " << (i+1) << " subjects. Estimated time left " << secduration(estimated_time_left) << ".\n";
         }
         
