@@ -27,16 +27,16 @@ int main(int argc, char** argv) {
         std::cout << "  <subjects_file> : text file containing one subject identifier per line.\n";
         std::cout << "  <subjects_dir>  : directory containing the FreeSurfer recon-all output for the subjects. Defaults to current working directory.\n";
         std::cout << "  <surface>       : the surface file to load from the surf/ subdir of each subject, without hemi part. Defaults to 'pial'.\n";
-        std::cout << "  <do_circle_stat>: flag whether to compute geodesic circle stats as well, must be 0 (off), 1 (on) or 2 (on with mean dists). Defaults to 0.\n";
-        std::cout << "  <keep_existing> : flag whether to keep existing output files, must be 0 (off: recompute and overwrite files), or 1 (keep existing files). Defaults to 0.\n";
+        std::cout << "  <do_circle_stat>: flag whether to compute geodesic circle stats as well, must be 0 (off), 1 (on) or 2 (on with mean dists). Defaults to 2.\n";
+        std::cout << "  <keep_existing> : flag whether to keep existing output files, must be 0 (off: recompute and overwrite files), or 1 (keep existing files). Defaults to 1.\n";
         exit(1);
     }
     std::string subjects_file = std::string(argv[1]);
     std::string subjects_dir = ".";
     std::string surface_name = "pial";
-    bool do_circle_stats = false;
-    bool keep_existing_files = false;
-    bool circle_stats_do_meandists = false;
+    bool do_circle_stats = true;
+    bool keep_existing_files = true;
+    bool circle_stats_do_meandists = true;
     if(argc >= 3) {
         subjects_dir = std::string(argv[2]);
     }
@@ -46,23 +46,25 @@ int main(int argc, char** argv) {
     if(argc >= 5) {
         if (std::string(argv[4]) == "1") {
             do_circle_stats = true;
+            circle_stats_do_meandists = false;
         } else if (std::string(argv[4]) == "2") {
             do_circle_stats = true;
             circle_stats_do_meandists = true;
         } else if((std::string(argv[4]) == "0")) {
-            // no-op, default.
+            do_circle_stats = false;
+            circle_stats_do_meandists = false;
         }  else {
-            std::cerr << "Invalid value for parameter 'do_circle_stats'.\n";
+            std::cerr << "Invalid value for parameter 'do_circle_stats' Must be '0', '1' or '2'.\n";
             exit(1);
         }
     }
-    if(argc == 6) {
+    if(argc == 6) { // whether to keep existing files / skip computation for those that are already done.
         if (std::string(argv[5]) == "0") {
-            // no-op, default.
+            keep_existing_files = false;
         } else if (std::string(argv[5]) == "1") {
             keep_existing_files = true;
         } else {
-            std::cerr << "Invalid value for parameter 'keep_existing'.\n";
+            std::cerr << "Invalid value for parameter 'keep_existing'. Must be '0' or '1'.\n";
             exit(1);
         }
     }
@@ -82,11 +84,14 @@ int main(int argc, char** argv) {
     std::string surf_file, hemi, subject;
     fs::Mesh surface;
 
+    const std::chrono::time_point<std::chrono::steady_clock> all_subjects_start_at = std::chrono::steady_clock::now();
+
     for (size_t i=0; i<subjects.size(); i++) {
         subject = subjects[i];
         std::cout << " * Handling subject '" << subject << "', # " << (i+1) << " of " << subjects.size() << ".\n";
+        std::chrono::time_point<std::chrono::steady_clock> subject_start_at = std::chrono::steady_clock::now();
         for (size_t hemi_idx=0; hemi_idx<hemis.size(); hemi_idx++) {
-            std::chrono::time_point<std::chrono::steady_clock> start_at = std::chrono::steady_clock::now();
+            std::chrono::time_point<std::chrono::steady_clock> subject_hemi_start_at = std::chrono::steady_clock::now();
             hemi = hemis[hemi_idx];
             
             // Load FreeSurfer mesh from file.
@@ -144,10 +149,19 @@ int main(int argc, char** argv) {
                 fs::write_curv(mean_geodist_outfile, mean_dists);
                 std::cout << "     o Geodesic mean distance results for hemi " << hemi << " written to file '" << mean_geodist_outfile << "'.\n";
             }
-            const std::chrono::time_point<std::chrono::steady_clock> end_at = std::chrono::steady_clock::now();
-            const double duration_seconds = std::chrono::duration_cast<std::chrono::milliseconds>(end_at - start_at).count() / 1000.0;
-            std::cout << "     o Computation for hemi " << hemi << " done after " << duration_seconds << " seconds (" << secduration(duration_seconds) << ").\n";
+            const std::chrono::time_point<std::chrono::steady_clock> subject_hemi_end_at = std::chrono::steady_clock::now();
+            const double hemi_duration_seconds = std::chrono::duration_cast<std::chrono::milliseconds>(subject_hemi_end_at - subject_hemi_start_at).count() / 1000.0;
+            std::cout << "     o Computation for hemi " << hemi << " done after " << hemi_duration_seconds << " seconds (" << secduration(hemi_duration_seconds) << ").\n";
         }
+        const std::chrono::time_point<std::chrono::steady_clock> subject_end_at = std::chrono::steady_clock::now();
+        const double subject_duration_seconds = std::chrono::duration_cast<std::chrono::milliseconds>(subject_end_at - subject_start_at).count() / 1000.0;
+        const double subjects_so_far_duration_seconds = std::chrono::duration_cast<std::chrono::milliseconds>(subject_end_at - all_subjects_start_at).count() / 1000.0;        
+        std::cout << "   - Subject " << subject << " took " << secduration(subject_duration_seconds) << ".\n";
+        if(i < (subjects.size() - 1)) {            
+            const double estimated_time_left = subjects_so_far_duration_seconds / (i+1) * subjects.size();
+            std::cout << "   - Duration since start " << secduration(subjects_so_far_duration_seconds) << " for " << (i+1) << " subjects. Estimated time left " << secduration(estimated_time_left) << ".\n";
+        }
+        
     }
 
 }
