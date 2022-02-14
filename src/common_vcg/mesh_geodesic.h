@@ -190,6 +190,20 @@ std::string geod_neigh_to_json(std::vector<std::vector<GeodNeighbor>> neigh) {
 }
 
 
+/// Who would write his own CSV exporter in 2022?!
+std::string geod_neigh_to_csv(const std::vector<std::vector<GeodNeighbor>> neigh, const std::string sep=",") {
+    std::stringstream is;
+    is << "source" << sep << "target" << sep << "distance" << "\n";
+    
+    for(size_t i=0; i < neigh.size(); i++) {
+        for(size_t j=0; j < neigh[i].size(); j++) {
+            is << i << sep << neigh[i][j].index << sep << neigh[i][j].distance << "\n";
+        }
+    }
+    return is.str();
+}
+
+
 /// Compute for each mesh vertex the mean geodesic distance to all others, sequentially.
 std::vector<float> mean_geodist(MyMesh &m) {
   std::vector<float> meandists;
