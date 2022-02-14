@@ -31,10 +31,10 @@ Utility apps:
 
 * `geodpath`: Simple app that computes [geodesic paths](https://en.wikipedia.org/wiki/Geodesic) on a mesh from a source vertex to a target vertex. It outputs coordinates of intermediate points and the total distance in machine-readbale formats. The algorithm can be selected (see `Algorithms` below).
 * `export_brainmesh`: Exports a FreeSurfer mesh and per-vertex data to a vertex-colored mesh in PLY format (by applying the viridis colormap to the per-vertex data). The colored mesh can then be viewed in standard mesh applications like [MeshLab](https://www.meshlab.net/) or [Blender](https://www.blender.org/).
-* `meshneigh_geod`: Compute vertex neighborhoods for all vertices of a mesh and save them to JSON, CSV, or [VV binary files](./vv_format). This application computes the geodesic neighborhood, i.e., the vertex indices (and distances) of all vertices in a certain geodesic area around each query vertex.
+* `meshneigh_geod`: Compute vertex neighborhoods for all vertices of a mesh and save them to JSON, CSV, or [VV binary files](./vv_format.md). This application computes the geodesic neighborhood, i.e., the vertex indices (and distances) of all vertices in a certain geodesic area around each query vertex.
 * `meshneigh_edge`: Compute vertex neighborhoods for all vertices of a mesh and save them to JSON, CSV, or VV binary files. This application computes the neighborhood using edge distance on the mesh, i.e., the vertex indices of all vertices within graph distance up to the query distance. (This is the adjacency list representation of the mesh for a distance of 1.)
 
-The utility apps can output to JSON or a dense, binary [custom format](./src/common/write_data.h).
+The utility apps can output to JSON, CSV, or [VV format](./vv_format.md) files.
 
 
 ## Descriptor visualizations
