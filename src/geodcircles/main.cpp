@@ -183,11 +183,13 @@ int main(int argc, char** argv) {
         // We need to make failed_subjects unique, as it may contain a subject twice if both of its hemispheres failed.
         std::sort( failed_subjects.begin(), failed_subjects.end() );
         failed_subjects.erase( unique( failed_subjects.begin(), failed_subjects.end() ), failed_subjects.end() );
-        std::cout << "Comutation failed for " << failed_subjects.size() << " of the " << subjects.size() << " subjects:\n";
+        std::cout << "Computation failed for " << failed_subjects.size() << " of the " << subjects.size() << " subjects:\n";
         for (const auto subj: failed_subjects) {        
             std::cout << subj << ' ';
         }
         std::cout << '\n';
+    } else {
+        std::cout << "Computation succeeded for all " << subjects.size() << " subjects.\n";
     }
 
 }
