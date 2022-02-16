@@ -22,7 +22,8 @@ The following apps are included:
       - mean separation distance: the average geodesic distance from a vertex to the rest of the surface, as a proxy measure for global wiring costs.
       - geodesic radius: radius of a geodesic circle covering *n* percent of the mesh surface area, as a proxy measure for local, intra-areal wiring costs.
       - geodesic perimeter: perimeter of a geodesic circle covering *n* percent of the mesh surface area, as a proxy measure for local, inter-areal wiring costs.
-    * These descriptors are described in mroe detail the following publication:
+    * These descriptors are described in mroe detail the following publications:
+      - Griffin, L.D. (1994) *The Intrinsic Geometry of the Cerebral Cortex.* Journal of Theoretical Biology, 166(3), 261-273. [doi.org/10.1006/jtbi.1994.1024](https://doi.org/10.1006/jtbi.1994.1024)
       - Ecker, C., Ronan, L., Feng, Y., Daly, E., Murphy, C., Ginestet, C. E., ... & MRC AIMS Consortium. (2013). *Intrinsic gray-matter connectivity of the brain in adults with autism spectrum disorder.* Proceedings of the National Academy of Sciences, 110(32), 13222-13227. [doi.org/10.1073/pnas.1221880110 ](https://doi.org/10.1073/pnas.1221880110)
     *  The paper used the implementation from the Fastmarching toolbox for Matlab by Gabriel Peyre. The `geodcircles` app in this repository is a C++ implementation using [OpenMP](https://www.openmp.org/) that is an order of magnitude faster on a single CPU core and scales well on multi-core systems. See below for descriptor visualizations.
 
