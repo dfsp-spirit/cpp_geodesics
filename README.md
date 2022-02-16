@@ -25,7 +25,7 @@ The following apps are included:
     * These descriptors are described in mroe detail the following publications:
       - Griffin, L.D. (1994) *The Intrinsic Geometry of the Cerebral Cortex.* Journal of Theoretical Biology, 166(3), 261-273. [doi.org/10.1006/jtbi.1994.1024](https://doi.org/10.1006/jtbi.1994.1024)
       - Ecker, C., Ronan, L., Feng, Y., Daly, E., Murphy, C., Ginestet, C. E., ... & MRC AIMS Consortium. (2013). *Intrinsic gray-matter connectivity of the brain in adults with autism spectrum disorder.* Proceedings of the National Academy of Sciences, 110(32), 13222-13227. [doi.org/10.1073/pnas.1221880110 ](https://doi.org/10.1073/pnas.1221880110)
-    *  The paper used the implementation from the Fastmarching toolbox for Matlab by Gabriel Peyre. The `geodcircles` app in this repository is a C++ implementation using [OpenMP](https://www.openmp.org/) that is an order of magnitude faster on a single CPU core and scales well on multi-core systems. See below for descriptor visualizations.
+    *  The *Ecker 2013* paper applied the descriptors to an ASD dataset and used the implementation from the Fastmarching toolbox for Matlab by Gabriel Peyre. The `geodcircles` app in this repository is a C++ implementation using [OpenMP](https://www.openmp.org/) that is an order of magnitude faster on a single CPU core and scales well on multi-core systems. See below for descriptor visualizations.
 
 
 Utility apps:
