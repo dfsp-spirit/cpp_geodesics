@@ -173,7 +173,7 @@ int main(int argc, char** argv) {
         if(i < (subjects.size() - 1) && num_hemis_computed > 0) {   // We do not give a time left estimate if nothing was really done yet or if we are finished.
             const double num_subjects_computed = num_hemis_computed / 2.0;
             const double estimated_time_left = subjects_so_far_duration_seconds / num_subjects_computed * (subjects.size() - num_subjects_computed);
-            std::cout << "   - Duration since start " << secduration(subjects_so_far_duration_seconds) << " for " << (i+1) << " subjects. Estimated time left " << secduration(estimated_time_left) << ".\n";
+            std::cout << "   - Duration since start " << secduration(subjects_so_far_duration_seconds) << " for " << (i+1) << " subjects. Estimated time left " << secduration(estimated_time_left) << " for " << (subjects.size() - (i+1)) << " subjects.\n";
         }
         
     }
