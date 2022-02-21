@@ -172,7 +172,7 @@ int main(int argc, char** argv) {
         const int num_hemis_computed = ((i+1) * 2) - num_skipped_hemis_for_far; // These are all hemispheres for which computational effort was needed (they were not skipped, for whatever reasons).
         if(i < (subjects.size() - 1) && num_hemis_computed > 0) {   // We do not give a time left estimate if nothing was really done yet or if we are finished.
             const double num_subjects_computed = num_hemis_computed / 2.0;
-            const double estimated_time_left = subjects_so_far_duration_seconds / num_subjects_computed * subjects.size();
+            const double estimated_time_left = subjects_so_far_duration_seconds / num_subjects_computed * (subjects.size() - num_subjects_computed);
             std::cout << "   - Duration since start " << secduration(subjects_so_far_duration_seconds) << " for " << (i+1) << " subjects. Estimated time left " << secduration(estimated_time_left) << ".\n";
         }
         
