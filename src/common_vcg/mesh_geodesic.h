@@ -29,7 +29,7 @@
 // Compute pseudo-geodesic distance from query vertices 'verts' to all others (or to those
 // within a maximal distance of maxdist_ if it is > 0). Often 'verts' only contains a single source vertex.
 std::vector<float> geodist(MyMesh& m, std::vector<int> verts, float maxdist) {
-  
+
     int n = verts.size();
     VertexIterator vi;
     FaceIterator fi;
@@ -68,7 +68,7 @@ std::vector<float> geodist(MyMesh& m, std::vector<int> verts, float maxdist) {
 
 /// Compute for each mesh vertex the mean geodesic distance to all others, parallel using OpenMP.
 std::vector<float> mean_geodist_p(MyMesh &m) {
-  
+
   // The MyMesh instance cannot be shared between the processes because it
   // gets changed when the geodist function is run (distances are stored in
   // the vertices' quality field). Also, firstprivate(m) does not work because
@@ -79,15 +79,15 @@ std::vector<float> mean_geodist_p(MyMesh &m) {
   // provide a copy constructor for that which copies the member MyMesh using the
   // VCGLIB mesh copy functionality, use firstprivate() on the wrapper, and then pass
   // in each thread the inner MyMesh from the wrapper to the geodist function. We have
-  // not tried this though. 
+  // not tried this though.
   fs::Mesh surf;
   fs_surface_from_vcgmesh(&surf, m);
 
   std::vector<float> meandists;
   size_t nv = surf.num_vertices();
   float max_dist = -1.0;
-  meandists.resize(nv);  
-  
+  meandists.resize(nv);
+
   # pragma omp parallel for firstprivate(max_dist) shared(surf, meandists)
   for(size_t i=0; i<nv; i++) {
     MyMesh m;
@@ -114,24 +114,24 @@ struct GeodNeighbor {
 
 /// Compute for each mesh vertex all vertices in a given distance (and that distance), parallel using OpenMP.
 std::vector<std::vector<GeodNeighbor>> geod_neighborhood(MyMesh &m, float max_dist = 5.0, bool include_self = true) {
-  
+
   // The MyMesh instance cannot be shared between the processes because it
   // gets changed when the geodist function is run (distances are stored in
-  // the vertices' quality field). See the comment in mean_geodist_p() for 
+  // the vertices' quality field). See the comment in mean_geodist_p() for
   // details.
   fs::Mesh surf;
   fs_surface_from_vcgmesh(&surf, m);
 
-  size_t nv = surf.num_vertices();  
+  size_t nv = surf.num_vertices();
   std::vector<std::vector<GeodNeighbor>> neighborhoods(nv, std::vector<GeodNeighbor>());
-  
+
   # pragma omp parallel for firstprivate(max_dist) shared(surf, neighborhoods)
   for(size_t i=0; i<nv; i++) {
     MyMesh m;
     vcgmesh_from_fs_surface(&m, surf);
     std::vector<int> query_vert= {(int)i};
     std::vector<float> gdists = geodist(m, query_vert, max_dist);
-    
+
     for(size_t j=0; j<gdists.size(); j++) {
       if(i == j) {
         if(include_self) {
@@ -140,10 +140,10 @@ std::vector<std::vector<GeodNeighbor>> geod_neighborhood(MyMesh &m, float max_di
       } else {
         if(gdists[j] > 0.0 && gdists[j] <= max_dist) {
           neighborhoods[i].push_back(GeodNeighbor(j, gdists[j]));
-        }        
-      }      
+        }
+      }
     }
-    
+
   }
   return neighborhoods;
 }
@@ -164,7 +164,7 @@ std::string geod_neigh_to_json(std::vector<std::vector<GeodNeighbor>> neigh) {
         }
         is << " ]";
         if(i < neigh.size()-1) {
-            is <<",";    
+            is <<",";
         }
         is <<"\n";
     }
@@ -180,7 +180,7 @@ std::string geod_neigh_to_json(std::vector<std::vector<GeodNeighbor>> neigh) {
         }
         is << " ]";
         if(i < neigh.size()-1) {
-            is <<",";    
+            is <<",";
         }
         is <<"\n";
     }
@@ -194,7 +194,7 @@ std::string geod_neigh_to_json(std::vector<std::vector<GeodNeighbor>> neigh) {
 std::string geod_neigh_to_csv(const std::vector<std::vector<GeodNeighbor>> neigh, const std::string sep=",") {
     std::stringstream is;
     is << "source" << sep << "target" << sep << "distance" << "\n";
-    
+
     for(size_t i=0; i < neigh.size(); i++) {
         for(size_t j=0; j < neigh[i].size(); j++) {
             is << i << sep << neigh[i][j].index << sep << neigh[i][j].distance << "\n";
@@ -210,7 +210,7 @@ std::vector<float> mean_geodist(MyMesh &m) {
   size_t nv = m.VN();
   float max_dist = -1.0;
   meandists.resize(nv);
-  
+
   for(size_t i=0; i<nv; i++) {
     std::vector<int> query_vert;
     query_vert.resize(1);
@@ -318,7 +318,7 @@ std::vector<std::vector<double>> _compute_geodesic_circle_stats(MyMesh& m, std::
             if(vert_in_radius[face_verts[j]] == false) {
               k=j;
             }
-          }          
+          }
         } else { // 1 in, 2 out
           for(int j=0; j<3; j++) {
             if(vert_in_radius[face_verts[j]] == true) {
@@ -353,7 +353,7 @@ std::vector<std::vector<double>> _compute_geodesic_circle_stats(MyMesh& m, std::
         std::vector<float> coords_v0 = surf.vertex_coords(face_verts[0]);
         std::vector<float> coords_v1 = surf.vertex_coords(face_verts[1]);
         std::vector<float> coords_v2 = surf.vertex_coords(face_verts[2]);
-        
+
         // These computations use vector math with overloaded operators from vec_math.h
         float alpha1 = face_vertex_dists[1]/(face_vertex_dists[1]-face_vertex_dists[0]);
         std::vector<float> v1 = alpha1 * coords_v0 + (1.0f-alpha1) * coords_v1;
@@ -368,10 +368,10 @@ std::vector<std::vector<double>> _compute_geodesic_circle_stats(MyMesh& m, std::
         }
 
         total_perimeter += vnorm(v1 - v2);
-      }     
-      
+      }
+
     }
-    // Collect results 
+    // Collect results
     areas_by_radius[radius_idx] = total_area_in_radius;
     perimeters_by_radius[radius_idx] = total_perimeter;
   }
@@ -388,12 +388,12 @@ std::vector<std::vector<double>> _compute_geodesic_circle_stats(MyMesh& m, std::
 /// If 'do_meandist' is true, this function will compute the mean geodesic distances to all other vertices for each vertex and
 /// return those as well. This is only partially needed for the function (it only needs to know for each vertex the geodesic
 /// distances in a certain radius, not to ALL vertices), but it is faster to do it here instead of separately computing the mean
-/// distances with another function call to mean_geodist_p()/mean_geodist() IF you need them anyways. If in doubt, leave this 
+/// distances with another function call to mean_geodist_p()/mean_geodist() IF you need them anyways. If in doubt, leave this
 /// disabled for a dramatic speedup (how much depends on the 'scale' parameter).
 std::vector<std::vector<float>> geodesic_circles(MyMesh& m, std::vector<int> query_vertices, float scale=5.0, bool do_meandist=false) {
 
   double sampling = 10.0;
-  double mesh_area = mesh_area_total(m);  
+  double mesh_area = mesh_area_total(m);
   double area_scale = (scale * mesh_area) / 100.0;
   double r_cycle = sqrt(area_scale / M_PI);
   float max_possible_float = std::numeric_limits<float>::max();
@@ -402,7 +402,7 @@ std::vector<std::vector<float>> geodesic_circles(MyMesh& m, std::vector<int> que
   double mean_len = std::accumulate(edge_lengths.begin(), edge_lengths.end(), 0.0) / (double)edge_lengths.size();
   double max_edge_len = *std::max_element(edge_lengths.begin(), edge_lengths.end());
   std::cout  << "     o Mesh has " << edge_lengths.size() << " edges with average length " << mean_len << " and maximal length " << max_edge_len << ".\n";
-   
+
   double extra_dist = max_edge_len * 8.0;
   double max_dist = r_cycle + extra_dist; // Early termination of geodesic distance computation for dramatic speed-up.
   if(do_meandist) {
@@ -438,7 +438,7 @@ std::vector<std::vector<float>> geodesic_circles(MyMesh& m, std::vector<int> que
     std::vector<float> v_geodist = geodist(mt, query_vertex, max_dist);
 
     if(do_meandist) {
-      meandist[i] = std::accumulate(v_geodist.begin(), v_geodist.end(), 0.0) / (float)v_geodist.size(); 
+      meandist[i] = std::accumulate(v_geodist.begin(), v_geodist.end(), 0.0) / (float)v_geodist.size();
     } else {
       // The geodist() function has been called with a positive max_dist setting, and it returned 0.0 for all vertices it
       // did not visit in that case. That is unfortunate, so we fix the returned distance values here.
@@ -449,7 +449,7 @@ std::vector<std::vector<float>> geodesic_circles(MyMesh& m, std::vector<int> que
             v_geodist[j] = max_possible_float;
           }
         }
-      }      
+      }
     }
 
     std::vector<double> sample_at_radii = linspace<double>(r_cycle-10.0, r_cycle+10.0, sampling);
@@ -487,13 +487,13 @@ std::vector<std::vector<float>> geodesic_circles(MyMesh& m, std::vector<int> que
     radius[i] = sampled_radii[min_index];
     perimeter[i] = sampled_perimeters[min_index];
   }
-  
+
   // Prepare and return results.
   std::vector<std::vector<float>> res;
   res.push_back(radius);
   res.push_back(perimeter);
   if(do_meandist) {
-    res.push_back(meandist);    
+    res.push_back(meandist);
   }
   return res;
 }

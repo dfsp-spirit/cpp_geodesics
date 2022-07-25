@@ -22,7 +22,7 @@
 
 /// Compute edge neighborhood (or graph k ring) for the mesh.
 /// @param k The 'k' for computing the k-ring neighborhood.
-void mesh_neigh_edge(const std::string& input_mesh_file, const size_t k = 1, const std::string& output_dist_file="edge_distances", const bool include_self=true, const bool json=false) {        
+void mesh_neigh_edge(const std::string& input_mesh_file, const size_t k = 1, const std::string& output_dist_file="edge_distances", const bool include_self=true, const bool write_json=false, const bool write_csv=false, const bool write_vvbin=true) {
 
     std::cout << "Reading mesh '" + input_mesh_file + "' to compute graph " + std::to_string(k) + "-ring edge neighborhoods...\n";
     if(include_self) {
@@ -30,7 +30,7 @@ void mesh_neigh_edge(const std::string& input_mesh_file, const size_t k = 1, con
     } else {
         std::cout << " * Neighborhoods will NOT include the query vertex itself.\n";
     }
-   
+
     fs::Mesh surface;
     fs::read_surf(&surface, input_mesh_file);
 
@@ -46,18 +46,27 @@ void mesh_neigh_edge(const std::string& input_mesh_file, const size_t k = 1, con
         query_vertices[i] = i;
     }
     std::vector<std::vector<int32_t>> neigh = mesh_adj(m, query_vertices, k, include_self);
-    
+
     // Write it to a JSON file.
-    if(json) {
+    if(write_json) {
         std::string output_dist_file_json = output_dist_file + ".json";
         strtofile(neigh_to_json(neigh), output_dist_file_json);
         std::cout << "Neighborhood information written to JSON file '" + output_dist_file_json + "'.\n";
     }
 
     // Write it to a VV file.
-    std::string output_dist_file_vv = output_dist_file + ".vv";
-    write_vv<int32_t>(output_dist_file_vv, neigh);
-    std::cout << "Neighborhood information written to vv file '" + output_dist_file_vv + "'.\n";    
+    if(write_vvbin) {
+        std::string output_dist_file_vv = output_dist_file + ".vv";
+        write_vv<int32_t>(output_dist_file_vv, neigh);
+        std::cout << "Neighborhood information written to vv file '" + output_dist_file_vv + "'.\n";
+    }
+
+    // Write it to a CSV file.
+    if(write_csv) {
+        std::string output_dist_file_csv = output_dist_file + ".csv";
+        strtofile(edge_neigh_to_csv(neigh), output_dist_file_csv);
+        std::cout << "Neighborhood information written to CSV file '" + output_dist_file_csv + "'.\n";
+    }
 }
 
 
@@ -67,7 +76,7 @@ int main(int argc, char** argv) {
     bool include_self = true;
     bool json = false;
     size_t k = 1;
-    
+
     if(argc < 2 || argc > 6) {
         std::cout << "===" << argv[0] << " -- Compute edge neighborhoods for mesh vertices. ===\n";
         std::cout << "Usage: " << argv[0] << " <input_mesh> [<k> [<output_file] [<include_self> [<json>]]]]>\n";
@@ -80,13 +89,13 @@ int main(int argc, char** argv) {
     }
     input_mesh_file = argv[1];
     if(argc >= 3) {
-        std::istringstream iss( argv[2] );        
+        std::istringstream iss( argv[2] );
         if(!(iss >> k)) {
             throw std::runtime_error("Could not convert argument k to positive integer.\n");
-        }        
+        }
     }
     if(argc >= 4) {
-        output_dist_file = argv[3];                
+        output_dist_file = argv[3];
     }
     if(argc >= 5) {
         std::string inc = argv[4];
@@ -108,7 +117,7 @@ int main(int argc, char** argv) {
             throw std::runtime_error("Argument json must be 'true' or 'false'.\n");
         }
     }
-        
+
     mesh_neigh_edge(input_mesh_file, k, output_dist_file, include_self, json);
     exit(0);
 }
