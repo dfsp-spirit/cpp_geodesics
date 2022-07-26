@@ -106,14 +106,71 @@ std::vector<float> mean_geodist_p(MyMesh &m) {
 }
 
 struct GeodNeighbor {
+  GeodNeighbor() : index(0), distance(0.0) {}
   GeodNeighbor(size_t index, float distance) : index(index), distance(distance) {}
-  size_t index;
-  float distance;
+  size_t index; // The index of the neighbor vertex.
+  float distance; // The geodesic distance to that neighbor.
 };
 
 
+/// Struct modeling a spatial neighborhood with coordinates, geodesic or Euclidean.
+///
+/// The coordinates of the neighbors should be
+/// centered on the central/source vertex (i.e., it should be at (0,0,0)) but
+/// NOT scaled (e.g., to range 0..1).
+/// Note that the fact that the central vertex is the origin means that we do
+/// not need to store its coordinates. If you need that (and do not center), you
+/// will have to add the vertex itself to its neighborhood.
+struct Neighborhood {
+  Neighborhood(size_t index, std::vector<std::vector<float>> coords, std::vector<float> distances) : index(index), coords(coords), distances(distances) {}
+  Neighborhood(size_t index, std::vector<std::vector<float>> coords) : index(index), coords(coords), distances(std::vector<float>(coords.size(), 0.0)) {}
+  Neighborhood() : index(0), coords(std::vector<std::vector<float>>(0)), distances(std::vector<float>(0)) {}
+  size_t index; // The index of the central/source vertex.
+  std::vector<std::vector<float> > coords; // 2D array of coordinates, for n 3D coordinates this will have dimensions (n, 3).
+  std::vector<float> distances;
+};
+
+
+std::vector<Neighborhood> neighborhoods_from_geod_neighbors(const std::vector<std::vector<GeodNeighbor> > geod_neighbors, MyMesh &m) {
+  size_t num_neighborhoods = geod_neighbors.size();
+  std::vector<Neighborhood> neighborhoods;
+  size_t neigh_size;
+  std::vector<std::vector<float>> neigh_coords;
+  std::vector<float> neigh_distances;
+  std::vector<float> source_vert_coords;
+  std::vector<int> neigh_indices;
+  for(size_t i = 0; i < num_neighborhoods; i++) {
+    neigh_size = geod_neighbors[i].size();
+    neigh_indices = std::vector<int>(neigh_size);
+    neigh_distances = std::vector<float>(neigh_size);
+    neigh_coords = std::vector<std::vector<float> >(neigh_size, std::vector<float> (3, 0.0));
+    for(size_t j = 0; j < neigh_size; j++) {
+      size_t neigh_mesh_idx = geod_neighbors[i][j].index;
+      neigh_indices[j] = neigh_mesh_idx;
+      neigh_distances[j] = geod_neighbors[i][j].distance;
+      neigh_coords[i] = std::vector<float> {m.vert[neigh_mesh_idx].P()[0], m.vert[neigh_mesh_idx].P()[1], m.vert[neigh_mesh_idx].P()[2]};
+      source_vert_coords = std::vector<float> {m.vert[i].P()[0], m.vert[i].P()[1], m.vert[i].P()[2]};
+      // Center the coords around source vertex (make it the origin):
+      for(size_t k = 0; k < 3; k++) {
+        neigh_coords[i][k] -= source_vert_coords[k];
+      }
+    }
+    neighborhoods.push_back(Neighborhood(i, neigh_coords, neigh_distances));
+  }
+  return neighborhoods;
+}
+
+
+std::vector<Neighborhood> neighborhoods_from_edge_neighbors(const std::vector<std::vector<int> > edge_neighbors, MyMesh &m) {
+  size_t num_neighborhoods = edge_neighbors.size();
+  std::vector<Neighborhood> neighborhoods;
+
+  throw std::runtime_error("TODO: implement neighborhoods_from_edge_neighbors().");
+  return neighborhoods;
+}
+
 /// Compute for each mesh vertex all vertices in a given distance (and that distance), parallel using OpenMP.
-std::vector<std::vector<GeodNeighbor>> geod_neighborhood(MyMesh &m, float max_dist = 5.0, bool include_self = true) {
+std::vector<std::vector<GeodNeighbor>> geod_neighborhood(MyMesh &m, const float max_dist = 5.0, const bool include_self = true) {
 
   // The MyMesh instance cannot be shared between the processes because it
   // gets changed when the geodist function is run (distances are stored in
