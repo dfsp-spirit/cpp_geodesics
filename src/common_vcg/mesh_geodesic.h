@@ -133,6 +133,7 @@ struct Neighborhood {
 
 std::vector<Neighborhood> neighborhoods_from_geod_neighbors(const std::vector<std::vector<GeodNeighbor> > geod_neighbors, MyMesh &m) {
   size_t num_neighborhoods = geod_neighbors.size();
+  std::cout << "Computing neighborhoods for " << num_neighborhoods << " vertices and their geodesic neighbors." << "\n";
   std::vector<Neighborhood> neighborhoods;
   size_t neigh_size;
   std::vector<std::vector<float>> neigh_coords;
@@ -148,7 +149,7 @@ std::vector<Neighborhood> neighborhoods_from_geod_neighbors(const std::vector<st
       size_t neigh_mesh_idx = geod_neighbors[i][j].index;
       neigh_indices[j] = neigh_mesh_idx;
       neigh_distances[j] = geod_neighbors[i][j].distance;
-      neigh_coords[i] = std::vector<float> {m.vert[neigh_mesh_idx].P()[0], m.vert[neigh_mesh_idx].P()[1], m.vert[neigh_mesh_idx].P()[2]};
+      neigh_coords[i] = std::vector<float> {m.vert[neigh_mesh_idx].P().X(), m.vert[neigh_mesh_idx].P().X(), m.vert[neigh_mesh_idx].P().Z()};
       source_vert_coords = std::vector<float> {m.vert[i].P()[0], m.vert[i].P()[1], m.vert[i].P()[2]};
       // Center the coords around source vertex (make it the origin):
       for(size_t k = 0; k < 3; k++) {
