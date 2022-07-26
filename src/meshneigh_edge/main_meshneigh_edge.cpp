@@ -75,16 +75,20 @@ int main(int argc, char** argv) {
     std::string output_dist_file = "edge_distances";
     bool include_self = true;
     bool json = false;
+    bool csv = false;
+    bool vvbin = true;
     size_t k = 1;
 
-    if(argc < 2 || argc > 6) {
+    if(argc < 2 || argc > 8) {
         std::cout << "===" << argv[0] << " -- Compute edge neighborhoods for mesh vertices. ===\n";
-        std::cout << "Usage: " << argv[0] << " <input_mesh> [<k> [<output_file] [<include_self> [<json>]]]]>\n";
+        std::cout << "Usage: " << argv[0] << " <input_mesh> [<k> [<output_file] [<include_self> [<json>] [<csv>] [<vv>]]]]>\n";
         std::cout << "   <input_mesh>    : str, a mesh file in a format supported by libfs, e.g., FreeSurfer, PLY, OBJ, OFF.\n";
         std::cout << "   <k>             : int, the k for the k-ring neighborhood computation. Defaults to 1.\n";
         std::cout << "   <output_file>   : str, file name for the output file (suffix gets added, will be overwritten if existing). Default: edge_distances.\n";
         std::cout << "   <include_self>  : bool, whether to include vertex itself in neighborhood, must be 'true' or 'false'. Default: 'true'.\n";
-        std::cout << "   <json>          : bool, whether to also write JSON output, must be 'true' or 'false'. Default: 'false'.\n";
+        std::cout << "   <json>          : bool, whether to write JSON output, must be 'true' or 'false'. Default: 'false'.\n";
+        std::cout << "   <csv>           : bool, whether to write CSV output, must be 'true' or 'false'. Default: 'false'.\n";
+        std::cout << "   <vv>            : bool, whether to write VV output, must be 'true' or 'false'. Default: 'true'.\n";
         exit(1);
     }
     input_mesh_file = argv[1];
@@ -117,7 +121,27 @@ int main(int argc, char** argv) {
             throw std::runtime_error("Argument json must be 'true' or 'false'.\n");
         }
     }
+    if(argc >= 7) {
+        std::string csvout = argv[6];
+        if(csvout == "true") {
+            csv = true;
+        } else if(csvout == "false") {
+            csv = false;
+        } else {
+            throw std::runtime_error("Argument csv must be 'true' or 'false'.\n");
+        }
+    }
+    if(argc >= 8) {
+        std::string vvout = argv[7];
+        if(vvout == "true") {
+            vvbin = true;
+        } else if(vvout == "false") {
+            vvbin = false;
+        } else {
+            throw std::runtime_error("Argument vv must be 'true' or 'false'.\n");
+        }
+    }
 
-    mesh_neigh_edge(input_mesh_file, k, output_dist_file, include_self, json);
+    mesh_neigh_edge(input_mesh_file, k, output_dist_file, include_self, json, csv, vvbin);
     exit(0);
 }
