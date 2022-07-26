@@ -22,10 +22,10 @@
 
 
 /// exec_mode must be 's' for sequential or 'p' for parallel (via openMP).
-int demo_vcglibbrain(const std::string& exec_mode, const std::string& subject) {        
+int demo_vcglibbrain(const std::string& exec_mode, const std::string& subject) {
 
     std::cout << " Reading FreeSurfer surfaces and labels for subject '" + subject + "'...\n";
-   
+
     std::string lh_surf_file = "demo_data/subjects_dir/" + subject + "/surf/lh.white";
     std::string rh_surf_file = "demo_data/subjects_dir/" + subject + "/surf/rh.white";
     std::string lh_label_file = "demo_data/subjects_dir/" + subject + "/label/lh.cortex.label";
@@ -33,7 +33,7 @@ int demo_vcglibbrain(const std::string& exec_mode, const std::string& subject) {
     std::string lh_curv_file = "demo_data/subjects_dir/" + subject + "/surf/lh.thickness";
     std::string rh_curv_file = "demo_data/subjects_dir/" + subject + "/surf/rh.thickness";
 
-    fs::Mesh lh_white, rh_white; 
+    fs::Mesh lh_white, rh_white;
     fs::read_surf(&lh_white, lh_surf_file);
     fs::read_surf(&rh_white, rh_surf_file);
 
@@ -68,8 +68,8 @@ int demo_vcglibbrain(const std::string& exec_mode, const std::string& subject) {
     int k = 1;  // The 'k' for computing the k-ring neighborhood.
     std::vector<std::vector<int>> neigh = mesh_adj(m, query_vertices, k, false);
     // Write it to a JSON file.
-    strtofile(neigh_to_json(neigh), "mesh_adj.json");
-    
+    strtofile(edge_neigh_to_json(neigh), "mesh_adj.json");
+
     // Compute geodesic distances to a single query vertex
     std::vector<int> query_vertices_geod;
     int qv = 500;
@@ -99,7 +99,7 @@ int demo_vcglibbrain(const std::string& exec_mode, const std::string& subject) {
     std::vector<int32_t> qv_cs; // the query vertices.
     bool do_meandists = false;
     std::vector<std::vector<float>> circle_stats = geodesic_circles(m, qv_cs, 5.0, do_meandists);
-    std::vector<float> radii = circle_stats[0];    
+    std::vector<float> radii = circle_stats[0];
     std::vector<float> perimeters = circle_stats[1];
     std::string rad_filename = "lh." + subject + "_radius_s5.curv";
     std::string per_filename = "lh." + subject + "_perimeter_s5.curv";
@@ -110,7 +110,7 @@ int demo_vcglibbrain(const std::string& exec_mode, const std::string& subject) {
         std::vector<float> mean_geodists_circ = circle_stats[2]; // Should be identical to the ones in 'mean_geodist' computed above.
         fs::write_curv(mgd_filename, mean_geodists_circ);
     }
-    
+
     return 0;
 }
 
@@ -128,12 +128,12 @@ int main(int argc, char** argv) {
     if(argc >= 2) {
         if(std::string(argv[1]) == "p") {
             mode = std::string(argv[1]);
-        }        
+        }
     }
     if(argc == 3) {
         subject = argv[2];
     }
-    
+
     demo_vcglibbrain(mode, subject);
     exit(0);
 }

@@ -50,7 +50,7 @@ void mesh_neigh_edge(const std::string& input_mesh_file, const size_t k = 1, con
     // Write it to a JSON file.
     if(write_json) {
         std::string output_dist_file_json = output_dist_file + ".json";
-        strtofile(neigh_to_json(neigh), output_dist_file_json);
+        strtofile(edge_neigh_to_json(neigh), output_dist_file_json);
         std::cout << "Neighborhood information written to JSON file '" + output_dist_file_json + "'.\n";
     }
 

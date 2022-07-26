@@ -56,7 +56,7 @@ std::vector<std::vector<int>> mesh_adj(MyMesh& m, std::vector<int> query_vertice
 
 /// Write mesh edge adjacency data to a JSON file.
 /// Dont roll your own JSON, they told us.
-std::string neigh_to_json(std::vector<std::vector<int>> neigh) {
+std::string edge_neigh_to_json(std::vector<std::vector<int>> neigh) {
     std::stringstream is;
     is << "{\n";
     for(size_t i=0; i < neigh.size(); i++) {

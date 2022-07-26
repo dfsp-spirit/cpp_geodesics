@@ -4,11 +4,11 @@
 subjects_dir="$FREESURFER_HOME/subjects"
 apptag="[EDGE_DIST]"
 
-# Positional command line arguments for meshneigh_edge
+# Positional trailing command line arguments for meshneigh_edge
 include_self="true"
 json="false"
-csv="true"
-vv="false"
+csv="false"
+vv="true"
 extra_args="${include_self} ${json} ${csv} ${vv}"
 
 echo "$apptag Info: Using meshneigh_edge extra_args '$extra_args'."
