@@ -97,6 +97,7 @@ std::string edge_neigh_to_csv(std::vector<std::vector<int>> neigh, size_t neigh_
     }
     if(neigh_write_size == 0) {
       neigh_write_size = min_neighbor_count;
+      std::cout << "Using auto-determined neighborhood size " << neigh_write_size << " during CSV export.\n";
     }
 
     // Pre-check is allow_nan is false, so we do not start writing something that will not be finished.
@@ -110,6 +111,8 @@ std::string edge_neigh_to_csv(std::vector<std::vector<int>> neigh, size_t neigh_
       if(failed_neighborhoods.size() >= 1) {
         throw std::runtime_error("Failed to generate mesh edge neighborhood CSV representation:'" + std::to_string(failed_neighborhoods.size()) + " neighborhoods are smaller than neigh_write_size "  + std::to_string(neigh_write_size) + ", and allow_nan is false.\n");
       }
+    } else {
+      std::cout << "There are " << failed_neighborhoods.size() << " neighborhoods smaller than neigh_write_size " << neigh_write_size << ".";
     }
 
     std::stringstream is;
