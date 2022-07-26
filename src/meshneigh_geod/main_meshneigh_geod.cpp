@@ -22,7 +22,7 @@
 
 /// Compute geodesic neighborhood up to max dist for the mesh.
 /// @param max_dist float, the distance defining the geodesic neighborhood circle.
-void mesh_neigh_geod(const std::string& input_mesh_file, const float max_dist = 5.0, const std::string& output_dist_file="geod_distances", bool include_self = true, const bool write_json=false, const bool write_csv=false, const bool write_vvbin=true) {        
+void mesh_neigh_geod(const std::string& input_mesh_file, const float max_dist = 5.0, const std::string& output_dist_file="geod_distances", bool include_self = true, const bool write_json=false, const bool write_csv=false, const bool write_vvbin=true) {
 
     std::cout << "Reading mesh '" + input_mesh_file + "' to compute geodesic distance up to " + std::to_string(max_dist) + " along mesh...\n";
     if(include_self) {
@@ -30,7 +30,7 @@ void mesh_neigh_geod(const std::string& input_mesh_file, const float max_dist = 
     } else {
         std::cout << " * Neighborhoods will NOT include the query vertex itself.\n";
     }
-   
+
     fs::Mesh surface;
     fs::read_surf(&surface, input_mesh_file);
 
@@ -46,18 +46,18 @@ void mesh_neigh_geod(const std::string& input_mesh_file, const float max_dist = 
         query_vertices[i] = i;
     }
     std::vector<std::vector<GeodNeighbor>> neigh = geod_neighborhood(m, max_dist, include_self);
-    
+
     // Write it to a JSON file if requested.
     if(write_json) {
         std::string output_dist_file_json = output_dist_file + ".json";
-        strtofile(geod_neigh_to_json(neigh), output_dist_file_json);    
+        strtofile(geod_neigh_to_json(neigh), output_dist_file_json);
         std::cout << "Neighborhood information written to JSON file '" + output_dist_file_json + "'.\n";
     }
 
     // Write it to a CSV file if requested.
     if(write_csv) {
         std::string output_dist_file_csv = output_dist_file + ".csv";
-        strtofile(geod_neigh_to_csv(neigh), output_dist_file_csv);    
+        strtofile(geod_neigh_to_csv(neigh), output_dist_file_csv);
         std::cout << "Neighborhood information written to CSV file '" + output_dist_file_csv + "'.\n";
     }
 
@@ -71,7 +71,7 @@ void mesh_neigh_geod(const std::string& input_mesh_file, const float max_dist = 
                 neigh_dist[i].push_back(neigh[i][j].distance);
             }
         }
-        
+
         std::string output_dist_file_index = output_dist_file + "_index.vv";
         std::string output_dist_file_dist = output_dist_file + "_dist.vv";
         write_vv<int32_t>(output_dist_file_index, neigh_idx);
@@ -83,13 +83,13 @@ void mesh_neigh_geod(const std::string& input_mesh_file, const float max_dist = 
 
 int main(int argc, char** argv) {
     std::string input_mesh_file;
-    std::string output_dist_file = "geod_distances";    
+    std::string output_dist_file = "geod_distances";
     float max_dist = 5.0;
     bool include_self = true;
     bool json = false;
     bool csv = false;
     bool vv = true;
-    
+
     if(argc < 2 || argc > 8) {
         std::cout << "===" << argv[0] << " -- Compute geodesic neighborhoods for mesh vertices. ===\n";
         std::cout << "Usage: " << argv[0] << " <input_mesh> [<max_dist> [<output_file> [<include_self> [json]]]]>\n";
@@ -104,7 +104,7 @@ int main(int argc, char** argv) {
     }
     input_mesh_file = argv[1];
     if(argc >= 3) {
-        std::istringstream iss( argv[2] );        
+        std::istringstream iss( argv[2] );
         if(!(iss >> max_dist)) {
             throw std::runtime_error("Could not convert argument max_dist to float.\n");
         }
@@ -113,7 +113,7 @@ int main(int argc, char** argv) {
         }
     }
     if(argc >= 4) {
-        output_dist_file = argv[3];                
+        output_dist_file = argv[3];
     }
     if(argc >= 5) {
         std::string inc = argv[4];
