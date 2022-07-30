@@ -76,13 +76,13 @@ int main(int argc, char** argv) {
 
     if(argc < 3 || argc > 4) {
         std::cout << "== Export colored brain mesh ==.\n";
-        std::cout << "Usage: " << argv[0] << "[<surf_file> [<curv_file>] <output_ply_file>] | [--gen-simple-mesh <output_surf_file>]\n";
+        std::cout << "Usage: " << argv[0] << "[<surf_file> [<curv_file>] <output_ply_file>] | [--gen-simple-mesh <output_ply_file>]\n";
         std::cout << "  <surf_file>       : path to a brain mesh file, typically in FreeSurfer surf format.\n";
         std::cout << "  <curv_file>       : optional, path to a file containing per-vertex data for the mesh, typically in FreeSurfer curv format. If omitted, no colors will be produced.\n";
         std::cout << "  <output_ply_file> : path to the output file in PLY format, will be created (or overwritten in case it exists).\n";
         std::cout << "  Examples: " << argv[0] << " demo_data/subjects_dir/subject1/surf/lh.white demo_data/subjects_dir/subject1/surf/lh.thickness colored_brain.ply\n";
         std::cout << "            " << argv[0] << " demo_data/subjects_dir/subject1/surf/lh.white plain_brain.ply\n";
-        std::cout << "            " << argv[0] << " --gen-simple-mesh mesh_out.surf\n";
+        std::cout << "            " << argv[0] << " --gen-simple-mesh cube_mesh.ply\n";
         exit(1);
     } else if (argc == 3) {
         if(std::string(argv[1]) == "--gen-simple-mesh") {
