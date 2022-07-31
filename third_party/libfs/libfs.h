@@ -16,13 +16,13 @@
  * \section intro_sec Introduction
  *
  * Welcome to the API documentation for libfs, a header-only C++11 library to read and write FreeSurfer neuroimaging data.
- * 
+ *
  * All relevant functions are in the file include/libfs.h and only a few utility functions are class
  * members, so the best place to start is to open the documentation for libfs.h in the Files section above.
- * 
+ *
  * The project page for fslib can be found at https://github.com/dfsp-spirit/libfs
- * 
- */ 
+ *
+ */
 
 
 
@@ -30,12 +30,14 @@ namespace fs {
 
   namespace util {
     /// Check whether a string ends with the given suffix.
+    /// @private
     inline bool ends_with(std::string const & value, std::string const & suffix) {
         if (suffix.size() > value.size()) return false;
         return std::equal(suffix.rbegin(), suffix.rend(), value.rbegin());
     }
 
     /// Check whether a string starts with the given prefix.
+    /// @private
     inline bool starts_with(std::string const & value, std::string const & prefix) {
         if (prefix.length() > value.length()) return false;
         return value.rfind(prefix, 0) == 0;
@@ -44,25 +46,36 @@ namespace fs {
 
     /// Construct a UNIX file system path from the given path_components.
     /// @details Any trailing or leading slash (path_sep) will be stripped from the individual components and replaced with a single one between two components. If the first path component started with a slash, that slash will be kept (absolute paths are left intact).
-    /// @param path_components init list of strings, the path components.
-    /// @throws std::invalid_argument on empty path_components
+    /// @param path_components init list of strings, the path components
+    /// @param path_sep path separator to use, typically `/` on Unix-based system.
+    /// @throws std::invalid_argument on empty
+    /// @returns string representation of the path, using the `path_sep`.
+    ///
+    /// #### Examples
+    ///
+    /// @code
+    /// std::string p = fs::fullpath({"path", "to", "file.txt"});
+    /// // Gives: "path/to/file.txt"
+    /// std::string p = fs::fullpath({"/path", "to", "file.txt"});
+    /// // Gives: "/path/to/file.txt"
+    /// @endcode
     std::string fullpath( std::initializer_list<std::string> path_components, std::string path_sep = std::string("/") ) {
       std::string fp;
       if(path_components.size() == 0) {
           throw std::invalid_argument("The 'path_components' must not be empty.");
       }
-      
+
       std::string comp;
       std::string comp_mod;
-      size_t idx = 0;    
+      size_t idx = 0;
       for(auto comp : path_components) {
         comp_mod = comp;
         if(idx != 0) { // We keep a leading slash intact for the first element (absolute path).
           if (starts_with(comp, path_sep)) {
             comp_mod = comp.substr(1, comp.size()-1);
-          }        
+          }
         }
-        
+
         if(ends_with(comp_mod, path_sep)) {
             comp_mod = comp_mod.substr(0, comp_mod.size()-1);
         }
@@ -77,6 +90,8 @@ namespace fs {
     }
 
     /// Write the given text representation (any string) to a file.
+    /// @param filename the file to which to write, will be overwritten if exists
+    /// @param rep the string to write to the file
     /// @throws st::runtime_error if the file cannot be opened.
     void str_to_file(const std::string& filename, const std::string rep) {
       std::ofstream ofs;
@@ -90,7 +105,7 @@ namespace fs {
     }
   }
 
-  
+
   // MRI data types, used by the MGH functions.
 
   /// MRI data type representing an 8 bit unsigned integer.
@@ -105,7 +120,7 @@ namespace fs {
   /// MRI data type representing a 16 bit signed integer.
   const int MRI_SHORT = 4;
 
-  // Declarations, should go to a header file.
+  // Forward declarations.
   int _fread3(std::istream&);
   template <typename T> T _freadt(std::istream&);
   std::string _freadstringnewline(std::istream&);
@@ -113,28 +128,70 @@ namespace fs {
   bool _ends_with(std::string const &fullString, std::string const &ending);
   size_t _vidx_2d(size_t, size_t, size_t);
   struct MghHeader;
-  
+
   /// Models a triangular mesh, used for brain surface meshes.
-  /// 
-  /// Represents a vertex-indexed mesh. The n vertices are stored as 3D point coordinates (x,y,z) in a vector
-  /// of length 3n, in which 3 consecutive values represent the x, y and z coordinate of the same vertex.
-  /// The m faces are stored as a vector of 3m integers, where 3 consecutive values represent the 3 vertices (by index)
+  ///
+  /// Represents a vertex-indexed mesh. The `n` vertices are stored as 3D point coordinates (x,y,z) in a vector
+  /// of length `3n`, in which 3 consecutive values represent the x, y and z coordinate of the same vertex.
+  /// The `m` faces are stored as a vector of `3m` integers, where 3 consecutive values represent the 3 vertices (by index)
   /// making up the respective face. Vertex indices are 0-based.
   struct Mesh {
 
     /// Construct a Mesh from the given vertices and faces.
-    Mesh(std::vector<float> cvertices, std::vector<int32_t> cfaces) { 
-      vertices = cvertices; faces = cfaces; 
+    Mesh(std::vector<float> cvertices, std::vector<int32_t> cfaces) {
+      vertices = cvertices; faces = cfaces;
     }
 
     /// Construct an empty Mesh.
     Mesh() {}
 
     std::vector<float> vertices;
-    std::vector<int32_t> faces;    
+    std::vector<int32_t> faces;
+
+    /// Construct and return a simple cube mesh.
+    ///
+    /// #### Examples
+    ///
+    /// @code
+    /// fs::Mesh surface = fs::Mesh::construct_cube();
+    /// size_t nv = surface.num_vertices(); // 8
+    /// @endcode
+    static fs::Mesh construct_cube() {
+      fs::Mesh mesh;
+      mesh.vertices = { 1.0, 1.0, 1.0,
+                        1.0, 1.0, -1.0,
+                        1.0, -1.0, 1.0,
+                        1.0, -1.0, -1.0,
+                      -1.0, 1.0, 1.0,
+                      -1.0, 1.0, -1.0,
+                      -1.0, -1.0, 1.0,
+                      -1.0, -1.0, -1.0 };
+      mesh.faces = { 0, 2, 3,
+                    3 ,1, 0,
+                    4, 6, 7,
+                    7, 5, 4,
+                    0, 4, 5,
+                    5, 1, 0,
+                    2, 6, 7,
+                    7, 3, 2,
+                    0, 4, 6,
+                    6, 2, 0,
+                    1, 5, 7,
+                    7, 3, 1 };
+      return mesh;
+    }
 
 
     /// Return string representing the mesh in Wavefront Object (.obj) format.
+    /// @retuns Wavefront Object string representation of the mesh, including vertices and faces.
+    /// @see fs::Mesh::to_obj_file is a shortcut if you want to export the string representation to a file.
+    ///
+    /// #### Examples
+    ///
+    /// @code
+    /// fs::Mesh surface = fs::Mesh::construct_cube();
+    /// std::str mesh_repr_off = surface.to_obj();
+    /// @endcode
     std::string to_obj() const {
       std::stringstream objs;
       for(size_t vidx=0; vidx<this->vertices.size(); vidx+=3) { // vertex coords
@@ -142,20 +199,33 @@ namespace fs {
       }
       for(size_t fidx=0; fidx<this->faces.size(); fidx+=3) { // faces: vertex indices, 1-based
         objs << "f " << faces[fidx]+1 << " " << faces[fidx+1]+1 << " " << faces[fidx+2]+1 << "\n";
-      }        
+      }
       return(objs.str());
     }
 
 
     /// Export this mesh to a file in Wavefront OBJ format.
+    /// @param filename path to the output file, will be overwritten if existing.
     /// @throws st::runtime_error if the target file cannot be opened.
+    /// @see fs::Mesh::to_obj if you want the string representation (without writing it to a file).
+    ///
+    /// #### Examples
+    ///
+    /// @code
+    /// fs::Mesh surface = fs::Mesh::construct_cube();
+    /// const std::string out_path = fs::fullpath({"/tmp", "mesh.obj"});
+    /// surface.to_obj(out_path);
+    /// @endcode
     void to_obj_file(const std::string& filename) const {
       fs::util::str_to_file(filename, this->to_obj());
     }
-    
+
 
     /// Read a brainmesh from a Wavefront object format stream.
     /// @details This only reads the geometry, optional format extensions like materials are ignored (but files including them should parse fine).
+    /// @param mesh pointer to fs:Mesh instance to be filled.
+    /// @param is stream holding a text representation of a mesh in Wavefront object format.
+    /// @see There exists an overloaded version that reads from a file.
     /// @throws std::domain_error if the file format is invalid.
     static void from_obj(Mesh* mesh, std::ifstream* is) {
       std::string line;
@@ -173,7 +243,7 @@ namespace fs {
         } else {
           if(fs::util::starts_with(line, "v ")) {
             std::string elem_type_identifier; float x, y, z;
-            if (!(iss >> elem_type_identifier >> x >> y >> z)) { 
+            if (!(iss >> elem_type_identifier >> x >> y >> z)) {
               throw std::domain_error("Could not parse vertex line " + std::to_string(line_idx+1) + " of OBJ data, invalid format.\n");
             }
             assert(elem_type_identifier == "v");
@@ -182,7 +252,7 @@ namespace fs {
             vertices.push_back(z);
           } else if(fs::util::starts_with(line, "f ")) {
             std::string elem_type_identifier, v0raw, v1raw, v2raw; int v0, v1, v2;
-            if (!(iss >> elem_type_identifier >> v0raw >> v1raw >> v2raw)) { 
+            if (!(iss >> elem_type_identifier >> v0raw >> v1raw >> v2raw)) {
               throw std::domain_error("Could not parse face line " + std::to_string(line_idx+1) + " of OBJ data, invalid format.\n");
             }
             assert(elem_type_identifier == "f");
@@ -194,13 +264,13 @@ namespace fs {
             std::size_t found_v1 = v1raw.find("/");
             std::size_t found_v2 = v2raw.find("/");
             if (found_v0 != std::string::npos) {
-              v0raw = v0raw.substr(0, found_v0);              
+              v0raw = v0raw.substr(0, found_v0);
             }
             if (found_v1 != std::string::npos) {
-              v1raw = v1raw.substr(0, found_v1);              
+              v1raw = v1raw.substr(0, found_v1);
             }
             if (found_v2 != std::string::npos) {
-              v2raw = v0raw.substr(0, found_v2);              
+              v2raw = v0raw.substr(0, found_v2);
             }
             v0 = std::stoi(v0raw);
             v1 = std::stoi(v1raw);
@@ -215,8 +285,8 @@ namespace fs {
             num_lines_ignored++;
             continue;
           }
-          
-        }        
+
+        }
       }
       if(num_lines_ignored > 0) {
         std::cerr << "Ignored " << num_lines_ignored << " lines in Wavefront OBJ format mesh file.\n";
@@ -228,8 +298,18 @@ namespace fs {
 
     /// Read a brainmesh from a Wavefront object format mesh file.
     /// @details This only reads the geometry, optional format extensions like materials are ignored (but files including them should parse fine).
+    /// @see There exists an overloaded version that reads from a stream.
+    /// @param mesh pointer to fs:Mesh instance to be filled.
+    /// @param filename path to input wavefront obj mesh to be read.
     /// @throws std::runtime_error if the file cannot be read.
     /// @throws std::domain_error if the file format is invalid.
+    ///
+    /// #### Examples
+    ///
+    /// @code
+    /// fs::Mesh surface;
+    /// fs::Mesh::from_obj(&surface, "mesh.obj");
+    /// @endcode
     static void from_obj(Mesh* mesh, const std::string& filename) {
       std::ifstream input(filename);
       if(input.is_open()) {
@@ -242,6 +322,7 @@ namespace fs {
 
 
     /// Read a brainmesh from an Object File format (OFF) stream.
+    /// @see There exists an overloaded version that reads from a file.
     /// @throws std::domain_error if the file format is invalid.
     static void from_off(Mesh* mesh, std::ifstream* is) {
       std::string line;
@@ -279,7 +360,7 @@ namespace fs {
               throw std::domain_error("Could not parse element count header line " + std::to_string(line_idx+1) + " of OFF data, invalid format.\n");
             }
           } else {
-            
+
             if(num_verts_parsed < num_vertices) {
               if (!(iss >> x >> y >> z)) {
                 throw std::domain_error("Could not parse vertex coordinate line " + std::to_string(line_idx+1) + " of OFF data, invalid format.\n");
@@ -302,8 +383,8 @@ namespace fs {
                 num_faces_parsed++;
               }
             }
-          }         
-        }        
+          }
+        }
       }
       if(num_verts_parsed < num_vertices) {
         throw std::domain_error("Vertex count mismatch between OFF header (" + std::to_string(num_vertices) + ") and data (" + std::to_string(num_verts_parsed) + ").\n");
@@ -317,9 +398,19 @@ namespace fs {
 
 
     /// Read a brainmesh from an OFF format mesh file.
+    /// @see There exists an overloaded version that reads from a stream.
     /// @details The OFF is the Object File Format (file extension .off) is a simple text-based mesh file format. Not to be confused with the Wavefront Object format (.obj).
+    /// @param mesh pointer to fs:Mesh instance to be filled.
+    /// @param filename path to input wavefront obj mesh to be read.
     /// @throws std::runtime_error if the file cannot be read.
     /// @throws std::domain_error if the file format is invalid.
+    ///
+    /// #### Examples
+    ///
+    /// @code
+    /// fs::Mesh surface;
+    /// fs::Mesh::from_off(&surface, "mesh.off");
+    /// @endcode
     static void from_off(Mesh* mesh, const std::string& filename) {
       std::ifstream input(filename);
       if(input.is_open()) {
@@ -332,6 +423,7 @@ namespace fs {
 
 
     /// Read a brainmesh from a Stanford PLY format stream.
+    /// @see There exists an overloaded version that reads from a file.
     /// @throws std::domain_error if the file format is invalid.
     static void from_ply(Mesh* mesh, std::ifstream* is) {
       std::string line;
@@ -362,12 +454,12 @@ namespace fs {
               in_header = false;
             } else if(fs::util::starts_with(line, "element vertex")) {
               std::string elem, elem_type_identifier;
-              if (!(iss >> elem >> elem_type_identifier >> num_verts)) { 
+              if (!(iss >> elem >> elem_type_identifier >> num_verts)) {
                 throw std::domain_error("Could not parse element vertex line of PLY header, invalid format.\n");
               }
             } else if(fs::util::starts_with(line, "element face")) {
               std::string elem, elem_type_identifier;
-              if (!(iss >> elem >> elem_type_identifier >> num_faces)) { 
+              if (!(iss >> elem >> elem_type_identifier >> num_faces)) {
                 throw std::domain_error("Could not parse element face line of PLY header, invalid format.\n");
               }
             } // Other properties like vertex colors and normals are ignored for now.
@@ -379,7 +471,7 @@ namespace fs {
             // Read vertices
             if(vertices.size() < (size_t)num_verts * 3) {
               float x,y,z;
-              if (!(iss >> x >> y >> z)) { 
+              if (!(iss >> x >> y >> z)) {
                 throw std::domain_error("Could not parse vertex line of PLY data, invalid format.\n");
               }
               vertices.push_back(x);
@@ -413,8 +505,18 @@ namespace fs {
     }
 
     /// Read a brainmesh from a Stanford PLY format mesh file.
+    /// @details The PLY format exists in text and binary forms, and the binary form can be little endian or big endian. This file reads the ASCII text format version.
+    /// @param mesh pointer to fs:Mesh instance to be filled.
+    /// @param filename path to input wavefront obj mesh to be read.
     /// @throws std::runtime_error if the file cannot be read.
     /// @throws std::domain_error if the file format is invalid.
+    ///
+    /// #### Examples
+    ///
+    /// @code
+    /// fs::Mesh surface;
+    /// fs::Mesh::from_ply(&surface, "mesh.ply");
+    /// @endcode
     static void from_ply(Mesh* mesh, const std::string& filename) {
       std::ifstream input(filename);
       if(input.is_open()) {
@@ -427,11 +529,27 @@ namespace fs {
 
 
     /// Return the number of vertices in this mesh.
+    /// @return the vertex count
+    ///
+    /// #### Examples
+    ///
+    /// @code
+    /// fs::Mesh surface = fs::Mesh::construct_cube();
+    /// size_t nv = surface.num_vertices();
+    /// @endcode
     size_t num_vertices() const {
       return(this->vertices.size() / 3);
     }
 
     /// Return the number of faces in this mesh.
+    /// @return the face count
+    ///
+    /// #### Examples
+    ///
+    /// @code
+    /// fs::Mesh surface = fs::Mesh::construct_cube();
+    /// size_t nv = surface.num_faces();
+    /// @endcode
     size_t num_faces() const {
       return(this->faces.size() / 3);
     }
@@ -440,9 +558,17 @@ namespace fs {
     /// @param i the row index, valid values are 0..num_faces.
     /// @param j the column index, valid values are 0..2 (for the 3 vertices of a face).
     /// @throws std::range_error on invalid index
+    /// @return vertex index of vertex `j` of face `i`
+    ///
+    /// #### Examples
+    ///
+    /// @code
+    /// fs::Mesh surface = fs::Mesh::construct_cube();
+    /// int first_face_third_vert = surface.fm_at(0, 2);
+    /// @endcode
     const int32_t& fm_at(const size_t i, const size_t j) const {
       size_t idx = _vidx_2d(i, j, 3);
-      if(idx > this->faces.size()-1) {        
+      if(idx > this->faces.size()-1) {
         throw std::range_error("Indices (" + std::to_string(i) + "," + std::to_string(j) + ") into Mesh.faces out of bounds. Hit " + std::to_string(idx) + " with max valid index " + std::to_string(this->faces.size()-1) + ".\n");
       }
       return(this->faces[idx]);
@@ -450,7 +576,15 @@ namespace fs {
 
 
     /// Get all vertex indices of the face, given by its index.
+    /// @param face the face index
+    /// @returns vector of length 3, the vertex indices of the face.
     /// @throws std::range_error on invalid index
+    /// #### Examples
+    ///
+    /// @code
+    /// fs::Mesh surface = fs::Mesh::construct_cube();
+    /// auto first_face_verts = surface.face_vertices(0);
+    /// @endcode
     std::vector<int32_t> face_vertices(const size_t face) const {
       if(face > this->num_faces()-1) {
         throw std::range_error("Index " + std::to_string(face) + " into Mesh.faces out of bounds, max valid index is " + std::to_string(this->num_faces()-1) + ".\n");
@@ -463,6 +597,8 @@ namespace fs {
     }
 
     /// Get all coordinates of the vertex, given by its index.
+    /// @param vertex the vertex index
+    /// @returns vector of length 3, the x,y,z coordinates of the vertex.
     /// @throws std::range_error on invalid index
     std::vector<float> vertex_coords(const size_t vertex) const {
       if(vertex > this->num_vertices()-1) {
@@ -486,7 +622,7 @@ namespace fs {
       }
       return(this->vertices[idx]);
     }
-    
+
     /// Return string representing the mesh in PLY format. Overload that works without passing a color vector.
     std::string to_ply() const {
       std::vector<uint8_t> empty_col;
@@ -495,7 +631,7 @@ namespace fs {
 
     /// Return string representing the mesh in PLY format.
     /// @param col u_char vector of RGB color values, 3 per vertex. They must appear by vertex, i.e. in order v0_red, v0_green, v0_blue, v1_red, v1_green, v1_blue. Leave empty if you do not want colors.
-    /// @throws std::invalid_argument if the number of vertex colors does not match the number of vertices. 
+    /// @throws std::invalid_argument if the number of vertex colors does not match the number of vertices.
     std::string to_ply(const std::vector<uint8_t> col) const {
       bool use_vertex_colors = col.size() != 0;
       std::stringstream plys;
@@ -511,7 +647,7 @@ namespace fs {
       plys << "element face " << this->num_faces() << "\n";
       plys << "property list uchar int vertex_index\n";
       plys << "end_header\n";
-      
+
       for(size_t vidx=0; vidx<this->vertices.size();vidx+=3) {  // vertex coords
         plys << vertices[vidx] << " " << vertices[vidx+1] << " " << vertices[vidx+2];
         if(use_vertex_colors) {
@@ -523,7 +659,7 @@ namespace fs {
       const int num_vertices_per_face = 3;
       for(size_t fidx=0; fidx<this->faces.size();fidx+=3) { // faces: vertex indices, 0-based
         plys << num_vertices_per_face << " " << faces[fidx] << " " << faces[fidx+1] << " " << faces[fidx+2] << "\n";
-      }        
+      }
       return(plys.str());
     }
 
@@ -547,7 +683,7 @@ namespace fs {
 
     /// Return string representing the mesh in PLY format.
     /// @param col u_char vector of RGB color values, 3 per vertex. They must appear by vertex, i.e. in order v0_red, v0_green, v0_blue, v1_red, v1_green, v1_blue. Leave empty if you do not want colors.
-    /// @throws std::invalid_argument if the number of vertex colors does not match the number of vertices. 
+    /// @throws std::invalid_argument if the number of vertex colors does not match the number of vertices.
     std::string to_off(const std::vector<uint8_t> col) const {
       bool use_vertex_colors = col.size() != 0;
       std::stringstream offs;
@@ -560,7 +696,7 @@ namespace fs {
         offs << "OFF\n";
       }
       offs << this->num_vertices() << " " << this->num_faces() << " 0\n";
-      
+
       for(size_t vidx=0; vidx<this->vertices.size();vidx+=3) {  // vertex coords
         offs << vertices[vidx] << " " << vertices[vidx+1] << " " << vertices[vidx+2];
         if(use_vertex_colors) {
@@ -572,7 +708,7 @@ namespace fs {
       const int num_vertices_per_face = 3;
       for(size_t fidx=0; fidx<this->faces.size();fidx+=3) { // faces: vertex indices, 0-based
         offs << num_vertices_per_face << " " << faces[fidx] << " " << faces[fidx+1] << " " << faces[fidx+2] << "\n";
-      }        
+      }
       return(offs.str());
     }
 
@@ -596,7 +732,7 @@ namespace fs {
     /// Construct a Curv instance from the given per-vertex data.
     Curv(std::vector<float> curv_data) :
       num_faces(100000), num_vertices(0), num_values_per_vertex(1) { data = curv_data; num_vertices = data.size(); }
-    
+
     /// Construct an empty Curv instance.
     Curv() :
       num_faces(100000), num_vertices(0), num_values_per_vertex(1) {}
@@ -605,7 +741,7 @@ namespace fs {
     std::vector<float> data;
     int32_t num_vertices;
     int32_t num_values_per_vertex;
-    
+
   };
 
   /// The colortable from an Annot file, can be used for parcellations and integer labels. Typically each index (in all fields) describes a brain region.
@@ -645,7 +781,7 @@ namespace fs {
         }
       }
       return(-1);
-    } 
+    }
 
   };
 
@@ -655,7 +791,7 @@ namespace fs {
     std::vector<int32_t> vertex_indices;  ///< Indices of the vertices, these always go from 0 to N-1 (where N is the number of vertices in the respective surface/annotation). Not really needed.
     std::vector<int32_t> vertex_labels;   ///< The label code for each vertex, defining the region it belongs to. Check in the Colortable for a region that has this label.
     Colortable colortable;  ///< A Colortable defining the regions (most importantly, the region name and visualization color).
-    
+
     /// Get all vertices of a region given by name in the brain surface parcellation. Returns an integer vector, the vertex indices.
     std::vector<int32_t> region_vertices(const std::string& region_name) const {
       int32_t region_idx = this->colortable.get_region_idx(region_name);
@@ -666,7 +802,7 @@ namespace fs {
         std::vector<int32_t> empty;
         return(empty);
       }
-    }    
+    }
 
     /// Get all vertices of a region given by label in the brain surface parcellation. Returns an integer vector, the vertex indices.
     std::vector<int32_t> region_vertices(int32_t region_label) const {
@@ -775,7 +911,7 @@ namespace fs {
   /// Models a whole MGH file.
   struct Mgh {
     MghHeader header;
-    MghData data;    
+    MghData data;
   };
 
   /// A simple 4D array datastructure, useful for representing volume data.
@@ -789,12 +925,12 @@ namespace fs {
 
     Array4D(Mgh *mgh) : // This does NOT init the data atm.
       d1(mgh->header.dim1length), d2(mgh->header.dim2length), d3(mgh->header.dim3length), d4(mgh->header.dim4length), data(d1*d2*d3*d4) {}
-  
+
     /// Get the value at the given 4D position.
     const T& at(const unsigned int i1, const unsigned int i2, const unsigned int i3, const unsigned int i4) const {
       return data[get_index(i1, i2, i3, i4)];
     }
-  
+
     /// Get the index in the vector for the given 4D position.
     unsigned int get_index(const unsigned int i1, const unsigned int i2, const unsigned int i3, const unsigned int i4) const {
       assert(i1 >= 0 && i1 < d1);
@@ -808,7 +944,7 @@ namespace fs {
     unsigned int num_values() const {
       return(d1*d2*d3*d4);
     }
-  
+
     unsigned int d1;
     unsigned int d2;
     unsigned int d3;
@@ -832,7 +968,7 @@ namespace fs {
 
 
   /// Read a FreeSurfer volume file in MGH format into the given Mgh struct.
-  /// 
+  ///
   /// @param mgh An Mgh instance that should be filled with the data from the filename.
   /// @param filename Path to the input MGH file.
   /// @see There exists an overloaded version that reads from a stream.
@@ -853,9 +989,9 @@ namespace fs {
     } else if(mgh->header.dtype == MRI_SHORT) {
       std::vector<short> data = _read_mgh_data_short(&mgh_header, filename);
       mgh->data.data_mri_short = data;
-    } else {      
+    } else {
       if(_ends_with(filename, ".mgz")) {
-        std::cout << "Note: your MGH filename ends with '.mgz'. Keep in mind that MGZ format is not supported directly. You can ignore this message if you wrapped a gz stream.\n";  
+        std::cout << "Note: your MGH filename ends with '.mgz'. Keep in mind that MGZ format is not supported directly. You can ignore this message if you wrapped a gz stream.\n";
       }
       throw std::runtime_error("Not reading MGH data from file '" + filename + "', data type " + std::to_string(mgh->header.dtype) + " not supported yet.\n");
     }
@@ -869,7 +1005,7 @@ namespace fs {
     std::ifstream input(filename);
     std::string line;
 
-    if(! input.is_open()) {      
+    if(! input.is_open()) {
       throw std::runtime_error("Could not open subjects file '" + filename + "'.\n");
     }
 
@@ -880,7 +1016,7 @@ namespace fs {
   }
 
   /// Read MGH data from a stream.
-  /// 
+  ///
   /// @param mgh An Mgh instance that should be filled with the data from the stream.
   /// @param is Pointer to an open istream from which to read the MGH data.
   /// @see There exists an overloaded version that reads from a file.
@@ -901,22 +1037,22 @@ namespace fs {
     } else if(mgh->header.dtype == MRI_SHORT) {
       std::vector<short> data = _read_mgh_data_short(&mgh_header, is);
       mgh->data.data_mri_short = data;
-    } else {      
+    } else {
       throw std::runtime_error("Not reading data from MGH stream, data type " + std::to_string(mgh->header.dtype) + " not supported yet.\n");
     }
   }
 
   /// Read an MGH header from a stream.
-  /// 
+  ///
   /// @param mgh_header An MghHeader instance that should be filled with the data from the stream.
   /// @param is Pointer to an open istream from which to read the MGH data.
   /// @see There exists an overloaded version that reads from a file.
   /// @throws runtime_error if the file uses an unsupported MRI file format version. Only version 1 is supported (the only existing version to my knowledge).
   void read_mgh_header(MghHeader* mgh_header, std::istream* is) {
-    const int MGH_VERSION = 1;    
+    const int MGH_VERSION = 1;
 
     int format_version = _freadt<int32_t>(*is);
-    if(format_version != MGH_VERSION) {        
+    if(format_version != MGH_VERSION) {
       throw std::runtime_error("Invalid MGH file or unsupported file format version: expected version " + std::to_string(MGH_VERSION) + ", found " + std::to_string(format_version) + ".\n");
     }
     mgh_header->dim1length =  _freadt<int32_t>(*is);
@@ -1003,7 +1139,7 @@ namespace fs {
   /// @param filename Path to the file from which to read the MGH data.
   /// @see There exists an overloaded version that reads from a stream.
   /// @throws runtime_error if the file cannot be opened
-  void read_mgh_header(MghHeader* mgh_header, const std::string& filename) {    
+  void read_mgh_header(MghHeader* mgh_header, const std::string& filename) {
     std::ifstream ifs;
     ifs.open(filename, std::ios_base::in | std::ios::binary);
     if(ifs.is_open()) {
@@ -1043,7 +1179,7 @@ namespace fs {
   ///
   /// THIS FUNCTION IS INTERNAL AND SHOULD NOT BE CALLED BY API CLIENTS.
   template <typename T>
-  std::vector<T> _read_mgh_data(MghHeader* mgh_header, std::istream* is) {    
+  std::vector<T> _read_mgh_data(MghHeader* mgh_header, std::istream* is) {
     int num_values = mgh_header->num_values();
     std::vector<T> data;
     for(int i=0; i<num_values; i++) {
@@ -1111,7 +1247,7 @@ namespace fs {
       std::string created_line = _freadstringnewline(is);
       std::string comment_line = _freadstringnewline(is);
       int num_verts =  _freadt<int32_t>(is);
-      int num_faces =  _freadt<int32_t>(is);      
+      int num_faces =  _freadt<int32_t>(is);
       //std::cout << "Read surface file with " << num_verts << " vertices, " << num_faces << " faces.\n";
       std::vector<float> vdata;
       for(int i=0; i<(num_verts*3); i++) {
@@ -1134,7 +1270,7 @@ namespace fs {
   ///
   /// @param surface a Mesh instance representing a vertex-indexed tri-mesh. This will be filled.
   /// @param filename The path to the file from which to read the mesh. The format will be determined from the file extension as follows. File names ending with '.obj' are loaded as Wavefront OBJ files. File names ending with '.ply' are loaded as Stanford PLY files in format version 'ascii 1.0'. All other files are loaded as FreeSurfer binary surf files.
-  /// @throws runtime_error if the file cannot be opened, domain_error if the surf file magic mismatches.  
+  /// @throws runtime_error if the file cannot be opened, domain_error if the surf file magic mismatches.
   void read_mesh(Mesh* surface, const std::string& filename) {
     if(fs::util::ends_with(filename, ".obj")) {
       fs::Mesh::from_obj(surface, filename);
@@ -1147,7 +1283,7 @@ namespace fs {
     }
   }
 
-  
+
   /// Determine the endianness of the system.
   ///
   /// THIS FUNCTION IS INTERNAL AND SHOULD NOT BE CALLED BY API CLIENTS.
@@ -1155,7 +1291,7 @@ namespace fs {
     short int number = 0x1;
     char *numPtr = (char*)&number;
     return (numPtr[0] != 1);
-  }  
+  }
 
   /// @brief Read per-vertex brain morphometry data from a FreeSurfer curv stream.
   /// @details The curv format is a simple binary format that stores one floating point value per vertex of a related brain surface.
@@ -1180,7 +1316,7 @@ namespace fs {
       data.push_back( _freadt<float>(*is));
     }
     curv->data = data;
-  }  
+  }
 
 
   /// @brief Read Curv instance from a FreeSurfer curv format file.
@@ -1200,7 +1336,7 @@ namespace fs {
 
   /// Read an Annot Colortable from a stream.
   void _read_annot_colortable(Colortable* colortable, std::istream *is, int32_t num_entries) {
-    int32_t num_chars_orig_filename = _freadt<int32_t>(*is);  // The number of characters of the file this annot was built from. 
+    int32_t num_chars_orig_filename = _freadt<int32_t>(*is);  // The number of characters of the file this annot was built from.
 
     // It follows the name of the file this annot was built from. This is development metadata and irrelevant afaik. We skip it.
     uint8_t discarded;
@@ -1213,7 +1349,7 @@ namespace fs {
     if(num_entries != num_entries_duplicated) {
       std::cerr << "Warning: the two num_entries header fields of this annotation do not match. Use with care.\n";
     }
-    
+
     int32_t entry_num_chars;
     for(int32_t i=0; i<num_entries; i++) {
       colortable->id.push_back(_freadt<int32_t>(*is));
@@ -1239,15 +1375,15 @@ namespace fs {
   /// @param is An open istream from which to read the annot data.
   /// @throws domain_error if the file format version is not supported or the file is missing the color table.
   void read_annot(Annot* annot, std::istream *is) {
-    
+
     int32_t num_vertices = _freadt<int32_t>(*is);
     std::vector<int32_t> vertices;
     std::vector<int32_t> labels;
     for(int32_t i=0; i<(num_vertices*2); i++) { // The vertices and their labels are stored directly after one another: v1,v1_label,v2,v2_label,...
         if(i % 2 == 0) {
-          vertices.push_back(_freadt<int32_t>(*is));          
+          vertices.push_back(_freadt<int32_t>(*is));
         } else {
-          labels.push_back(_freadt<int32_t>(*is));          
+          labels.push_back(_freadt<int32_t>(*is));
         }
     }
     annot->vertex_indices = vertices;
@@ -1300,7 +1436,7 @@ namespace fs {
     read_curv(&curv, filename);
     return(curv.data);
   }
-  
+
   /// Swap endianness of a value.
   ///
   /// THIS FUNCTION IS INTERNAL AND SHOULD NOT BE CALLED BY API CLIENTS.
@@ -1332,7 +1468,7 @@ namespace fs {
     if(! _is_bigendian()) {
       t = _swap_endian<T>(t);
     }
-    return(t);  
+    return(t);
   }
 
   /// Read 3 big endian bytes as a single integer from a stream.
@@ -1374,7 +1510,7 @@ namespace fs {
       b3 = _swap_endian<unsigned char>(b3);
       //std::cout << "Produced swapped BE values " << (int)b1 << "," << (int)b2 << "," << (int)b3 << ".\n";
     }
-    
+
     os.write( reinterpret_cast<const char*>( &b1 ), sizeof(b1));
     os.write( reinterpret_cast<const char*>( &b2 ), sizeof(b2));
     os.write( reinterpret_cast<const char*>( &b3 ), sizeof(b3));
@@ -1523,7 +1659,7 @@ namespace fs {
     } else {
       throw std::domain_error("Unsupported MRI data type " + std::to_string(mgh.header.dtype) + ", cannot write MGH data.\n");
     }
-    
+
   }
 
   /// @brief Write MGH data to a file.
@@ -1567,7 +1703,7 @@ namespace fs {
     }
 
     /// Return the number of entries (vertices/voxels) in this label.
-    size_t num_entries() const {      
+    size_t num_entries() const {
       size_t num_ent = this->vertex.size();
       if(this->coord_x.size() != num_ent || this->coord_y.size() != num_ent || this->coord_z.size() != num_ent || this->value.size() != num_ent || this->value.size() != num_ent) {
         std::cerr << "Inconsistent label: sizes of property vectors do not match.\n";
@@ -1575,6 +1711,61 @@ namespace fs {
       return(num_ent);
     }
   };
+
+  /// @brief Write a mesh to a stream in FreeSurfer surf format.
+  /// @details A surf file contains a vertex index representation of a mesh, i.e., the vertices and faces vectors.
+  /// @param os An output stream to which to write the data. The stream must be open, and this function will not close it after writing to it.
+  /// @param vertices vector of float, length 3n for n vertices. The 3D coordinates of the vertices, typically from `<Mesh_instance>.vertices`.
+  /// @param faces vector of int, length 3n for n faces. The 3 vertex indices for each face, typically from `<Mesh_instance>.faces`.
+  /// @throws std::runtime_error if the file cannot be opened.
+  void write_surf(std::ostream& os, std::vector<float> vertices, std::vector<int32_t> faces) {
+    const uint32_t SURF_TRIS_MAGIC = 16777214;
+    _fwritei3(os, SURF_TRIS_MAGIC);
+    std::string created_and_comment_lines = "Created by fslib\n\n";
+    os << created_and_comment_lines;
+    _fwritet<int32_t>(os, vertices.size() / 3);  // number of vertices
+    _fwritet<int32_t>(os, faces.size() / 3);  // number of faces
+    for(size_t i=0; i < vertices.size(); i++) {
+       _fwritet<float>(os, vertices[i]);
+    }
+    for(size_t i=0; i < faces.size(); i++) {
+       _fwritet<int32_t>(os, faces[i]);
+    }
+  }
+
+  /// @brief Write a mesh to a binary file in FreeSurfer surf format.
+  /// @details A surf file contains a vertex index representation of a mesh, i.e., the vertices and faces vectors.
+  /// @param filename The path to the output file.
+  /// @param vertices vector of float, length 3n for n vertices. The 3D coordinates of the vertices, typically from `<Mesh_instance>.vertices`.
+  /// @param faces vector of int, length 3n for n faces. The 3 vertex indices for each face, typically from `<Mesh_instance>.faces`.
+  /// @throws std::runtime_error if the file cannot be opened.
+  void write_surf(const std::string& filename, std::vector<float> vertices, std::vector<int32_t> faces) {
+    std::ofstream ofs;
+    ofs.open(filename, std::ofstream::out | std::ofstream::binary);
+    if(ofs.is_open()) {
+      write_surf(ofs, vertices, faces);
+      ofs.close();
+    } else {
+      throw std::runtime_error("Unable to open surf file '" + filename + "' for writing.\n");
+    }
+  }
+
+  /// @brief Write a mesh to a binary file in FreeSurfer surf format.
+  /// @details A surf file contains a vertex index representation of a mesh, i.e., the vertices and faces vectors.
+  /// @param filename The path to the output file.
+  /// @param mesh The `Mesh` instance to write.
+  /// @throws std::runtime_error if the file cannot be opened.
+  void write_surf(const std::string& filename, const Mesh& mesh) {
+    std::ofstream ofs;
+    ofs.open(filename, std::ofstream::out | std::ofstream::binary);
+    if(ofs.is_open()) {
+      write_surf(ofs, mesh.vertices, mesh.faces);
+      ofs.close();
+    } else {
+      throw std::runtime_error("Unable to open surf file '" + filename + "' for writing.\n");
+    }
+  }
+
 
 
   /// @brief Read a FreeSurfer ASCII label from a stream.
@@ -1595,12 +1786,12 @@ namespace fs {
         continue; // skip comment.
       } else {
         if(line_idx == 1) {
-          if (!(iss >> num_entries_header)) { 
+          if (!(iss >> num_entries_header)) {
             throw std::domain_error("Could not parse entry count from label file, invalid format.\n");
-          } 
+          }
         } else {
           int vertex; float x, y, z, value;
-          if (!(iss >> vertex >> x >> y >> z >> value)) { 
+          if (!(iss >> vertex >> x >> y >> z >> value)) {
             throw std::domain_error("Could not parse line " + std::to_string(line_idx+1) + " of label file, invalid format.\n");
           }
           //std::cout << "Line " << (line_idx+1) << ": vertex=" << vertex << ", x=" << x << ", y=" << y << ", z=" << z << ", value=" << value << ".\n";
@@ -1611,7 +1802,7 @@ namespace fs {
           label->value.push_back(value);
           num_entries++;
         }
-      }        
+      }
     }
     if(num_entries != num_entries_header) {
       throw std::domain_error("Expected " + std::to_string(num_entries_header) + " entries from label file header, but found " + std::to_string(num_entries) + " in file, invalid label file.\n");
@@ -1643,14 +1834,14 @@ namespace fs {
   ///
   /// @param label The label to write.
   /// @param os An open output stream.
-  /// @see There exists an onverload of this function to write a label to a file.  
+  /// @see There exists an onverload of this function to write a label to a file.
   void write_label(const Label& label, std::ostream& os) {
     const size_t num_entries = label.num_entries();
     os << "#!ascii label from subject anonymous\n" << num_entries << "\n";
     for(size_t i=0; i<num_entries; i++) {
       os << label.vertex[i] << " " << label.coord_x[i] << " " << label.coord_y[i] << " " << label.coord_z[i] << " " << label.value[i] << "\n";
     }
-  }  
+  }
 
 
   /// Write label data to a file.
