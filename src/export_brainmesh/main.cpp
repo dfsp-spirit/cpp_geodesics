@@ -46,31 +46,6 @@ void export_brain(const std::string& surf_file, const std::string& output_ply_fi
 /// Generate unit cube.
 /// @param mesh fslib mesh, an empty mesh instance to which to add cube vertices and faces.
 
-void gen_simple_cube_mesh(const std::string& output_surf_file) {
-    fs::Mesh mesh;
-    mesh.vertices = { 1.0, 1.0, 1.0,
-                      1.0, 1.0, -1.0,
-                      1.0, -1.0, 1.0,
-                      1.0, -1.0, -1.0,
-                     -1.0, 1.0, 1.0,
-                     -1.0, 1.0, -1.0,
-                     -1.0, -1.0, 1.0,
-                     -1.0, -1.0, -1.0 };
-    mesh.faces = { 0, 2, 3,
-                   3 ,1, 0,
-                   4, 6, 7,
-                   7, 5, 4,
-                   0, 4, 5,
-                   5, 1, 0,
-                   2, 6, 7,
-                   7, 3, 2,
-                   0, 4, 6,
-                   6, 2, 0,
-                   1, 5, 7,
-                   7, 3, 1 };
-    mesh.to_ply_file(output_surf_file);
-}
-
 
 int main(int argc, char** argv) {
 
@@ -83,11 +58,13 @@ int main(int argc, char** argv) {
         std::cout << "  Examples: " << argv[0] << " demo_data/subjects_dir/subject1/surf/lh.white demo_data/subjects_dir/subject1/surf/lh.thickness colored_brain.ply\n";
         std::cout << "            " << argv[0] << " demo_data/subjects_dir/subject1/surf/lh.white plain_brain.ply\n";
         std::cout << "            " << argv[0] << " --gen-simple-mesh cube_mesh.ply\n";
+        std::cout << "Hint: A great software to visualize colored PLY meshes is MeshLab. Run `meshlab mymesh.ply` to view if you have it installed.\n";
         exit(1);
     } else if (argc == 3) {
         if(std::string(argv[1]) == "--gen-simple-mesh") {
             std::cout << "Generating simple cube mesh in PLY format and writing to '" << argv[2] << "'\n.";
-            gen_simple_cube_mesh(argv[2]);
+            fs::Mesh surface = fs::Mesh::construct_cube();
+            surface.to_ply_file(argv[2]);
         } else {
             export_brain(argv[1], argv[2]);
         }

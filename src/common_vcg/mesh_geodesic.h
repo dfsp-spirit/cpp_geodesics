@@ -130,8 +130,16 @@ struct Neighborhood {
   std::vector<float> distances;
 };
 
-
-std::vector<Neighborhood> neighborhoods_from_geod_neighbors(const std::vector<std::vector<GeodNeighbor> > geod_neighbors, MyMesh &m) {
+/// Compute vertex neighborhoods: for a source vertex, compute centered coordinates of all given neighbors.
+///
+/// Parameters
+/// geod_neighbors: (n, m) 2D vector of `GeodNeighbor`, typically the neighborhoods (each consisting of `m` neighbors) for all `n` vertices of some mesh. Neighbors are encoded as vertex indices.
+///                 in the GeodNeighbor struct.
+/// mesh: the mesh, used to get the vertex coordinates from the vertex indices in geod_neighbors.
+///
+/// Returns
+/// vector of `n` Neighborhood instances
+std::vector<Neighborhood> neighborhoods_from_geod_neighbors(const std::vector<std::vector<GeodNeighbor> > geod_neighbors, MyMesh &mesh) {
   size_t num_neighborhoods = geod_neighbors.size();
   std::cout << "Computing neighborhoods for " << num_neighborhoods << " vertices and their geodesic neighbors." << "\n";
   std::vector<Neighborhood> neighborhoods;
@@ -149,8 +157,8 @@ std::vector<Neighborhood> neighborhoods_from_geod_neighbors(const std::vector<st
       size_t neigh_mesh_idx = geod_neighbors[i][j].index;
       neigh_indices[j] = neigh_mesh_idx;
       neigh_distances[j] = geod_neighbors[i][j].distance;
-      neigh_coords[i] = std::vector<float> {m.vert[neigh_mesh_idx].P().X(), m.vert[neigh_mesh_idx].P().X(), m.vert[neigh_mesh_idx].P().Z()};
-      source_vert_coords = std::vector<float> {m.vert[i].P()[0], m.vert[i].P()[1], m.vert[i].P()[2]};
+      neigh_coords[i] = std::vector<float> {mesh.vert[neigh_mesh_idx].P().X(), mesh.vert[neigh_mesh_idx].P().X(), mesh.vert[neigh_mesh_idx].P().Z()};
+      source_vert_coords = std::vector<float> {mesh.vert[i].P()[0], mesh.vert[i].P()[1], mesh.vert[i].P()[2]};
       // Center the coords around source vertex (make it the origin):
       for(size_t k = 0; k < 3; k++) {
         neigh_coords[i][k] -= source_vert_coords[k];
@@ -165,6 +173,10 @@ std::vector<Neighborhood> neighborhoods_from_geod_neighbors(const std::vector<st
 std::vector<Neighborhood> neighborhoods_from_edge_neighbors(const std::vector<std::vector<int> > edge_neighbors, MyMesh &m) {
   size_t num_neighborhoods = edge_neighbors.size();
   std::vector<Neighborhood> neighborhoods;
+  size_t neigh_size;
+  for(size_t i = 0; i < num_neighborhoods; i++) {
+    neigh_size = edge_neighbors[i].size();
+  }
 
   throw std::runtime_error("TODO: implement neighborhoods_from_edge_neighbors().");
   return neighborhoods;
