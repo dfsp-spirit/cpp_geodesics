@@ -8,6 +8,7 @@
 #include <assert.h>
 #include <set>
 #include <cstring>
+#include <limits>
 
 namespace geodesic {
 
