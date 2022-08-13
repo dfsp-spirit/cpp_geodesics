@@ -7,7 +7,7 @@
 #include <numeric>
 
 
-TEST_CASE( "Reading the demo curv file with read_curv_data works" ) {
+TEST_CASE( "Reading the demo cube mesh file with read_mesh works" ) {
 
     fs::Mesh surface;
     fs::read_mesh(&surface, "demo_data/meshes/cube.ply");
