@@ -8,10 +8,9 @@
 #include <cmath>
 #include <functional>
 
-
 // Init vector of specified length with identical values.
 template<typename T>
-std::vector<T> vinit(T t, size_t times) {  
+std::vector<T> vinit(T t, size_t times) {
   std::vector<T> res(times);
   for(size_t i=0; i<times; i++) {
     res[i] = t;
@@ -28,7 +27,7 @@ std::vector<T> operator+(const std::vector<T>& a, const std::vector<T>& b)
     std::vector<T> result;
     result.reserve(a.size());
 
-    std::transform(a.begin(), a.end(), b.begin(), 
+    std::transform(a.begin(), a.end(), b.begin(),
                    std::back_inserter(result), std::plus<T>());
     return result;
 }
@@ -65,6 +64,21 @@ std::vector<T> cross(const std::vector<T>& a, const std::vector<T>& b)
     result[2] = a[0] * b[1] - a[1] * b[0];
 
     return result;
+}
+
+
+// Euclidean distance between two 3-dimensional vectors.
+template <typename T>
+T dist_euclid(const std::vector<T>& a, const std::vector<T>& b)
+{
+    assert(a.size() == b.size());
+    assert(a.size() == 3);
+
+    T xdist = a[0] - b[0];
+    T ydist = a[1] - b[1];
+    T zdist = a[2] - b[2];
+
+    return sqrt(xdist * xdist + ydist * ydist + zdist * zdist);
 }
 
 template <typename T>
