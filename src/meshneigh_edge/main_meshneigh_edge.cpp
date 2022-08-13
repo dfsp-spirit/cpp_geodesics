@@ -47,6 +47,9 @@ void mesh_neigh_edge(const std::string& input_mesh_file, const size_t k = 1, con
     }
     std::vector<std::vector<int32_t>> neigh = mesh_adj(m, query_vertices, k, include_self);
 
+    std::vector<Neighborhood> nh = neighborhoods_from_edge_neighbors(neigh, m);
+    std::cout << "TODO: implement to_csv method for std::vector<Neighborhood> and write 'nh' to files as well.\n";
+
     // Write it to a JSON file.
     if(write_json) {
         std::string output_dist_file_json = output_dist_file + ".json";

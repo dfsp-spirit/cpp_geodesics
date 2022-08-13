@@ -48,6 +48,7 @@ void mesh_neigh_geod(const std::string& input_mesh_file, const float max_dist = 
     std::vector<std::vector<GeodNeighbor>> neigh = geod_neighborhood(m, max_dist, include_self);
 
     std::vector<Neighborhood> nh = neighborhoods_from_geod_neighbors(neigh, m);
+    std::cout << "TODO: implement to_csv method for std::vector<Neighborhood> and write 'nh' to files as well.\n";
 
     // Write it to a JSON file if requested.
     if(write_json) {
