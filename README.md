@@ -28,7 +28,7 @@ The following apps are included:
     *  The *Ecker 2013* paper applied the descriptors to an ASD dataset and used the implementation from the Fastmarching toolbox for Matlab by Gabriel Peyre. The `geodcircles` app in this repository is a C++ implementation using [OpenMP](https://www.openmp.org/) that is an order of magnitude faster on a single CPU core and scales well on multi-core systems. See below for descriptor visualizations.
 
 
-Utility apps:
+Utility apps, used by me for debugging and to train machine learning algorithms on meshes (maybe useful to others for other purposes?):
 
 * `geodpath`: Simple app that computes [geodesic paths](https://en.wikipedia.org/wiki/Geodesic) on a mesh from a source vertex to a target vertex. It outputs coordinates of intermediate points and the total distance in machine-readbale formats. The algorithm can be selected (see `Algorithms` below).
 * `export_brainmesh`: Exports a FreeSurfer mesh and per-vertex data to a vertex-colored mesh in PLY format (by applying the viridis colormap to the per-vertex data). The colored mesh can then be viewed in standard mesh applications like [MeshLab](https://www.meshlab.net/) or [Blender](https://www.blender.org/).
