@@ -20,7 +20,29 @@
  * All relevant functions are in the file include/libfs.h and only a few utility functions are class
  * members, so the best place to start is to open the documentation for libfs.h in the Files section above.
  *
- * The project page for fslib can be found at https://github.com/dfsp-spirit/libfs
+ * \subsection intro-examples A note on the API doc examples
+ *
+ * The examples in the doc strings of the libfs.h functions usually only show data preparation and the function call itself. Typically you
+ * will get a working program out of them by wrapping them into something like:
+ *
+ * @code
+ * #include "libfs.h"
+ * #include <string>
+ * #include <iostream>
+ * #include <vector>
+ * // maybe more includes for some examples here.
+ *
+ * int main(int argc, char** argv) {
+ *      // Demo code goes here
+ * }
+ * @endcode
+ *
+ * To see full demo programs and compilation instructions, check the <a href="https://github.com/dfsp-spirit/libfs/tree/main/examples">examples/ directory</a> in the GitHub repository linked below.
+ *
+ *
+ * \subsection intro-website The libfs project website
+ *
+ * The project page for libfs can be found at https://github.com/dfsp-spirit/libfs. It contains information on all documentation available for libfs.
  *
  */
 
@@ -29,22 +51,80 @@
 namespace fs {
 
   namespace util {
-    /// Check whether a string ends with the given suffix.
+    /// @brief Check whether a string ends with the given suffix.
     /// @private
+    ///
+    /// #### Examples
+    ///
+    /// @code
+    /// bool ev = fs::util::ends_with("freesurfer", "surfer"); // true
+    /// @endcode
     inline bool ends_with(std::string const & value, std::string const & suffix) {
         if (suffix.size() > value.size()) return false;
         return std::equal(suffix.rbegin(), suffix.rend(), value.rbegin());
     }
 
-    /// Check whether a string starts with the given prefix.
+    /// @brief Check whether a string ends with one of the given suffixes.
     /// @private
+    ///
+    /// #### Examples
+    ///
+    /// @code
+    /// bool ev = fs::util::ends_with("freesurfer", {"surfer", "not"}); // true
+    /// @endcode
+    inline bool ends_with(std::string const & value, std::initializer_list<std::string> suffixes) {
+      for (auto suffix : suffixes) {
+        if (ends_with(value, suffix)) {
+          return true;
+        }
+      }
+      return false;
+    }
+
+    /// @brief Check whether a string starts with the given prefix.
+    /// @private
+    ///
+    /// #### Examples
+    ///
+    /// @code
+    /// bool ev = fs::util::starts_with("freesurfer", "free"); // true
+    /// @endcode
     inline bool starts_with(std::string const & value, std::string const & prefix) {
         if (prefix.length() > value.length()) return false;
         return value.rfind(prefix, 0) == 0;
     }
 
+    /// @brief Check whether a string starts with one of the given prefixes.
+    /// @private
+    ///
+    /// #### Examples
+    ///
+    /// @code
+    /// bool ev = fs::util::starts_with("freesurfer", {"free", "not"}); // true
+    /// @endcode
+    inline bool starts_with(std::string const & value, std::initializer_list<std::string> prefixes) {
+      for (auto prefix : prefixes) {
+        if (starts_with(value, prefix)) {
+          return true;
+        }
+      }
+      return false;
+    }
 
-    /// Construct a UNIX file system path from the given path_components.
+    /// @brief Check whether a file exists (can be read) at given path.
+    /// @details You should not rely on this as a pre-check when considering to open a file due
+    ///          to race conditions, just try-catch open in that case.
+    inline bool file_exists(const std::string& name) {
+    if (FILE *file = fopen(name.c_str(), "r")) {
+        fclose(file);
+        return true;
+    } else {
+        return false;
+    }
+}
+
+
+    /// @brief Construct a UNIX file system path from the given path_components.
     /// @details Any trailing or leading slash (path_sep) will be stripped from the individual components and replaced with a single one between two components. If the first path component started with a slash, that slash will be kept (absolute paths are left intact).
     /// @param path_components init list of strings, the path components
     /// @param path_sep path separator to use, typically `/` on Unix-based system.
@@ -54,9 +134,9 @@ namespace fs {
     /// #### Examples
     ///
     /// @code
-    /// std::string p = fs::fullpath({"path", "to", "file.txt"});
+    /// std::string p = fs::util::fullpath({"path", "to", "file.txt"});
     /// // Gives: "path/to/file.txt"
-    /// std::string p = fs::fullpath({"/path", "to", "file.txt"});
+    /// std::string p = fs::util::fullpath({"/path", "to", "file.txt"});
     /// // Gives: "/path/to/file.txt"
     /// @endcode
     std::string fullpath( std::initializer_list<std::string> path_components, std::string path_sep = std::string("/") ) {
@@ -89,10 +169,16 @@ namespace fs {
       return fp;
     }
 
-    /// Write the given text representation (any string) to a file.
+    /// @brief Write the given text representation (any string) to a file.
     /// @param filename the file to which to write, will be overwritten if exists
     /// @param rep the string to write to the file
-    /// @throws st::runtime_error if the file cannot be opened.
+    /// @throws std::runtime_error if the file cannot be opened.
+    ///
+    /// #### Examples
+    ///
+    /// @code
+    /// fs::util::str_to_file("thoughts.txt", "blah, blah, blah");
+    /// @endcode
     void str_to_file(const std::string& filename, const std::string rep) {
       std::ofstream ofs;
       ofs.open(filename, std::ofstream::out);
@@ -129,12 +215,23 @@ namespace fs {
   size_t _vidx_2d(size_t, size_t, size_t);
   struct MghHeader;
 
-  /// Models a triangular mesh, used for brain surface meshes.
+  /// @brief Models a triangular mesh, used for brain surface meshes.
   ///
-  /// Represents a vertex-indexed mesh. The `n` vertices are stored as 3D point coordinates (x,y,z) in a vector
+  /// @details Represents a vertex-indexed mesh. The `n` vertices are stored as 3D point coordinates (x,y,z) in a vector
   /// of length `3n`, in which 3 consecutive values represent the x, y and z coordinate of the same vertex.
   /// The `m` faces are stored as a vector of `3m` integers, where 3 consecutive values represent the 3 vertices (by index)
   /// making up the respective face. Vertex indices are 0-based.
+  /// #### Examples
+  ///
+  /// @code
+  /// fs::Mesh surface = fs::Mesh::construct_cube();
+  /// size_t nv = surface.num_vertices(); // 8
+  /// auto first_face_verts = surface.face_vertices(0);
+  /// int first_face_third_vert = surface.fm_at(0, 2);
+  /// size_t nf = surface.num_faces();
+  /// size_t nv = surface.num_vertices();
+  /// surface.to_obj("cube_out.obj");
+  /// @endcode
   struct Mesh {
 
     /// Construct a Mesh from the given vertices and faces.
@@ -145,8 +242,8 @@ namespace fs {
     /// Construct an empty Mesh.
     Mesh() {}
 
-    std::vector<float> vertices;
-    std::vector<int32_t> faces;
+    std::vector<float> vertices;  ///< *n x 3* vector of the *x*,*y*,*z* coordinates for the *n* vertices. The x,y,z coordinates for a single vertex form consecutive entries.
+    std::vector<int32_t> faces;  ///< *n x 3* vector of the 3 vertex indices for the *n* triangles or faces. The 3 vertices of a single face form consecutive entries.
 
     /// Construct and return a simple cube mesh.
     ///
@@ -182,8 +279,8 @@ namespace fs {
     }
 
 
-    /// Return string representing the mesh in Wavefront Object (.obj) format.
-    /// @retuns Wavefront Object string representation of the mesh, including vertices and faces.
+    /// @brief Return string representing the mesh in Wavefront Object (.obj) format.
+    /// @return Wavefront Object string representation of the mesh, including vertices and faces.
     /// @see fs::Mesh::to_obj_file is a shortcut if you want to export the string representation to a file.
     ///
     /// #### Examples
@@ -204,29 +301,37 @@ namespace fs {
     }
 
 
-    /// Export this mesh to a file in Wavefront OBJ format.
+    /// @brief Export this mesh to a file in Wavefront OBJ format.
     /// @param filename path to the output file, will be overwritten if existing.
-    /// @throws st::runtime_error if the target file cannot be opened.
+    /// @throws std::runtime_error if the target file cannot be opened.
     /// @see fs::Mesh::to_obj if you want the string representation (without writing it to a file).
     ///
     /// #### Examples
     ///
     /// @code
     /// fs::Mesh surface = fs::Mesh::construct_cube();
-    /// const std::string out_path = fs::fullpath({"/tmp", "mesh.obj"});
-    /// surface.to_obj(out_path);
+    /// const std::string out_path = fs::util::fullpath({"/tmp", "mesh.obj"});
+    /// surface.to_obj_file(out_path);
     /// @endcode
     void to_obj_file(const std::string& filename) const {
       fs::util::str_to_file(filename, this->to_obj());
     }
 
 
-    /// Read a brainmesh from a Wavefront object format stream.
+    /// @brief Read a brainmesh from a Wavefront object format stream.
     /// @details This only reads the geometry, optional format extensions like materials are ignored (but files including them should parse fine).
     /// @param mesh pointer to fs:Mesh instance to be filled.
     /// @param is stream holding a text representation of a mesh in Wavefront object format.
     /// @see There exists an overloaded version that reads from a file.
     /// @throws std::domain_error if the file format is invalid.
+    ///
+    /// #### Examples
+    ///
+    /// @code
+    /// fs::Mesh surface;
+    /// const std::string in_path = fs::util::fullpath({"/tmp", "mesh.obj"});
+    /// fs::Mesh::from_obj(&surface, in_path);
+    /// @endcode
     static void from_obj(Mesh* mesh, std::ifstream* is) {
       std::string line;
       int line_idx = -1;
@@ -296,7 +401,7 @@ namespace fs {
     }
 
 
-    /// Read a brainmesh from a Wavefront object format mesh file.
+    /// @brief Read a brainmesh from a Wavefront object format mesh file.
     /// @details This only reads the geometry, optional format extensions like materials are ignored (but files including them should parse fine).
     /// @see There exists an overloaded version that reads from a stream.
     /// @param mesh pointer to fs:Mesh instance to be filled.
@@ -321,7 +426,7 @@ namespace fs {
     }
 
 
-    /// Read a brainmesh from an Object File format (OFF) stream.
+    /// @brief Read a brainmesh from an Object File format (OFF) stream.
     /// @see There exists an overloaded version that reads from a file.
     /// @throws std::domain_error if the file format is invalid.
     static void from_off(Mesh* mesh, std::ifstream* is) {
@@ -397,7 +502,7 @@ namespace fs {
     }
 
 
-    /// Read a brainmesh from an OFF format mesh file.
+    /// @brief Read a brainmesh from an OFF format mesh file.
     /// @see There exists an overloaded version that reads from a stream.
     /// @details The OFF is the Object File Format (file extension .off) is a simple text-based mesh file format. Not to be confused with the Wavefront Object format (.obj).
     /// @param mesh pointer to fs:Mesh instance to be filled.
@@ -422,7 +527,7 @@ namespace fs {
     }
 
 
-    /// Read a brainmesh from a Stanford PLY format stream.
+    /// @brief Read a brainmesh from a Stanford PLY format stream.
     /// @see There exists an overloaded version that reads from a file.
     /// @throws std::domain_error if the file format is invalid.
     static void from_ply(Mesh* mesh, std::ifstream* is) {
@@ -504,7 +609,7 @@ namespace fs {
       mesh->faces = faces;
     }
 
-    /// Read a brainmesh from a Stanford PLY format mesh file.
+    /// @brief Read a brainmesh from a Stanford PLY format mesh file.
     /// @details The PLY format exists in text and binary forms, and the binary form can be little endian or big endian. This file reads the ASCII text format version.
     /// @param mesh pointer to fs:Mesh instance to be filled.
     /// @param filename path to input wavefront obj mesh to be read.
@@ -528,7 +633,7 @@ namespace fs {
     }
 
 
-    /// Return the number of vertices in this mesh.
+    /// @brief Return the number of vertices in this mesh.
     /// @return the vertex count
     ///
     /// #### Examples
@@ -541,7 +646,7 @@ namespace fs {
       return(this->vertices.size() / 3);
     }
 
-    /// Return the number of faces in this mesh.
+    /// @brief Return the number of faces in this mesh.
     /// @return the face count
     ///
     /// #### Examples
@@ -575,10 +680,11 @@ namespace fs {
     }
 
 
-    /// Get all vertex indices of the face, given by its index.
+    /// @brief Get all vertex indices of the face, given by its index.
     /// @param face the face index
     /// @returns vector of length 3, the vertex indices of the face.
     /// @throws std::range_error on invalid index
+    ///
     /// #### Examples
     ///
     /// @code
@@ -596,10 +702,17 @@ namespace fs {
       return(fv);
     }
 
-    /// Get all coordinates of the vertex, given by its index.
+    /// @brief Get all coordinates of the vertex, given by its index.
     /// @param vertex the vertex index
     /// @returns vector of length 3, the x,y,z coordinates of the vertex.
     /// @throws std::range_error on invalid index
+    ///
+    /// #### Examples
+    ///
+    /// @code
+    /// fs::Mesh surface = fs::Mesh::construct_cube();
+    /// auto coords = surface.vertex_coords(0);
+    /// @endcode
     std::vector<float> vertex_coords(const size_t vertex) const {
       if(vertex > this->num_vertices()-1) {
         throw std::range_error("Index " + std::to_string(vertex) + " into Mesh.vertices out of bounds, max valid index is " + std::to_string(this->num_vertices()-1) + ".\n");
@@ -611,10 +724,19 @@ namespace fs {
       return(vc);
     }
 
-    /// @brief Retrieve a coordinate of a vertex, treating the vertices vector as an nx3 matrix.
+    /// @brief Retrieve a single (x, y, or z) coordinate of a vertex, treating the vertices vector as an nx3 matrix.
     /// @param i the row index, valid values are 0..num_vertices.
     /// @param j the column index, valid values are 0..2 (for the x,y,z coordinates).
     /// @throws std::range_error on invalid index
+    ///
+    /// #### Examples
+    ///
+    /// @code
+    /// fs::Mesh surface = fs::Mesh::construct_cube();
+    /// float v5_x = surface.vm_at(5, 0);
+    /// float v5_y = surface.vm_at(5, 1);
+    /// float v5_z = surface.vm_at(5, 2);
+    /// @endcode
     const float& vm_at(const size_t i, const size_t j) const {
       size_t idx = _vidx_2d(i, j, 3);
       if(idx > this->vertices.size()-1) {
@@ -623,15 +745,29 @@ namespace fs {
       return(this->vertices[idx]);
     }
 
-    /// Return string representing the mesh in PLY format. Overload that works without passing a color vector.
+    /// @brief Return string representing the mesh in PLY format. Overload that works without passing a color vector.
+    ///
+    /// #### Examples
+    ///
+    /// @code
+    /// fs::Mesh surface = fs::Mesh::construct_cube();
+    /// std::string ply_rep = surface.to_ply();
+    /// @endcode
     std::string to_ply() const {
       std::vector<uint8_t> empty_col;
       return(this->to_ply(empty_col));
     }
 
-    /// Return string representing the mesh in PLY format.
+    /// @brief Return string representing the mesh in PLY format.
     /// @param col u_char vector of RGB color values, 3 per vertex. They must appear by vertex, i.e. in order v0_red, v0_green, v0_blue, v1_red, v1_green, v1_blue. Leave empty if you do not want colors.
     /// @throws std::invalid_argument if the number of vertex colors does not match the number of vertices.
+    ///
+    /// #### Examples
+    ///
+    /// @code
+    /// fs::Mesh surface = fs::Mesh::construct_cube();
+    /// std::string ply_rep = surface.to_ply();
+    /// @endcode
     std::string to_ply(const std::vector<uint8_t> col) const {
       bool use_vertex_colors = col.size() != 0;
       std::stringstream plys;
@@ -663,25 +799,39 @@ namespace fs {
       return(plys.str());
     }
 
-    /// Export this mesh to a file in Stanford PLY format.
-    /// @throws st::runtime_error if the target file cannot be opened.
+    /// @brief Export this mesh to a file in Stanford PLY format.
+    /// @throws std::runtime_error if the target file cannot be opened.
+    ///
+    /// #### Examples
+    ///
+    /// @code
+    /// fs::Mesh surface = fs::Mesh::construct_cube();
+    /// surface.to_ply_file("mesh.ply");
+    /// @endcode
     void to_ply_file(const std::string& filename) const {
       fs::util::str_to_file(filename, this->to_ply());
     }
 
-    /// Export this mesh to a file in Stanford PLY format with vertex colors.
-    /// @throws st::runtime_error if the target file cannot be opened, std::invalid_argument if the number of vertex colors does not match the number of vertices.
+    /// @brief Export this mesh to a file in Stanford PLY format with vertex colors.
+    /// @throws std::runtime_error if the target file cannot be opened, std::invalid_argument if the number of vertex colors does not match the number of vertices.
     void to_ply_file(const std::string& filename, const std::vector<uint8_t> col) const {
       fs::util::str_to_file(filename, this->to_ply(col));
     }
 
-    /// Return string representing the mesh in OFF format. Overload that works without passing a color vector.
+    /// @brief Return string representing the mesh in OFF format. Overload that works without passing a color vector.
+    ///
+    /// #### Examples
+    ///
+    /// @code
+    /// fs::Mesh surface = fs::Mesh::construct_cube();
+    /// std::string off_rep = surface.to_off();
+    /// @endcode
     std::string to_off() const {
       std::vector<uint8_t> empty_col;
       return(this->to_off(empty_col));
     }
 
-    /// Return string representing the mesh in PLY format.
+    /// @brief Return string representing the mesh in PLY format.
     /// @param col u_char vector of RGB color values, 3 per vertex. They must appear by vertex, i.e. in order v0_red, v0_green, v0_blue, v1_red, v1_green, v1_blue. Leave empty if you do not want colors.
     /// @throws std::invalid_argument if the number of vertex colors does not match the number of vertices.
     std::string to_off(const std::vector<uint8_t> col) const {
@@ -712,14 +862,21 @@ namespace fs {
       return(offs.str());
     }
 
-    /// Export this mesh to a file in OFF format.
-    /// @throws st::runtime_error if the target file cannot be opened.
+    /// @brief Export this mesh to a file in OFF format.
+    /// @throws std::runtime_error if the target file cannot be opened.
+    ///
+    /// #### Examples
+    ///
+    /// @code
+    /// fs::Mesh surface = fs::Mesh::construct_cube();
+    /// surface.to_off_file("mesh.off");
+    /// @endcode
     void to_off_file(const std::string& filename) const {
       fs::util::str_to_file(filename, this->to_off());
     }
 
-    /// Export this mesh to a file in OFF format with vertex colors (COFF).
-    /// @throws st::runtime_error if the target file cannot be opened, std::invalid_argument if the number of vertex colors does not match the number of vertices.
+    /// @brief Export this mesh to a file in OFF format with vertex colors (COFF).
+    /// @throws std::runtime_error if the target file cannot be opened, std::invalid_argument if the number of vertex colors does not match the number of vertices.
     void to_off_file(const std::string& filename, const std::vector<uint8_t> col) const {
       fs::util::str_to_file(filename, this->to_off(col));
     }
@@ -737,11 +894,17 @@ namespace fs {
     Curv() :
       num_faces(100000), num_vertices(0), num_values_per_vertex(1) {}
 
+    /// The number of faces of the mesh to which this belongs, typically irrelevant and ignored.
     int32_t num_faces;
-    std::vector<float> data;
-    int32_t num_vertices;
-    int32_t num_values_per_vertex;
 
+    /// The curvature data, one value per vertex. Something like the cortical thickness at each vertex.
+    std::vector<float> data;
+
+    /// The number of vertices of the mesh to which this belongs. Can be deduced from length of 'data'.
+    int32_t num_vertices;
+
+    /// The number of values per vertex, stored in this file. Almost all apps (including FreeSurfer itself) only support a value of 1 here. Ignored by most apps, and assumed to be 1.
+    int32_t num_values_per_vertex;
   };
 
   /// The colortable from an Annot file, can be used for parcellations and integer labels. Typically each index (in all fields) describes a brain region.
@@ -754,7 +917,7 @@ namespace fs {
     std::vector<int32_t> a;   ///< alpha channel of RGBA color
     std::vector<int32_t> label;   ///< label integer computed from rgba values. Maps to the Annot.vertex_label field.
 
-    /// Get the number of enties (regions) in this Colortable.
+    /// @brief Get the number of enties (regions) in this Colortable.
     size_t num_entries() const {
       size_t num_ids = this->id.size();
       if(this->name.size() != num_ids || this->r.size() != num_ids || this->g.size() != num_ids || this->b.size() != num_ids || this->a.size() != num_ids || this->label.size() != num_ids) {
@@ -763,7 +926,7 @@ namespace fs {
       return num_ids;
     }
 
-    /// Get the index of a region in the Colortable by region name. Returns a negative value if the region is not found.
+    /// @brief Get the index of a region in the Colortable by region name. Returns a negative value if the region is not found.
     int32_t get_region_idx(const std::string& query_name) const {
       for(size_t i = 0; i<this->num_entries(); i++) {
         if(this->name[i] == query_name) {
@@ -773,7 +936,7 @@ namespace fs {
       return(-1);
     }
 
-    /// Get the index of a region in the Colortable by label. Returns a negative value if the region is not found.
+    /// @brief Get the index of a region in the Colortable by label. Returns a negative value if the region is not found.
     int32_t get_region_idx(int32_t query_label) const {
       for(size_t i = 0; i<this->num_entries(); i++) {
         if(this->label[i] == query_label) {
@@ -792,7 +955,7 @@ namespace fs {
     std::vector<int32_t> vertex_labels;   ///< The label code for each vertex, defining the region it belongs to. Check in the Colortable for a region that has this label.
     Colortable colortable;  ///< A Colortable defining the regions (most importantly, the region name and visualization color).
 
-    /// Get all vertices of a region given by name in the brain surface parcellation. Returns an integer vector, the vertex indices.
+    /// @brief Get all vertices of a region given by name in the brain surface parcellation. Returns an integer vector, the vertex indices.
     std::vector<int32_t> region_vertices(const std::string& region_name) const {
       int32_t region_idx = this->colortable.get_region_idx(region_name);
       if(region_idx >= 0) {
@@ -804,7 +967,7 @@ namespace fs {
       }
     }
 
-    /// Get all vertices of a region given by label in the brain surface parcellation. Returns an integer vector, the vertex indices.
+    /// @brief Get all vertices of a region given by label in the brain surface parcellation. Returns an integer vector, the vertex indices.
     std::vector<int32_t> region_vertices(int32_t region_label) const {
       std::vector<int32_t> reg_verts;
       for(size_t i=0; i<this->vertex_labels.size(); i++) {
@@ -815,7 +978,7 @@ namespace fs {
       return(reg_verts);
     }
 
-    /// Get the vertex colors as an array of uchar values, 3 consecutive values are the red, green and blue channel values for a single vertex.
+    /// @brief Get the vertex colors as an array of uchar values, 3 consecutive values are the red, green and blue channel values for a single vertex.
     /// @param alpha whether to include the alpha channel and return 4 values per vertex instead of 3.
     std::vector<uint8_t> vertex_colors(bool alpha = false) const {
       int num_channels = alpha ? 4 : 3;
@@ -833,7 +996,7 @@ namespace fs {
       return(col);
     }
 
-    /// Get the number of vertices of this parcellation (or the associated surface).
+    /// @brief Get the number of vertices of this parcellation (or the associated surface).
     /// @throws std::runtime_error on invalid annot
     size_t num_vertices() const {
       size_t nv = this->vertex_indices.size();
@@ -843,7 +1006,7 @@ namespace fs {
       return nv;
     }
 
-    /// Compute the region indices in the Colortable for all vertices in this brain surface parcellation. With the region indices, it becomes very easy to obtain all region names, labels, and color channel values from the Colortable.
+    /// @brief Compute the region indices in the Colortable for all vertices in this brain surface parcellation. With the region indices, it becomes very easy to obtain all region names, labels, and color channel values from the Colortable.
     /// @see The function `vertex_region_names` uses this function to get the region names for all vertices.
     std::vector<size_t> vertex_regions() const {
       std::vector<size_t> vert_reg;
@@ -860,7 +1023,7 @@ namespace fs {
       return vert_reg;
     }
 
-    /// Compute the region names in the Colortable for all vertices in this brain surface parcellation.
+    /// @brief Compute the region names in the Colortable for all vertices in this brain surface parcellation.
     std::vector<std::string> vertex_region_names() const {
       std::vector<std::string> region_names;
       std::vector<size_t> vertex_region_indices = this->vertex_regions();
@@ -874,55 +1037,59 @@ namespace fs {
 
   /// Models the header of an MGH file.
   struct MghHeader {
-    int32_t dim1length;
-    int32_t dim2length;
-    int32_t dim3length;
-    int32_t dim4length;
+    int32_t dim1length;  ///< size of data along 1st dimension
+    int32_t dim2length;  ///< size of data along 2nd dimension
+    int32_t dim3length;  ///< size of data along 3rd dimension
+    int32_t dim4length;  ///< size of data along 4th dimension
 
-    int32_t dtype;
-    int32_t dof;
-    int16_t ras_good_flag;
+    int32_t dtype;  ///< the MRI data type
+    int32_t dof;  ///< typically ignored
+    int16_t ras_good_flag; ///< flag indicating whether the data in the RAS fields (Mdc, Pxyz_c) are valid. 1 means valid, everything else means invalid.
 
-    /// Compute the number of values based on the dim*length header fields.
+    /// @brief Compute the number of values based on the dim*length header fields.
     size_t num_values() const {
       return((size_t) dim1length * dim2length * dim3length * dim4length);
     }
 
-    float xsize;
-    float ysize;
-    float zsize;
-    std::vector<float> Mdc;
-    std::vector<float> Pxyz_c;
+    float xsize;  ///< size of voxels along 1st axis (x or r)
+    float ysize;  ///< size of voxels along 2nd axis (y or a)
+    float zsize;  ///< size of voxels along 3rd axis (z or s)
+    std::vector<float> Mdc;  ///< matrix
+    std::vector<float> Pxyz_c;  ///< x,y,z coordinates of central vertex
   };
 
   /// Models the data of an MGH file. Currently these are 1D vectors, but one can compute the 4D array using the dimXlength fields of the respective MghHeader.
   struct MghData {
     MghData() {}
-    MghData(std::vector<int32_t> curv_data) { data_mri_int = curv_data; }
-    explicit MghData(std::vector<uint8_t> curv_data) { data_mri_uchar = curv_data; }
-    explicit MghData(std::vector<short> curv_data) { data_mri_short = curv_data; }
-    MghData(std::vector<float> curv_data) { data_mri_float = curv_data; }
-    std::vector<int32_t> data_mri_int;
-    std::vector<uint8_t> data_mri_uchar;
-    std::vector<float> data_mri_float;
-    std::vector<short> data_mri_short;
+    MghData(std::vector<int32_t> curv_data) { data_mri_int = curv_data; }  ///< constructor to create MghData from MRI_INT (int32_t) data.
+    explicit MghData(std::vector<uint8_t> curv_data) { data_mri_uchar = curv_data; }  ///< constructor to create MghData from MRI_UCHAR (uint8_t) data.
+    explicit MghData(std::vector<short> curv_data) { data_mri_short = curv_data; }  ///< constructor to create MghData from MRI_SHORT (short) data.
+    MghData(std::vector<float> curv_data) { data_mri_float = curv_data; }  ///< constructor to create MghData from MRI_FLOAT (float) data.
+    std::vector<int32_t> data_mri_int;  ///< data of type MRI_INT, check the dtype to see whether this is relevant for this instance.
+    std::vector<uint8_t> data_mri_uchar;  ///< data of type MRI_UCHAR, check the dtype to see whether this is relevant for this instance.
+    std::vector<float> data_mri_float;  ///< data of type MRI_FLOAT, check the dtype to see whether this is relevant for this instance.
+    std::vector<short> data_mri_short;  ///< data of type MRI_SHORT, check the dtype to see whether this is relevant for this instance.
   };
 
   /// Models a whole MGH file.
   struct Mgh {
-    MghHeader header;
-    MghData data;
+    MghHeader header;  ///< Header for this MGH instance.
+    MghData data;  ///< 4D data for this MGH instance.
   };
 
-  /// A simple 4D array datastructure, useful for representing volume data.
+  /// @brief A simple 4D array datastructure, useful for representing volume data.
+  /// @details By convention, for FreeSurfer data, the order of the 4 dimensions is: *time*, *x*, *y*, *z*.
   template<class T>
   struct Array4D {
+    /// Constructor for creating an empty 4D array of the given dimensions.
     Array4D(unsigned int d1, unsigned int d2, unsigned int d3, unsigned int d4) :
       d1(d1), d2(d2), d3(d3), d4(d4), data(d1*d2*d3*d4) {}
 
+    /// Constructor for creating an empty 4D array based on dimensions specified in an fs::MghHeader.
     Array4D(MghHeader *mgh_header) :
       d1(mgh_header->dim1length), d2(mgh_header->dim2length), d3(mgh_header->dim3length), d4(mgh_header->dim4length), data(d1*d2*d3*d4) {}
 
+    /// Constructor for creating an empty 4D array based on dimensions specified in the header of an fs::Mgh. Does not init the data.
     Array4D(Mgh *mgh) : // This does NOT init the data atm.
       d1(mgh->header.dim1length), d2(mgh->header.dim2length), d3(mgh->header.dim3length), d4(mgh->header.dim4length), data(d1*d2*d3*d4) {}
 
@@ -945,11 +1112,11 @@ namespace fs {
       return(d1*d2*d3*d4);
     }
 
-    unsigned int d1;
-    unsigned int d2;
-    unsigned int d3;
-    unsigned int d4;
-    std::vector<T> data;
+    unsigned int d1;  ///< size of data along 1st dimension
+    unsigned int d2;  ///< size of data along 2nd dimension
+    unsigned int d3;  ///< size of data along 3rd dimension
+    unsigned int d4;  ///< size of data along 4th dimension
+    std::vector<T> data;  ///< the data, as a 1D vector. Use fs::Array4D::at for easy access in 4D.
   };
 
   // More declarations, should also go to separate header.
@@ -967,12 +1134,18 @@ namespace fs {
   std::vector<float> _read_mgh_data_float(MghHeader*, std::istream*);
 
 
-  /// Read a FreeSurfer volume file in MGH format into the given Mgh struct.
-  ///
+  /// @brief Read a FreeSurfer volume file in MGH format into the given Mgh struct.
   /// @param mgh An Mgh instance that should be filled with the data from the filename.
   /// @param filename Path to the input MGH file.
   /// @see There exists an overloaded version that reads from a stream.
   /// @throws runtime_error if the file uses an unsupported MRI data type.
+  ///
+  /// #### Examples
+  ///
+  /// @code
+  /// fs::Mgh mgh;
+  /// fs::read_mgh(&mgh, "somebrain.mgh");
+  /// @endcode
   void read_mgh(Mgh* mgh, const std::string& filename) {
     MghHeader mgh_header;
     read_mgh_header(&mgh_header, filename);
@@ -990,16 +1163,22 @@ namespace fs {
       std::vector<short> data = _read_mgh_data_short(&mgh_header, filename);
       mgh->data.data_mri_short = data;
     } else {
-      if(_ends_with(filename, ".mgz")) {
+      if(fs::util::ends_with(filename, ".mgz")) {
         std::cout << "Note: your MGH filename ends with '.mgz'. Keep in mind that MGZ format is not supported directly. You can ignore this message if you wrapped a gz stream.\n";
       }
       throw std::runtime_error("Not reading MGH data from file '" + filename + "', data type " + std::to_string(mgh->header.dtype) + " not supported yet.\n");
     }
   }
 
-  /// Read a vector of subject identifiers from a FreeSurfer subjects file.
+  /// @brief Read a vector of subject identifiers from a FreeSurfer subjects file.
   /// @param filename a text file that contains one subject identifier per line.
   /// @throws runtime_error if the file cannot be read
+  ///
+  /// #### Examples
+  ///
+  /// @code
+  /// std::vector<std::string> subjects = fs::read_subjectsfile("subjects.txt");
+  /// @endcode
   std::vector<std::string> read_subjectsfile(const std::string& filename) {
     std::vector<std::string> subjects;
     std::ifstream input(filename);
@@ -1015,8 +1194,7 @@ namespace fs {
     return(subjects);
   }
 
-  /// Read MGH data from a stream.
-  ///
+  /// @brief Read MGH data from a stream.
   /// @param mgh An Mgh instance that should be filled with the data from the stream.
   /// @param is Pointer to an open istream from which to read the MGH data.
   /// @see There exists an overloaded version that reads from a file.
@@ -1042,8 +1220,7 @@ namespace fs {
     }
   }
 
-  /// Read an MGH header from a stream.
-  ///
+  /// @brief Read an MGH header from a stream.
   /// @param mgh_header An MghHeader instance that should be filled with the data from the stream.
   /// @param is Pointer to an open istream from which to read the MGH data.
   /// @see There exists an overloaded version that reads from a file.
@@ -1092,9 +1269,10 @@ namespace fs {
     (void)discarded; // Suppress warnings about unused variable.
   }
 
-  /// Read MRI_INT data from MGH file
+  /// @brief Read MRI_INT data from MGH file
   ///
   /// THIS FUNCTION IS INTERNAL AND SHOULD NOT BE CALLED BY API CLIENTS.
+  /// @private
   std::vector<int32_t> _read_mgh_data_int(MghHeader* mgh_header, const std::string& filename) {
     if(mgh_header->dtype != MRI_INT) {
       std::cerr << "Expected MRI data type " << MRI_INT << ", but found " << mgh_header->dtype << ".\n";
@@ -1102,9 +1280,10 @@ namespace fs {
     return(_read_mgh_data<int32_t>(mgh_header, filename));
   }
 
-  /// Read MRI_INT data from a stream.
+  /// @brief Read MRI_INT data from a stream.
   ///
   /// THIS FUNCTION IS INTERNAL AND SHOULD NOT BE CALLED BY API CLIENTS.
+  /// @private
   std::vector<int32_t> _read_mgh_data_int(MghHeader* mgh_header, std::istream* is) {
     if(mgh_header->dtype != MRI_INT) {
       std::cerr << "Expected MRI data type " << MRI_INT << ", but found " << mgh_header->dtype << ".\n";
@@ -1112,9 +1291,10 @@ namespace fs {
     return(_read_mgh_data<int32_t>(mgh_header, is));
   }
 
-  /// Read MRI_SHORT data from MGH file
+  /// @brief Read MRI_SHORT data from MGH file
   ///
   /// THIS FUNCTION IS INTERNAL AND SHOULD NOT BE CALLED BY API CLIENTS.
+  /// @private
   std::vector<short> _read_mgh_data_short(MghHeader* mgh_header, const std::string& filename) {
     if(mgh_header->dtype != MRI_SHORT) {
       std::cerr << "Expected MRI data type " << MRI_SHORT << ", but found " << mgh_header->dtype << ".\n";
@@ -1122,9 +1302,10 @@ namespace fs {
     return(_read_mgh_data<short>(mgh_header, filename));
   }
 
-  /// Read MRI_SHORT data from a stream.
+  /// @brief Read MRI_SHORT data from a stream.
   ///
   /// THIS FUNCTION IS INTERNAL AND SHOULD NOT BE CALLED BY API CLIENTS.
+  /// @private
   std::vector<short> _read_mgh_data_short(MghHeader* mgh_header, std::istream* is) {
     if(mgh_header->dtype != MRI_SHORT) {
       std::cerr << "Expected MRI data type " << MRI_SHORT << ", but found " << mgh_header->dtype << ".\n";
@@ -1133,7 +1314,7 @@ namespace fs {
   }
 
 
-  /// Read the header of a FreeSurfer volume file in MGH format into the given MghHeader struct.
+  /// @brief Read the header of a FreeSurfer volume file in MGH format into the given MghHeader struct.
   ///
   /// @param mgh_header An MghHeader instance that should be filled with the data from the file.
   /// @param filename Path to the file from which to read the MGH data.
@@ -1151,10 +1332,11 @@ namespace fs {
   }
 
 
-  /// Read arbitrary MGH data from a file.
+  /// @brief Read arbitrary MGH data from a file.
   ///
   /// THIS FUNCTION IS INTERNAL AND SHOULD NOT BE CALLED BY API CLIENTS.
   /// @throws runtime_error if the file cannot be opened
+  /// @private
   template <typename T>
   std::vector<T> _read_mgh_data(MghHeader* mgh_header, const std::string& filename) {
     std::ifstream ifs;
@@ -1175,9 +1357,10 @@ namespace fs {
   }
 
 
-  /// Read arbitrary MGH data from a stream. The stream must be open and at the beginning of the MGH data.
+  /// @brief Read arbitrary MGH data from a stream. The stream must be open and at the beginning of the MGH data.
   ///
   /// THIS FUNCTION IS INTERNAL AND SHOULD NOT BE CALLED BY API CLIENTS.
+  /// @private
   template <typename T>
   std::vector<T> _read_mgh_data(MghHeader* mgh_header, std::istream* is) {
     int num_values = mgh_header->num_values();
@@ -1189,9 +1372,10 @@ namespace fs {
   }
 
 
-  /// Read MRI_FLOAT data from MGH file
+  /// @brief Read MRI_FLOAT data from MGH file
   ///
   /// THIS FUNCTION IS INTERNAL AND SHOULD NOT BE CALLED BY API CLIENTS.
+  /// @private
   std::vector<float> _read_mgh_data_float(MghHeader* mgh_header, const std::string& filename) {
     if(mgh_header->dtype != MRI_FLOAT) {
       std::cerr << "Expected MRI data type " << MRI_FLOAT << ", but found " << mgh_header->dtype << ".\n";
@@ -1199,9 +1383,10 @@ namespace fs {
     return(_read_mgh_data<float>(mgh_header, filename));
   }
 
-  /// Read MRI_FLOAT data from an MGH stream
+  /// @brief Read MRI_FLOAT data from an MGH stream
   ///
   /// THIS FUNCTION IS INTERNAL AND SHOULD NOT BE CALLED BY API CLIENTS.
+  /// @private
   std::vector<float> _read_mgh_data_float(MghHeader* mgh_header, std::istream* is) {
     if(mgh_header->dtype != MRI_FLOAT) {
       std::cerr << "Expected MRI data type " << MRI_FLOAT << ", but found " << mgh_header->dtype << ".\n";
@@ -1209,9 +1394,10 @@ namespace fs {
     return(_read_mgh_data<float>(mgh_header, is));
   }
 
-  /// Read MRI_UCHAR data from MGH file
+  /// @brief Read MRI_UCHAR data from MGH file
   ///
   /// THIS FUNCTION IS INTERNAL AND SHOULD NOT BE CALLED BY API CLIENTS.
+  /// @private
   std::vector<uint8_t> _read_mgh_data_uchar(MghHeader* mgh_header, const std::string& filename) {
     if(mgh_header->dtype != MRI_UCHAR) {
       std::cerr << "Expected MRI data type " << MRI_UCHAR << ", but found " << mgh_header->dtype << ".\n";
@@ -1219,9 +1405,10 @@ namespace fs {
     return(_read_mgh_data<uint8_t>(mgh_header, filename));
   }
 
-  /// Read MRI_UCHAR data from an MGH stream
+  /// @brief Read MRI_UCHAR data from an MGH stream
   ///
   /// THIS FUNCTION IS INTERNAL AND SHOULD NOT BE CALLED BY API CLIENTS.
+  /// @private
   std::vector<uint8_t> _read_mgh_data_uchar(MghHeader* mgh_header, std::istream* is) {
     if(mgh_header->dtype != MRI_UCHAR) {
       std::cerr << "Expected MRI data type " << MRI_UCHAR << ", but found " << mgh_header->dtype << ".\n";
@@ -1229,12 +1416,19 @@ namespace fs {
     return(_read_mgh_data<uint8_t>(mgh_header, is));
   }
 
-  /// Read a brain mesh from a file in binary FreeSurfer 'surf' format into the given Mesh instance.
+  /// @brief Read a brain mesh from a file in binary FreeSurfer 'surf' format into the given Mesh instance.
   ///
   /// @param surface a Mesh instance representing a vertex-indexed tri-mesh. This will be filled.
   /// @param filename The path to the file from which to read the mesh. Must be in binary FreeSurfer surf format. An example file is `surf/lh.white`.
   /// @throws runtime_error if the file cannot be opened, domain_error if the surf file magic mismatches.
-  /// @see read_mesh, a generalized version that supports other file formats as well.
+  /// @see fs::read_mesh, a generalized version that supports other mesh file formats as well.
+  ///
+  /// #### Examples
+  ///
+  /// @code
+  /// fs::Mesh surface;
+  /// fs::read_surf(&surface, "lh.white");
+  /// @endcode
   void read_surf(Mesh* surface, const std::string& filename) {
     const int SURF_TRIS_MAGIC = 16777214;
     std::ifstream is;
@@ -1266,11 +1460,18 @@ namespace fs {
   }
 
 
-  /// Read a triangular mesh from a surf, obj, or ply file into the given Mesh instance.
+  /// @brief Read a triangular mesh from a surf, obj, or ply file into the given Mesh instance.
   ///
   /// @param surface a Mesh instance representing a vertex-indexed tri-mesh. This will be filled.
   /// @param filename The path to the file from which to read the mesh. The format will be determined from the file extension as follows. File names ending with '.obj' are loaded as Wavefront OBJ files. File names ending with '.ply' are loaded as Stanford PLY files in format version 'ascii 1.0'. All other files are loaded as FreeSurfer binary surf files.
   /// @throws runtime_error if the file cannot be opened, domain_error if the surf file magic mismatches.
+  ///
+  /// #### Examples
+  ///
+  /// @code
+  /// fs::mesh surface;
+  /// fs::read_mesh(&surface, "subject1/surf/lh.thickness");
+  /// @endcode
   void read_mesh(Mesh* surface, const std::string& filename) {
     if(fs::util::ends_with(filename, ".obj")) {
       fs::Mesh::from_obj(surface, filename);
@@ -1284,9 +1485,11 @@ namespace fs {
   }
 
 
-  /// Determine the endianness of the system.
+  /// @brief Determine the endianness of the system.
   ///
   /// THIS FUNCTION IS INTERNAL AND SHOULD NOT BE CALLED BY API CLIENTS.
+  /// @return boolean, whether the current system is big endian.
+  /// @private
   bool _is_bigendian() {
     short int number = 0x1;
     char *numPtr = (char*)&number;
@@ -1324,6 +1527,13 @@ namespace fs {
   /// @param curv A Curv instance to be filled.
   /// @param filename Path to a file from which to read the curv data.
   /// @throws runtime_error if the file cannot be opened, domain_error if the curv file magic mismatches or the curv file header claims that the file contains more than 1 value per vertex.
+  ///
+  /// #### Examples
+  ///
+  /// @code
+  /// fs::Curv curv;
+  /// fs::read_curv(&curv, "examples/read_curv/lh.thickness");
+  /// @endcode
   void read_curv(Curv* curv, const std::string& filename) {
     std::ifstream is(filename);
     if(is.is_open()) {
@@ -1335,6 +1545,7 @@ namespace fs {
   }
 
   /// Read an Annot Colortable from a stream.
+  /// @private
   void _read_annot_colortable(Colortable* colortable, std::istream *is, int32_t num_entries) {
     int32_t num_chars_orig_filename = _freadt<int32_t>(*is);  // The number of characters of the file this annot was built from.
 
@@ -1365,6 +1576,7 @@ namespace fs {
   }
 
   /// Compute the vector index for treating a vector of length n*m as a matrix with n rows and m columns.
+  /// @private
   size_t _vidx_2d(size_t row, size_t column, size_t row_length=3) {
     return (row+1)*row_length -row_length + column;
   }
@@ -1415,6 +1627,14 @@ namespace fs {
   /// @param filename Path to the label file that should be read.
   /// @see There exists an overload to read from a stream instead.
   /// @throws runtime_error if the file cannot be opened, domain_error if the file format version is not supported or the file is missing the color table.
+  ///
+  /// #### Examples
+  ///
+  /// @code
+  /// std::string annot_fname = "lh.aparc.annot";
+  /// fs::Annot annot;
+  /// fs::read_annot(&annot, annot_fname);
+  /// @endcode
   void read_annot(Annot* annot, const std::string& filename) {
     std::ifstream is(filename);
     if(is.is_open()) {
@@ -1431,6 +1651,13 @@ namespace fs {
   /// @param filename Path to a file from which to read the curv data.
   /// @return a vector of float values, one per vertex.
   /// @throws runtime_error if the file cannot be opened, domain_error if the curv file magic mismatches or the curv file header claims that the file contains more than 1 value per vertex.
+  ///
+  /// #### Examples
+  ///
+  /// @code
+  /// std::string curv_fname = "lh.thickness";
+  /// std::vector<float> data = fs::read_curv_data(curv_fname);
+  /// @endcode
   std::vector<float> read_curv_data(const std::string& filename) {
     Curv curv;
     read_curv(&curv, filename);
@@ -1440,6 +1667,7 @@ namespace fs {
   /// Swap endianness of a value.
   ///
   /// THIS FUNCTION IS INTERNAL AND SHOULD NOT BE CALLED BY API CLIENTS.
+  /// @private
   template <typename T>
   T _swap_endian(T u) {
       static_assert (CHAR_BIT == 8, "CHAR_BIT != 8");
@@ -1461,6 +1689,7 @@ namespace fs {
   /// Read a big endian value from a stream.
   ///
   /// THIS FUNCTION IS INTERNAL AND SHOULD NOT BE CALLED BY API CLIENTS.
+  /// @private
   template <typename T>
   T _freadt(std::istream& is) {
     T t;
@@ -1474,6 +1703,7 @@ namespace fs {
   /// Read 3 big endian bytes as a single integer from a stream.
   ///
   /// THIS FUNCTION IS INTERNAL AND SHOULD NOT BE CALLED BY API CLIENTS.
+  /// @private
   int _fread3(std::istream& is) {
     uint32_t i;
     is.read(reinterpret_cast<char*>(&i), 3);
@@ -1487,6 +1717,7 @@ namespace fs {
   /// Write a value to a stream as big endian.
   ///
   /// THIS FUNCTION IS INTERNAL AND SHOULD NOT BE CALLED BY API CLIENTS.
+  /// @private
   template <typename T>
   void _fwritet(std::ostream& os, T t) {
     if(! _is_bigendian()) {
@@ -1499,6 +1730,7 @@ namespace fs {
   // Write big endian 24 bit integer to a stream, extracted from the first 3 bytes of an unsigned 32 bit integer.
   //
   // THIS FUNCTION IS INTERNAL AND SHOULD NOT BE CALLED BY API CLIENTS.
+  /// @private
   void _fwritei3(std::ostream& os, uint32_t i) {
     unsigned char b1 = ( i >> 16) & 255;
     unsigned char b2 = ( i >> 8) & 255;
@@ -1519,6 +1751,7 @@ namespace fs {
   /// Read a '\n'-terminated ASCII string from a stream.
   ///
   /// THIS FUNCTION IS INTERNAL AND SHOULD NOT BE CALLED BY API CLIENTS.
+  /// @private
   std::string _freadstringnewline(std::istream &is) {
     std::string s;
     std::getline(is, s, '\n');
@@ -1527,6 +1760,7 @@ namespace fs {
 
   /// Read a fixed length C-style string from an open binary stream. This does not care about trailing NULL bytes or anything, it just reads the given length of bytes.
   /// @throws std::out_of_range if length is not positive
+  /// @private
   std::string _freadfixedlengthstring(std::istream &is, int32_t length, bool strip_last_char=true) {
     if(length <= 0) {
       throw std::out_of_range("Parameter 'length' must be a positive integer.\n");
@@ -1538,18 +1772,6 @@ namespace fs {
       str = str.substr(0, length-1);
     }
     return str;
-  }
-
-  /// Check whether a string ends with the given suffix.
-  ///
-  /// THIS FUNCTION IS INTERNAL AND SHOULD NOT BE CALLED BY API CLIENTS.
-  /// https://stackoverflow.com/questions/874134/find-out-if-string-ends-with-another-string-in-c
-  bool _ends_with (std::string const &fullString, std::string const &ending) {
-    if (fullString.length() >= ending.length()) {
-        return (0 == fullString.compare (fullString.length() - ending.length(), ending.length(), ending));
-    } else {
-        return false;
-    }
   }
 
 
@@ -1576,6 +1798,14 @@ namespace fs {
   /// @param curv_data the data to write.
   /// @param num_faces the value for the header field `num_faces`. This is not needed afaik and typically ignored.
   /// @throws std::runtime_error if the file cannot be opened.
+  ///
+  /// #### Examples
+  ///
+  /// @code
+  /// std::vector<float> data = fs::read_curv_data("lh.thickness");
+  /// // Do something with 'data' here, maybe?
+  /// fs::write_curv("output.curv", data);
+  /// @endcode
   void write_curv(const std::string& filename, std::vector<float> curv_data, const int32_t num_faces = 100000) {
     std::ofstream ofs;
     ofs.open(filename, std::ofstream::out | std::ofstream::binary);
@@ -1668,6 +1898,15 @@ namespace fs {
   /// @param filename Path to an output file to which to write.
   /// @see There exists an overload to write to a stream.
   /// @throws std::runtime_error if the file cannot be opened, std::logic_error if the mgh header and data are inconsistent, std::domain_error if the given MRI data type is unknown or unsupported.
+  ///
+  /// #### Examples
+  ///
+  /// @code
+  /// fs::Mgh mgh;
+  /// fs::read_mgh(&mgh, "somebrain.mgh");
+  /// // Do something with 'mgh' here, maybe?
+  /// fs::write_mgh(mgh, "output.mgh");
+  /// @endcode
   void write_mgh(const Mgh& mgh, const std::string& filename) {
     std::ofstream ofs;
     ofs.open(filename, std::ofstream::out | std::ofstream::binary);
@@ -1681,11 +1920,11 @@ namespace fs {
 
   /// Models a FreeSurfer label.
   struct Label {
-    std::vector<int> vertex;
-    std::vector<float> coord_x;
-    std::vector<float> coord_y;
-    std::vector<float> coord_z;
-    std::vector<float> value;
+    std::vector<int> vertex;  ///< vertex indices for the data in this label if it is a surface label. These are indices into the vertices of a surface mesh to which this label belongs.
+    std::vector<float> coord_x;  ///< x coordinates of the vertices in case of a surface label, or voxels coordinates for a volume label.
+    std::vector<float> coord_y;  ///< y coordinates of the vertices in case of a surface label, or voxels coordinates for a volume label.
+    std::vector<float> coord_z;  ///< z coordinates of the vertices in case of a surface label, or voxels coordinates for a volume label.
+    std::vector<float> value;  ///< the value of the label, can represent continuous data like a p-value, or sometimes simply 1.0 or 0.0 to mark a certain area.
 
     /// Compute for each vertex of the surface whether it is inside the label.
     std::vector<bool> vert_in_label(size_t surface_num_verts) const {
@@ -1714,11 +1953,11 @@ namespace fs {
 
   /// @brief Write a mesh to a stream in FreeSurfer surf format.
   /// @details A surf file contains a vertex index representation of a mesh, i.e., the vertices and faces vectors.
-  /// @param os An output stream to which to write the data. The stream must be open, and this function will not close it after writing to it.
   /// @param vertices vector of float, length 3n for n vertices. The 3D coordinates of the vertices, typically from `<Mesh_instance>.vertices`.
   /// @param faces vector of int, length 3n for n faces. The 3 vertex indices for each face, typically from `<Mesh_instance>.faces`.
+  /// @param os An output stream to which to write the data. The stream must be open, and this function will not close it after writing to it.
   /// @throws std::runtime_error if the file cannot be opened.
-  void write_surf(std::ostream& os, std::vector<float> vertices, std::vector<int32_t> faces) {
+  void write_surf(std::vector<float> vertices, std::vector<int32_t> faces, std::ostream& os) {
     const uint32_t SURF_TRIS_MAGIC = 16777214;
     _fwritei3(os, SURF_TRIS_MAGIC);
     std::string created_and_comment_lines = "Created by fslib\n\n";
@@ -1735,37 +1974,51 @@ namespace fs {
 
   /// @brief Write a mesh to a binary file in FreeSurfer surf format.
   /// @details A surf file contains a vertex index representation of a mesh, i.e., the vertices and faces vectors.
-  /// @param filename The path to the output file.
   /// @param vertices vector of float, length 3n for n vertices. The 3D coordinates of the vertices, typically from `<Mesh_instance>.vertices`.
   /// @param faces vector of int, length 3n for n faces. The 3 vertex indices for each face, typically from `<Mesh_instance>.faces`.
+  /// @param filename The path to the output file.
   /// @throws std::runtime_error if the file cannot be opened.
-  void write_surf(const std::string& filename, std::vector<float> vertices, std::vector<int32_t> faces) {
+  ///
+  /// #### Examples
+  ///
+  /// @code
+  /// fs::Mesh surface = fs::Mesh::construct_cube();
+  /// fs::write_surf(surface.vertices, surface.faces, "lh.cube");
+  /// @endcode
+  void write_surf(std::vector<float> vertices, std::vector<int32_t> faces, const std::string& filename) {
     std::ofstream ofs;
     ofs.open(filename, std::ofstream::out | std::ofstream::binary);
     if(ofs.is_open()) {
-      write_surf(ofs, vertices, faces);
+      write_surf(vertices, faces, ofs);
       ofs.close();
     } else {
       throw std::runtime_error("Unable to open surf file '" + filename + "' for writing.\n");
     }
   }
+
 
   /// @brief Write a mesh to a binary file in FreeSurfer surf format.
   /// @details A surf file contains a vertex index representation of a mesh, i.e., the vertices and faces vectors.
-  /// @param filename The path to the output file.
   /// @param mesh The `Mesh` instance to write.
+  /// @param filename The path to the output file.
   /// @throws std::runtime_error if the file cannot be opened.
-  void write_surf(const std::string& filename, const Mesh& mesh) {
+  ///
+  /// #### Examples
+  ///
+  /// @code
+  /// fs::Mesh surface = fs::Mesh::construct_cube();
+  /// fs::write_surf(surface, "lh.cube");
+  /// @endcode
+  void write_surf(const Mesh& mesh, const std::string& filename ) {
     std::ofstream ofs;
     ofs.open(filename, std::ofstream::out | std::ofstream::binary);
     if(ofs.is_open()) {
-      write_surf(ofs, mesh.vertices, mesh.faces);
+      write_surf(mesh.vertices, mesh.faces, ofs);
       ofs.close();
     } else {
       throw std::runtime_error("Unable to open surf file '" + filename + "' for writing.\n");
     }
   }
-
 
 
   /// @brief Read a FreeSurfer ASCII label from a stream.
@@ -1819,6 +2072,13 @@ namespace fs {
   /// @param filename Path to the label file that should be read.
   /// @see There exists an overload to read from a stream instead.
   /// @throws std::domain_error if the label data format is incorrect, std::runtime_error if the file cannot be opened.
+  ///
+  /// #### Examples
+  ///
+  /// @code
+  /// fs::Label label;
+  /// fs::read_label(&label, "subject1/label/lh.cortex.label");
+  /// @endcode
   void read_label(Label* label, const std::string& filename) {
     std::ifstream infile(filename);
     if(infile.is_open()) {
@@ -1830,8 +2090,7 @@ namespace fs {
   }
 
 
-  /// Write label data to a stream.
-  ///
+  /// @brief Write label data to a stream.
   /// @param label The label to write.
   /// @param os An open output stream.
   /// @see There exists an onverload of this function to write a label to a file.
@@ -1844,10 +2103,19 @@ namespace fs {
   }
 
 
-  /// Write label data to a file.
-  ///
-  /// See also: swrite_label to write to a stream.
+  /// @brief Write label data to a file.
+  /// @param label an fs::Label instance
+  /// @param filename Path to the label file that should be written.
+  /// @see There exists an overload to write to a stream.
   /// @throws std::runtime_error if the file cannot be opened.
+  ///
+  /// #### Examples
+  ///
+  /// @code
+  /// fs::Label label;
+  /// fs::read_label(&label, "subject1/label/lh.cortex.label");
+  /// fs::write_label(label, "out.label");
+  /// @endcode
   void write_label(const Label& label, const std::string& filename) {
     std::ofstream ofs;
     ofs.open(filename, std::ofstream::out);
@@ -1856,6 +2124,33 @@ namespace fs {
       ofs.close();
     } else {
       throw std::runtime_error("Unable to open label file '" + filename + "' for writing.\n");
+    }
+  }
+
+  /// @brief Write a mesh to a file in different formats.
+  /// @details The output format will be auto-determined from the file extension.
+  /// @param mesh The fs::Mesh instance to write.
+  /// @param filename The path to the output file.
+  /// @throws std::runtime_error if the file cannot be opened.
+  ///
+  /// #### Examples
+  ///
+  /// @code
+  /// fs::Mesh surface = fs::Mesh::construct_cube();
+  /// fs::write_mesh(surface, "cube.ply");
+  /// fs::write_mesh(surface, "cube.off");
+  /// fs::write_mesh(surface, "cube.obj");
+  /// fs::write_mesh(surface, "cube");  // writes FS surf format.
+  /// @endcode
+  void write_mesh(const Mesh& mesh, const std::string& filename ) {
+    if (fs::util::ends_with(filename, {".ply", ".PLY"})) {
+      mesh.to_ply_file(filename);
+    } else if (fs::util::ends_with(filename, {".obj", ".OBJ"})) {
+      mesh.to_obj_file(filename);
+    } else if (fs::util::ends_with(filename, {".off", ".OFF"})) {
+      mesh.to_off_file(filename);
+    } else {
+      fs::write_surf(mesh, filename);
     }
   }
 
