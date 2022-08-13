@@ -2,7 +2,7 @@
 Fast computation of geodesic distances and related mesh descriptors on (brain surface) meshes in C++ and OpenMP.
 
 
-## About 
+## About
 
 This repo contains fast C++ applications to compute geodesic distances and related mesh descriptors on triangular meshes. We use them to compute distances on the human cortex in computational neuroimaging, but they work with any connected trimesh. Geodesics computation is computationally expensive and the focus of these applications is mostly on speed.
 
@@ -85,7 +85,7 @@ Note for Mac users: Apple's version of the clang compiler that comes with MacOS 
 Just run the apps without command line arguments to get help. E.g.,
 
 ```shell
-./geodpath 
+./geodpath
 ===./geodpath -- Compute geodesic path and distance on a mesh. ===
 Usage: ./geodpath <mesh> [<source> [<target>]]
   <mesh>   : str, path to the input mesh file.
@@ -107,8 +107,17 @@ The applications use algorithms from the the following libraries:
 FreeSurfer data is read and written with [libfs](https://github.com/dfsp-spirit/libfs).
 
 
+## Unit tests
+
+To build the unit tests, simply follow the instructions in the section `Building` above. This creates several binaries, including the `cpp_geodesic_tests` binary. Execute it to run the tests:
+
+```shell
+./cpp_geodesic_tests
+```
+
+
 ## Contact and Author
 
 Please open an issue here on GitHub if you find a bug or have any question or comment.
 
-The programs in this repo were written by [Tim Schäfer](http://rcmd.org/ts). 
+The programs in this repo were written by [Tim Schäfer](http://rcmd.org/ts).
