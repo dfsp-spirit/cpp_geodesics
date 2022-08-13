@@ -178,3 +178,31 @@ endif()
 if( CMAKE_CXX_COMPILER_ID MATCHES "MSVC" )
 	target_compile_options( geodpath PRIVATE /W4 /WX )
 endif()
+
+
+# Build the unit tests, they mainly test functions combining libfs and VCGLIB.
+set(SOURCE_FILES_TESTS src/tests/main.cpp src/tests/cpp_geodesic_tests.cpp ${SOURCE_FILES_COMMON_VCG})
+add_executable(cpp_geodesic_tests ${SOURCE_FILES_TESTS})
+target_include_directories(cpp_geodesic_tests PUBLIC include src/common_vcg)
+target_include_directories(cpp_geodesic_tests PUBLIC include src/common)
+target_include_directories(cpp_geodesic_tests PUBLIC include third_party/libfs)
+target_include_directories(cpp_geodesic_tests PUBLIC include third_party/vcglib)
+target_include_directories(cpp_geodesic_tests PUBLIC include third_party/vcglib/eigenlib)
+target_include_directories(cpp_geodesic_tests PUBLIC include third_party/spline)
+target_include_directories(cpp_geodesic_tests PUBLIC include third_party/catch)
+
+set_property(TARGET cpp_geodesic_tests PROPERTY CXX_STANDARD 11)
+set_property(TARGET cpp_geodesic_tests PROPERTY CXX_STANDARD_REQUIRED ON)
+set_property(TARGET cpp_geodesic_tests PROPERTY CXX_EXTENSIONS OFF)
+
+find_package(OpenMP)
+if(OpenMP_CXX_FOUND)
+    target_link_libraries(cpp_geodesic_tests PUBLIC OpenMP::OpenMP_CXX)
+endif()
+
+if( CMAKE_CXX_COMPILER_ID MATCHES "Clang|AppleClang|GNU" )
+    target_compile_options( cpp_geodesic_tests PRIVATE -Wall -Wextra)
+endif()
+if( CMAKE_CXX_COMPILER_ID MATCHES "MSVC" )
+	target_compile_options( cpp_geodesic_tests PRIVATE /W4 /WX )
+endif()
