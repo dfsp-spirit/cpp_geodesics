@@ -110,12 +110,13 @@ struct GeodNeighbor {
   GeodNeighbor(size_t index, float distance) : index(index), distance(distance) {}
   size_t index; // The index of the neighbor vertex.
   float distance; // The geodesic distance to that neighbor.
+  // TODO: add vertex normal field here, and compute with vcglib.
 };
 
 
-/// Struct modeling a spatial neighborhood with coordinates, geodesic or Euclidean.
+/// @brief Struct modeling a spatial neighborhood with coordinates, and geodesic or Euclidean distances of neighbors to central vertex.
 ///
-/// The coordinates of the neighbors should be
+/// @details The coordinates of the neighbors should be
 /// centered on the central/source vertex (i.e., it should be at (0,0,0)) but
 /// NOT scaled (e.g., to range 0..1).
 /// Note that the fact that the central vertex is the origin means that we do
@@ -125,9 +126,10 @@ struct Neighborhood {
   Neighborhood(size_t index, std::vector<std::vector<float>> coords, std::vector<float> distances) : index(index), coords(coords), distances(distances) {}
   Neighborhood(size_t index, std::vector<std::vector<float>> coords) : index(index), coords(coords), distances(std::vector<float>(coords.size(), 0.0)) {}
   Neighborhood() : index(0), coords(std::vector<std::vector<float>>(0)), distances(std::vector<float>(0)) {}
-  size_t index; // The index of the central/source vertex.
-  std::vector<std::vector<float> > coords; // 2D array of coordinates, for n 3D coordinates this will have dimensions (n, 3).
-  std::vector<float> distances;
+  size_t index; ///< The index of the central/source vertex.
+  std::vector<std::vector<float> > coords; ///< 2D array of coordinates, for n 3D coordinates this will have dimensions (n, 3).
+  std::vector<float> distances;  ///< distances from the central vertex -- these can be Euclidean (easily derivable from coords) or Geodesic.
+  //std::vector<float> normals; // TODO: add vertex normal field here, and compute with vcglib.
 };
 
 /// @brief Compute vertex neighborhoods: for a source vertex, compute centered coordinates of all given neighbors.
@@ -197,7 +199,7 @@ std::vector<Neighborhood> neighborhoods_from_edge_neighbors(const std::vector<st
   return neighborhoods;
 }
 
-/// Compute for each mesh vertex all vertices in a given distance (and that distance), parallel using OpenMP.
+/// @brief Compute for each mesh vertex all vertices in a given distance (and that distance), parallel using OpenMP.
 std::vector<std::vector<GeodNeighbor>> geod_neighborhood(MyMesh &m, const float max_dist = 5.0, const bool include_self = true) {
 
   // The MyMesh instance cannot be shared between the processes because it
