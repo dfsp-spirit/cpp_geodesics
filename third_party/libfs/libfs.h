@@ -295,15 +295,15 @@ namespace fs {
       fs::Mesh mesh;
       mesh.vertices = { 0.0, 0.0, 0.0, // start with 4x base
                         0.0, 1.0, 0.0,
-                        1.0, 0.0, 0.0,
                         1.0, 1.0, 0.0,
+                        1.0, 0.0, 0.0,
                         0.5, 0.5, 1.0 }; // apex
-      mesh.faces = { 0, 1, 2, // start with 2 base faces
-                     0, 2, 3,
-                     0, 1, 4, // now the 4 wall faces
-                     1, 2, 4,
-                     3, 4, 2,
-                     0, 4, 3 };
+      mesh.faces = { 0, 2, 1, // start with 2 base faces
+                     0, 3, 2,
+                     0, 4, 1, // now the 4 wall faces
+                     1, 4, 2,
+                     3, 2, 4,
+                     0, 3, 4 };
       return mesh;
     }
 
