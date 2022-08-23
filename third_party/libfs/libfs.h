@@ -245,7 +245,8 @@ namespace fs {
     std::vector<float> vertices;  ///< *n x 3* vector of the *x*,*y*,*z* coordinates for the *n* vertices. The x,y,z coordinates for a single vertex form consecutive entries.
     std::vector<int32_t> faces;  ///< *n x 3* vector of the 3 vertex indices for the *n* triangles or faces. The 3 vertices of a single face form consecutive entries.
 
-    /// Construct and return a simple cube mesh.
+    /// @brief Construct and return a simple cube mesh.
+    /// @return fs::Mesh instance representing a cube.
     ///
     /// #### Examples
     ///
@@ -275,6 +276,67 @@ namespace fs {
                     6, 2, 0,
                     1, 5, 7,
                     7, 3, 1 };
+      return mesh;
+    }
+
+    /// @brief Construct and return a simple planar grid mesh.
+    /// @details This is a 2D rectangular grid embedded in 3D. Each rectangular cell consists of 2 triangular faces. The height (z coordinate) for all vertices is `0.0`.
+    /// @param nx number of vertices in x direction
+    /// @param ny number of vertices in y direction
+    /// @param distx distance between vertices in x direction
+    /// @param disty distance between vertices in y direction
+    /// @return fs::Mesh instance representing a flat grid.
+    /// @throws std::invalid_argument error if `nx` or `ny` are `< 2`.
+    ///
+    /// #### Examples
+    ///
+    /// @code
+    /// fs::Mesh surface = fs::Mesh::construct_grid();
+    /// size_t nv = surface.num_vertices();
+    /// @endcode
+    static fs::Mesh construct_grid(const size_t nx = 4, const size_t ny = 5, const float distx = 1.0, const float disty = 1.0) {
+      if(nx < 2 || ny < 2) {
+        throw std::runtime_error("Parameters nx and ny must be at least 2.");
+      }
+      fs::Mesh mesh;
+      size_t num_vertices = nx * ny;
+      size_t num_faces = ((nx - 1) * (ny - 1)) * 2;
+      std::vector<float> vertices;
+      vertices.reserve(num_vertices * 3);
+      std::vector<int> faces;
+      faces.reserve(num_faces * 3);
+
+      // Create vertices.
+      float cur_x, cur_y, cur_z;
+      cur_x = cur_y = cur_z = 0.0;
+      for(size_t i = 0; i < nx; i++) {
+        for(size_t j = 0; j < ny; j++) {
+          vertices.push_back(cur_x);
+          vertices.push_back(cur_y);
+          vertices.push_back(cur_z);
+          cur_y += disty;
+        }
+        cur_x += distx;
+      }
+
+      // Create faces.
+      for(size_t i = 0; i < num_vertices; i++) {
+        if((i+1) % ny == 0 || i >= num_vertices - ny) {
+          // Do not use the last ones in row or column as source.
+          continue;
+        }
+        // Add the upper left triangle of this grid cell.
+        faces.push_back(i);
+        faces.push_back(i + ny + 1);
+        faces.push_back(i + 1);
+        // Add the lower right triangle of this grid cell.
+        faces.push_back(i);
+        faces.push_back(i + ny + 1);
+        faces.push_back(i + ny);
+      }
+
+      mesh.vertices = vertices;
+      mesh.faces = faces;
       return mesh;
     }
 
