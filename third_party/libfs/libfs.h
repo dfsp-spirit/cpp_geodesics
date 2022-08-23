@@ -252,7 +252,8 @@ namespace fs {
     ///
     /// @code
     /// fs::Mesh surface = fs::Mesh::construct_cube();
-    /// size_t nv = surface.num_vertices(); // 8
+    /// size_t nv = surface.num_vertices();  // 8
+    /// size_t nf = surface.num_faces();     // 12
     /// @endcode
     static fs::Mesh construct_cube() {
       fs::Mesh mesh;
@@ -279,6 +280,33 @@ namespace fs {
       return mesh;
     }
 
+    /// @brief Construct and return a simple pyramidal mesh.
+    /// @details This constructs a right square pyramid with base edge length 1 and height 1. Think of the Great Pyramid of Giza.
+    /// @return fs::Mesh instance representing a 4-sided pyramid.
+    ///
+    /// #### Examples
+    ///
+    /// @code
+    /// fs::Mesh surface = fs::Mesh::construct_pyramid();
+    /// size_t nv = surface.num_vertices();  // 5
+    /// size_t nf = surface.num_faces();     // 6
+    /// @endcode
+    static fs::Mesh construct_pyramid() {
+      fs::Mesh mesh;
+      mesh.vertices = { 0.0, 0.0, 0.0, // start with 4x base
+                        0.0, 1.0, 0.0,
+                        1.0, 0.0, 0.0,
+                        1.0, 1.0, 0.0,
+                        0.5, 0.5, 1.0 }; // apex
+      mesh.faces = { 0, 1, 2, // start with 2 base faces
+                     0, 2, 3,
+                     0, 1, 4, // now the 4 wall faces
+                     1, 2, 4,
+                     3, 4, 2,
+                     0, 4, 3 };
+      return mesh;
+    }
+
     /// @brief Construct and return a simple planar grid mesh.
     /// @details This is a 2D rectangular grid embedded in 3D. Each rectangular cell consists of 2 triangular faces. The height (z coordinate) for all vertices is `0.0`.
     /// @param nx number of vertices in x direction
@@ -291,8 +319,9 @@ namespace fs {
     /// #### Examples
     ///
     /// @code
-    /// fs::Mesh surface = fs::Mesh::construct_grid();
-    /// size_t nv = surface.num_vertices();
+    /// fs::Mesh surface = fs::Mesh::construct_grid(4, 5);
+    /// size_t nv = surface.num_vertices();  // 4*5 = 20
+    /// size_t nf = surface.num_faces();     // (4-1)*(5-1)*2 = 24;
     /// @endcode
     static fs::Mesh construct_grid(const size_t nx = 4, const size_t ny = 5, const float distx = 1.0, const float disty = 1.0) {
       if(nx < 2 || ny < 2) {
