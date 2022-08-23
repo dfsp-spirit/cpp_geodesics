@@ -105,12 +105,14 @@ std::vector<float> mean_geodist_p(MyMesh &m) {
   return meandists;
 }
 
+/// @brief Model a geodesic neighbor, i.e., vertex withing geodesic threshold distance.
+/// @details This currently does not hold any information on the source vertex, i.e., you will need to keep track of the vertex this neighbor belongs to.
 struct GeodNeighbor {
   GeodNeighbor() : index(0), distance(0.0) {}
   GeodNeighbor(size_t index, float distance) : index(index), distance(distance) {}
-  size_t index; // The index of the neighbor vertex.
-  float distance; // The geodesic distance to that neighbor.
-  // TODO: add vertex normal field here, and compute with vcglib.
+  size_t index; ///< The index of the neighbor vertex.
+  float distance; ///< The geodesic distance to that neighbor.
+  std::vector<float> normals; // TODO: use this, compute with vcglib.
 };
 
 
@@ -123,13 +125,19 @@ struct GeodNeighbor {
 /// not need to store its coordinates. If you need that (and do not center), you
 /// will have to add the vertex itself to its neighborhood.
 struct Neighborhood {
-  Neighborhood(size_t index, std::vector<std::vector<float>> coords, std::vector<float> distances) : index(index), coords(coords), distances(distances) {}
-  Neighborhood(size_t index, std::vector<std::vector<float>> coords) : index(index), coords(coords), distances(std::vector<float>(coords.size(), 0.0)) {}
-  Neighborhood() : index(0), coords(std::vector<std::vector<float>>(0)), distances(std::vector<float>(0)) {}
+  /// Constructor to initialize everything.
+  Neighborhood(size_t index, std::vector<std::vector<float>> coords, std::vector<float> distances, std::vector<std::vector<float>> normals) : index(index), coords(coords), distances(distances), normals(normals) {}
+  /// Constructor to initialize everything but normals.
+  Neighborhood(size_t index, std::vector<std::vector<float>> coords, std::vector<float> distances) : index(index), coords(coords), distances(distances), normals(std::vector<std::vector<float>>(coords.size(), std::vector<float>())) {}
+  /// Constructor to initialize central vertex index and all neighbor coords.
+  Neighborhood(size_t index, std::vector<std::vector<float>> coords) : index(index), coords(coords), distances(std::vector<float>(coords.size(), 0.0)), normals(std::vector<std::vector<float>>(coords.size(), std::vector<float>())) {}
+  /// Default constructor.
+  Neighborhood() : index(0), coords(std::vector<std::vector<float>>(0)), distances(std::vector<float>(0)), normals(std::vector<std::vector<float>>(0)) {}
+
   size_t index; ///< The index of the central/source vertex.
-  std::vector<std::vector<float> > coords; ///< 2D array of coordinates, for n 3D coordinates this will have dimensions (n, 3).
-  std::vector<float> distances;  ///< distances from the central vertex -- these can be Euclidean (easily derivable from coords) or Geodesic.
-  //std::vector<float> normals; // TODO: add vertex normal field here, and compute with vcglib.
+  std::vector<std::vector<float>> coords; ///< 2D array of neighborhood vertex coordinates, for n vertices this will have dimensions (n, 3).
+  std::vector<float> distances;  ///< distances from the central vertex for all n neighbors -- these can be Euclidean (easily derivable from coords) or Geodesic.
+  std::vector<std::vector<float>> normals; ///< vertex normals.
 };
 
 /// @brief Compute vertex neighborhoods: for a source vertex, compute centered coordinates of all given neighbors.
@@ -237,6 +245,8 @@ std::vector<std::vector<GeodNeighbor>> geod_neighborhood(MyMesh &m, const float 
 
 
 /// Dont roll your own JSON, they told us.
+/// @brief Get JSON representation on mesh geodesic neighborhoods.
+/// TODO: This could become a static method of GeodNeighbor
 std::string geod_neigh_to_json(std::vector<std::vector<GeodNeighbor>> neigh) {
     std::stringstream is;
     is << "{\n";
@@ -278,6 +288,8 @@ std::string geod_neigh_to_json(std::vector<std::vector<GeodNeighbor>> neigh) {
 
 
 /// Who would write his own CSV exporter in 2022?!
+/// @brief Get CSV representation on mesh geodesic neighborhoods.
+/// TODO: This could become a static method of GeodNeighbor
 std::string geod_neigh_to_csv(const std::vector<std::vector<GeodNeighbor>> neigh, const std::string sep=",") {
     std::stringstream is;
     is << "source" << sep << "target" << sep << "distance" << "\n";
@@ -291,7 +303,7 @@ std::string geod_neigh_to_csv(const std::vector<std::vector<GeodNeighbor>> neigh
 }
 
 
-/// Compute for each mesh vertex the mean geodesic distance to all others, sequentially.
+/// @brief Compute for each mesh vertex the mean geodesic distance to all others, sequentially.
 std::vector<float> mean_geodist(MyMesh &m) {
   std::vector<float> meandists;
   size_t nv = m.VN();
