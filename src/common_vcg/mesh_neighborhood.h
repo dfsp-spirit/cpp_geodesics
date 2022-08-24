@@ -23,7 +23,8 @@
 /// Note that the fact that the central vertex is the origin means that we do
 /// not need to store its coordinates. If you need that (and do not center), you
 /// will have to add the vertex itself to its neighborhood.
-struct Neighborhood {
+class Neighborhood {
+  public:
   /// Constructor to initialize everything.
   Neighborhood(size_t index, std::vector<std::vector<float>> coords, std::vector<float> distances, std::vector<std::vector<float>> normals) : index(index), coords(coords), distances(distances), normals(normals) {}
   /// Constructor to initialize everything but normals.
@@ -37,6 +38,10 @@ struct Neighborhood {
   std::vector<std::vector<float>> coords; ///< 2D array of neighborhood vertex coordinates, for n vertices this will have dimensions (n, 3).
   std::vector<float> distances;  ///< distances from the central vertex for all n neighbors -- these can be Euclidean (easily derivable from coords) or Geodesic.
   std::vector<std::vector<float>> normals; ///< vertex normals.
+
+  const size_t size() {
+    return this->distances.size();
+  }
 };
 
 /// @brief Compute vertex neighborhoods: for a source vertex, compute centered coordinates of all given neighbors.
@@ -132,10 +137,76 @@ std::string neighborhoods_to_json(std::vector<Neighborhood> neigh) {
     return is.str();
 }
 
+
 /// @brief Write Neighborhoods vector to CSV string representation.
-std::string neighborhoods_to_csv(std::vector<Neighborhood> neigh) {
-    std::stringstream is;
-    is << "not implemented yet\n";
-    std::cerr << "neighborhoods_to_csv: not implemented yet.\n";
-    return is.str();
+/// @param neigh_write_size: the number of neihbors to write for each vertex (number of neighbor columns). If shorther
+///             than actual number of neighbors, the list will be truncated. If longer than the real available
+///             number of neighbors, the behavior depends on the setting of allow_nan. Set to 0 for 'use the min of all neighborhood sizes'.
+/// @param allow_nan: whether to allow nan values in the output file. If neigh_write_size is larger than actual neighborhood and
+///            this setting is true, the missing values will be written as NANs. Otherwise, an error will be raised.
+/// @param header: whether to write a header line
+/// @return CSV string representation of edge neighborhoods
+std::string neighborhoods_to_csv(std::vector<Neighborhood> neigh, size_t neigh_write_size = 0, bool allow_nan = false, bool header=true) {
+
+  // Get min size over all neighborhoods.
+  size_t min_neighbor_count = (size_t)-1;  // Set to max possible value.
+  for(size_t i=0; i < neigh.size(); i++) {
+    if(neigh[i].size() < min_neighbor_count) {
+      min_neighbor_count = neigh[i].size();
+    }
+  }
+  if(neigh_write_size == 0) {
+      neigh_write_size = min_neighbor_count;
+      std::cout << "Using auto-determined neighborhood size " << neigh_write_size << " during CSV export.\n";
+  }
+
+  // Pre-check if allow_nan is false, so we do not start writing something that will not be finished.
+  std::vector<int> failed_neighborhoods; // These will only 'fail' if NAN values are not allowed.
+  for(size_t i=0; i < neigh.size(); i++) {
+    if(neigh[i].size() < neigh_write_size) {
+      failed_neighborhoods.push_back(i);
+    }
+  }
+  if(! allow_nan) {
+    if(failed_neighborhoods.size() >= 1) {
+      throw std::runtime_error("Failed to generate mesh neighborhood CSV representation:'" + std::to_string(failed_neighborhoods.size()) + " neighborhoods are smaller than neigh_write_size "  + std::to_string(neigh_write_size) + ", and allow_nan is false.\n");
+    }
+  } else {
+    std::cout << "There are " << failed_neighborhoods.size() << " neighborhoods smaller than neigh_write_size " << neigh_write_size << ", will pad with 'NA' values.";
+  }
+
+  // TODO: write header for coordinates, distances, and normals
+  std::stringstream is;
+  if(header) {  // Write header line like: 'source n0 n1 n2 ...'
+    is << "source ";
+    for(size_t i=0; i < neigh_write_size; i++) {
+      is << "n" << i;
+      if(i < neigh_write_size - 1) {
+        is << " ";
+      }
+    }
+    is << "\n";
+  }
+
+  // Now for the data.
+  // TODO: coordinates, distances, and normals
+  for(size_t i=0; i < neigh.size(); i++) {
+
+    // We write one line per neighborhood (source vertex)
+    is << neigh[i].index;  // Write the source vertex.
+    for(size_t j=0; j < neigh_write_size; j++) {
+        if(j < neigh[i].size()) {  // Write the neighborhood data.
+          is << " " << neigh[i][j];
+        } else {  // Fill with NA values. We know that allow_nan is true, otherwise we had thrown an error earlier.
+          is << " NA";
+        }
+    }
+    is << "\n";  // End CSV line.
+  }
+
+
+
+  is << "not implemented yet\n";
+  std::cerr << "neighborhoods_to_csv: not implemented yet.\n";
+  return is.str();
 }

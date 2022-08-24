@@ -101,7 +101,7 @@ std::string edge_neigh_to_csv(std::vector<std::vector<int>> neigh, size_t neigh_
     }
 
     // Pre-check if allow_nan is false, so we do not start writing something that will not be finished.
-    std::vector<int> failed_neighborhoods;
+    std::vector<int> failed_neighborhoods; // These will only 'fail' if NAN values are not allowed.
     for(size_t i=0; i < neigh.size(); i++) {
       if(neigh[i].size() < neigh_write_size) {
         failed_neighborhoods.push_back(i);
@@ -112,7 +112,7 @@ std::string edge_neigh_to_csv(std::vector<std::vector<int>> neigh, size_t neigh_
         throw std::runtime_error("Failed to generate mesh edge neighborhood CSV representation:'" + std::to_string(failed_neighborhoods.size()) + " neighborhoods are smaller than neigh_write_size "  + std::to_string(neigh_write_size) + ", and allow_nan is false.\n");
       }
     } else {
-      std::cout << "There are " << failed_neighborhoods.size() << " neighborhoods smaller than neigh_write_size " << neigh_write_size << ".";
+      std::cout << "There are " << failed_neighborhoods.size() << " neighborhoods smaller than neigh_write_size " << neigh_write_size << ", will pad with 'NA' values.";
     }
 
     std::stringstream is;
