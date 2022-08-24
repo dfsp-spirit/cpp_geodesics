@@ -176,7 +176,7 @@ std::string neighborhoods_to_csv(std::vector<Neighborhood> neigh, size_t neigh_w
     std::cout << "There are " << failed_neighborhoods.size() << " neighborhoods smaller than neigh_write_size " << neigh_write_size << ", will pad with 'NA' values.";
   }
 
-  // TODO: write header for coordinates, distances, and normals
+  // Write header for coordinates, distances, and normals
   std::stringstream is;
   if(header) {  // Write header line like: 'source n0cx n0cy n0cz ... n0dist ... n0nx n0ny n0nz', where 'cx' is for coord x, and 'nx' is for normal x.
     is << "source ";
@@ -205,8 +205,7 @@ std::string neighborhoods_to_csv(std::vector<Neighborhood> neigh, size_t neigh_w
     is << "\n"; // terminate header line.
   }
 
-  // Now for the data.
-  // TODO: coordinates, distances, and normals
+  // Now for the data: coordinates, distances, and normals
   for(size_t i=0; i < neigh.size(); i++) {
 
     // We write one line per neighborhood (source vertex)
