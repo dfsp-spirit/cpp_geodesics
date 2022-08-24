@@ -24,7 +24,8 @@
 /// @brief Compute edge neighborhood (or graph k ring) for the mesh.
 /// @param input_mesh_file input mesh file path
 /// @param k The 'k' for computing the k-ring neighborhood. Use 1 for direct edge neighbors.
-void mesh_neigh_edge(const std::string& input_mesh_file, const size_t k = 1, const std::string& output_dist_file="edge_distances", const bool include_self=true, const bool write_json=false, const bool write_csv=false, const bool write_vvbin=true) {
+/// @param with_neigh whether to also write data based on unified Neighborhood format (supported for geodesic and Euclidean distances).
+void mesh_neigh_edge(const std::string& input_mesh_file, const size_t k = 1, const std::string& output_dist_file="edge_distances", const bool include_self=true, const bool write_json=false, const bool write_csv=false, const bool write_vvbin=true, const bool with_neigh=false) {
 
     std::cout << "Reading mesh '" + input_mesh_file + "' to compute graph " + std::to_string(k) + "-ring edge neighborhoods...\n";
     if(include_self) {
@@ -49,12 +50,14 @@ void mesh_neigh_edge(const std::string& input_mesh_file, const size_t k = 1, con
     }
     std::vector<std::vector<int32_t>> neigh = mesh_adj(m, query_vertices, k, include_self);
 
-    std::vector<Neighborhood> nh = neighborhoods_from_edge_neighbors(neigh, m);
-    std::cout << "TODO: implement to_csv method for std::vector<Neighborhood> and write 'nh' to files as well.\n";
+    std::vector<Neighborhood> nh;
 
     const bool write_dists = true;
-    const bool write_neigh = false; // Whether to write neighborhoods in addition to adjacency
+
     const std::string output_neigh_file = "neighborhoods_edge";
+    if(with_neigh) {
+        nh = neighborhoods_from_edge_neighbors(neigh, m);
+    }
 
     // Write it to a JSON file.
     if(write_json) {
@@ -63,7 +66,7 @@ void mesh_neigh_edge(const std::string& input_mesh_file, const size_t k = 1, con
             strtofile(edge_neigh_to_json(neigh), output_dist_file_json);
             std::cout << "Neighborhood edge distance information written to JSON file '" + output_dist_file_json + "'.\n";
         }
-        if(write_neigh) {
+        if(with_neigh) {
             //std::string output_neigh_file_json = output_neigh_file + ".json";
             //strtofile(neighborhoods_to_json(nh), output_neigh_file_json);
             //std::cout << "Neighborhood information written to JSON file '" + output_neigh_file_json + "'.\n";
@@ -78,6 +81,9 @@ void mesh_neigh_edge(const std::string& input_mesh_file, const size_t k = 1, con
             write_vv<int32_t>(output_dist_file_vv, neigh);
             std::cout << "Neighborhood information written to vv file '" + output_dist_file_vv + "'.\n";
         }
+        if(with_neigh) {
+            std::cout << "WARNING: Writing Neighborhood information to VV format not supported yet, skipping. Use CSV instead.\n";
+        }
     }
 
     // Write it to a CSV file.
@@ -87,7 +93,7 @@ void mesh_neigh_edge(const std::string& input_mesh_file, const size_t k = 1, con
             strtofile(edge_neigh_to_csv(neigh), output_dist_file_csv);
             std::cout << "Neighborhood edge distance information written to CSV file '" + output_dist_file_csv + "'.\n";
         }
-        if(write_neigh) {
+        if(with_neigh) {
             std::string output_neigh_file_csv = output_neigh_file + ".csv";
             strtofile(neighborhoods_to_csv(nh), output_neigh_file_csv);
             std::cout << "Neighborhood information written to CSV file '" + output_neigh_file_csv + "'.\n";
@@ -103,9 +109,10 @@ int main(int argc, char** argv) {
     bool json = false;
     bool csv = false;
     bool vvbin = true;
+    bool with_neigh = false;
     size_t k = 1;
 
-    if(argc < 2 || argc > 8) {
+    if(argc < 2 || argc > 9) {
         std::cout << "===" << argv[0] << " -- Compute edge neighborhoods for mesh vertices. ===\n";
         std::cout << "Usage: " << argv[0] << " <input_mesh> [<k> [<output_file] [<include_self> [<json>] [<csv>] [<vv>]]]]>\n";
         std::cout << "   <input_mesh>    : str, a mesh file in a format supported by libfs, e.g., FreeSurfer, PLY, OBJ, OFF.\n";
@@ -115,6 +122,7 @@ int main(int argc, char** argv) {
         std::cout << "   <json>          : bool, whether to write JSON output, must be 'true' or 'false'. Default: 'false'.\n";
         std::cout << "   <csv>           : bool, whether to write CSV output, must be 'true' or 'false'. Default: 'false'.\n";
         std::cout << "   <vv>            : bool, whether to write VV output, must be 'true' or 'false'. Default: 'true'.\n";
+        std::cout << "   <with_neigh>    : bool, whether to also write unified Neighborhood format files, must be 'true' or 'false'. Default: 'true'.\n";
         exit(1);
     }
     input_mesh_file = argv[1];
@@ -134,7 +142,7 @@ int main(int argc, char** argv) {
         } else if(inc == "false") {
             include_self = false;
         } else {
-            throw std::runtime_error("Argument include_self must be 'true' or 'false'.\n");
+            throw std::runtime_error("Argument 'include_self' must be 'true' or 'false'.\n");
         }
     }
     if(argc >= 6) {
@@ -144,7 +152,7 @@ int main(int argc, char** argv) {
         } else if(jout == "false") {
             json = false;
         } else {
-            throw std::runtime_error("Argument json must be 'true' or 'false'.\n");
+            throw std::runtime_error("Argument 'json' must be 'true' or 'false'.\n");
         }
     }
     if(argc >= 7) {
@@ -154,7 +162,7 @@ int main(int argc, char** argv) {
         } else if(csvout == "false") {
             csv = false;
         } else {
-            throw std::runtime_error("Argument csv must be 'true' or 'false'.\n");
+            throw std::runtime_error("Argument 'csv' must be 'true' or 'false'.\n");
         }
     }
     if(argc >= 8) {
@@ -164,10 +172,20 @@ int main(int argc, char** argv) {
         } else if(vvout == "false") {
             vvbin = false;
         } else {
-            throw std::runtime_error("Argument vv must be 'true' or 'false'.\n");
+            throw std::runtime_error("Argument 'vv' must be 'true' or 'false'.\n");
+        }
+    }
+    if(argc >= 9) {
+        std::string swith_neigh = argv[8];
+        if(swith_neigh == "true") {
+            with_neigh = true;
+        } else if(swith_neigh == "false") {
+            with_neigh = false;
+        } else {
+            throw std::runtime_error("Argument 'with_neigh' must be 'true' or 'false'.\n");
         }
     }
 
-    mesh_neigh_edge(input_mesh_file, k, output_dist_file, include_self, json, csv, vvbin);
+    mesh_neigh_edge(input_mesh_file, k, output_dist_file, include_self, json, csv, vvbin, with_neigh);
     exit(0);
 }

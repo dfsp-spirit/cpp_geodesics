@@ -9,7 +9,8 @@ include_self="true"
 json="false"
 csv="false"
 vv="true"
-extra_args="${include_self} ${json} ${csv} ${vv}"
+with_neigh="false"
+extra_args="${include_self} ${json} ${csv} ${vv} ${with_neigh}"
 
 echo "$apptag Info: Using meshneigh_edge extra_args '$extra_args'."
 
