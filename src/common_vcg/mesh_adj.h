@@ -78,14 +78,14 @@ std::string edge_neigh_to_json(std::vector<std::vector<int>> neigh) {
 }
 
 
-/// Write mesh edge adjacency data to a CSV file.
-///
-/// neigh_write_size: the number of neihbors to write for each vertex (number of neighbor columns). If shorther
+/// @brief Get CSV string representation of mesh edge adjacency data.
+/// @param neigh_write_size: the number of neihbors to write for each vertex (number of neighbor columns). If shorther
 ///             than actual number of neighbors, the list will be truncated. If longer than the real available
 ///             number of neighbors, the behavior depends on the setting of allow_nan. Set to 0 for 'use the min of all neighborhood sizes'.
-/// allow_nan: whether to allow nan values in the output file. If neigh_write_size is larger than actual neighborhood and
+/// @param allow_nan: whether to allow nan values in the output file. If neigh_write_size is larger than actual neighborhood and
 ///            this setting is true, the missing values will be written as NANs. Otherwise, an error will be raised.
-/// Dont roll your own CSV, they told us.
+/// @param header: whether to write a header line
+/// @return CSV string representation of edge neighborhoods
 std::string edge_neigh_to_csv(std::vector<std::vector<int>> neigh, size_t neigh_write_size = 0, bool allow_nan = false, bool header=true) {
 
     // Get min size over all neighborhoods.
@@ -100,7 +100,7 @@ std::string edge_neigh_to_csv(std::vector<std::vector<int>> neigh, size_t neigh_
       std::cout << "Using auto-determined neighborhood size " << neigh_write_size << " during CSV export.\n";
     }
 
-    // Pre-check is allow_nan is false, so we do not start writing something that will not be finished.
+    // Pre-check if allow_nan is false, so we do not start writing something that will not be finished.
     std::vector<int> failed_neighborhoods;
     for(size_t i=0; i < neigh.size(); i++) {
       if(neigh[i].size() < neigh_write_size) {

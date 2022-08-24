@@ -27,9 +27,9 @@ struct Neighborhood {
   /// Constructor to initialize everything.
   Neighborhood(size_t index, std::vector<std::vector<float>> coords, std::vector<float> distances, std::vector<std::vector<float>> normals) : index(index), coords(coords), distances(distances), normals(normals) {}
   /// Constructor to initialize everything but normals.
-  Neighborhood(size_t index, std::vector<std::vector<float>> coords, std::vector<float> distances) : index(index), coords(coords), distances(distances), normals(std::vector<std::vector<float>>(coords.size(), std::vector<float>())) {}
+  Neighborhood(size_t index, std::vector<std::vector<float>> coords, std::vector<float> distances) : index(index), coords(coords), distances(distances), normals(std::vector<std::vector<float>>(coords.size(), std::vector<float>(3, 0.0))) {}
   /// Constructor to initialize central vertex index and all neighbor coords.
-  Neighborhood(size_t index, std::vector<std::vector<float>> coords) : index(index), coords(coords), distances(std::vector<float>(coords.size(), 0.0)), normals(std::vector<std::vector<float>>(coords.size(), std::vector<float>())) {}
+  Neighborhood(size_t index, std::vector<std::vector<float>> coords) : index(index), coords(coords), distances(std::vector<float>(coords.size(), 0.0)), normals(std::vector<std::vector<float>>(coords.size(), std::vector<float>(3, 0.0))) {}
   /// Default constructor.
   Neighborhood() : index(0), coords(std::vector<std::vector<float>>(0)), distances(std::vector<float>(0)), normals(std::vector<std::vector<float>>(0)) {}
 
@@ -111,7 +111,31 @@ std::vector<Neighborhood> neighborhoods_from_edge_neighbors(const std::vector<st
 /// TODO: This could become a static method of Neighborhood
 std::string neighborhoods_to_json(std::vector<Neighborhood> neigh) {
     std::stringstream is;
-    is << "" << neigh.size() << "\n";
-    throw std::runtime_error("neighborhood_to_json: not implemented yet.");
+    is << "{\n";
+    is << "  \"neighborhoods\": {\n";
+    Neighborhood nh;
+    for(size_t i=0; i < neigh.size(); i++) {
+      nh = neigh[i];
+      is << "  \"" << nh.index << "\": {\n";  // TODO: add coords, distances, normals here.
+      is << "    \"coords\": [\n";
+      is << "      ],\n";
+      is << "    \"distances\": [\n";
+      is << "      ],\n";
+      is << "    \"normals\": [\n";
+      is << "      ],\n";
+      is << "    }\n";
+    }
+    is << "  }\n";
+    is << "}\n";
+    is << "not implemented yet\n";
+    std::cerr << "neighborhoods_to_json: not implemented yet.\n";
+    return is.str();
+}
+
+/// @brief Write Neighborhoods vector to CSV string representation.
+std::string neighborhoods_to_csv(std::vector<Neighborhood> neigh) {
+    std::stringstream is;
+    is << "not implemented yet\n";
+    std::cerr << "neighborhoods_to_csv: not implemented yet.\n";
     return is.str();
 }

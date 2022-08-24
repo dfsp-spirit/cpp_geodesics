@@ -72,16 +72,25 @@ void mesh_neigh_edge(const std::string& input_mesh_file, const size_t k = 1, con
 
     // Write it to a VV file.
     if(write_vvbin) {
-        std::string output_dist_file_vv = output_dist_file + ".vv";
-        write_vv<int32_t>(output_dist_file_vv, neigh);
-        std::cout << "Neighborhood information written to vv file '" + output_dist_file_vv + "'.\n";
+        if(write_dists) {
+            std::string output_dist_file_vv = output_dist_file + ".vv";
+            write_vv<int32_t>(output_dist_file_vv, neigh);
+            std::cout << "Neighborhood information written to vv file '" + output_dist_file_vv + "'.\n";
+        }
     }
 
     // Write it to a CSV file.
     if(write_csv) {
-        std::string output_dist_file_csv = output_dist_file + ".csv";
-        strtofile(edge_neigh_to_csv(neigh), output_dist_file_csv);
-        std::cout << "Neighborhood information written to CSV file '" + output_dist_file_csv + "'.\n";
+        if(write_dists) {
+            std::string output_dist_file_csv = output_dist_file + ".csv";
+            strtofile(edge_neigh_to_csv(neigh), output_dist_file_csv);
+            std::cout << "Neighborhood edge distance information written to CSV file '" + output_dist_file_csv + "'.\n";
+        }
+        if(write_neigh) {
+            std::string output_neigh_file_csv = output_neigh_file + ".csv";
+            strtofile(neighborhoods_to_csv(nh), output_neigh_file_csv);
+            std::cout << "Neighborhood information written to CSV file '" + output_neigh_file_csv + "'.\n";
+        }
     }
 }
 
