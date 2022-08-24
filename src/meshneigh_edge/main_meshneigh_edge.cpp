@@ -64,9 +64,10 @@ void mesh_neigh_edge(const std::string& input_mesh_file, const size_t k = 1, con
             std::cout << "Neighborhood edge distance information written to JSON file '" + output_dist_file_json + "'.\n";
         }
         if(write_neigh) {
-            std::string output_neigh_file_json = output_neigh_file + ".json";
-            strtofile(neighborhoods_to_json(nh), output_neigh_file_json);
-            std::cout << "Neighborhood information written to JSON file '" + output_neigh_file_json + "'.\n";
+            //std::string output_neigh_file_json = output_neigh_file + ".json";
+            //strtofile(neighborhoods_to_json(nh), output_neigh_file_json);
+            //std::cout << "Neighborhood information written to JSON file '" + output_neigh_file_json + "'.\n";
+            std::cout << "WARNING: Writing Neighborhood information to JSON format not supported yet, skipping. Use CSV instead.\n";
         }
     }
 

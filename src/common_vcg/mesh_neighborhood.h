@@ -39,7 +39,7 @@ class Neighborhood {
   std::vector<float> distances;  ///< distances from the central vertex for all n neighbors -- these can be Euclidean (easily derivable from coords) or Geodesic.
   std::vector<std::vector<float>> normals; ///< vertex normals.
 
-  const size_t size() {
+  size_t size() {
     return this->distances.size();
   }
 };
@@ -145,8 +145,9 @@ std::string neighborhoods_to_json(std::vector<Neighborhood> neigh) {
 /// @param allow_nan: whether to allow nan values in the output file. If neigh_write_size is larger than actual neighborhood and
 ///            this setting is true, the missing values will be written as NANs. Otherwise, an error will be raised.
 /// @param header: whether to write a header line
+/// @param normals whether to write vertex normals
 /// @return CSV string representation of edge neighborhoods
-std::string neighborhoods_to_csv(std::vector<Neighborhood> neigh, size_t neigh_write_size = 0, bool allow_nan = false, bool header=true) {
+std::string neighborhoods_to_csv(std::vector<Neighborhood> neigh, size_t neigh_write_size = 0, bool allow_nan = false, bool header=true, bool normals = true) {
 
   // Get min size over all neighborhoods.
   size_t min_neighbor_count = (size_t)-1;  // Set to max possible value.
@@ -177,15 +178,31 @@ std::string neighborhoods_to_csv(std::vector<Neighborhood> neigh, size_t neigh_w
 
   // TODO: write header for coordinates, distances, and normals
   std::stringstream is;
-  if(header) {  // Write header line like: 'source n0 n1 n2 ...'
+  if(header) {  // Write header line like: 'source n0cx n0cy n0cz ... n0dist ... n0nx n0ny n0nz', where 'cx' is for coord x, and 'nx' is for normal x.
     is << "source ";
-    for(size_t i=0; i < neigh_write_size; i++) {
-      is << "n" << i;
+    for(size_t i=0; i < neigh_write_size; i++) { // header for the neighbor coords, 3 per vertex
+      is << "n" << i << "cx" << " " << "n" << i << "cy" << " " << "n" << i << "cz";
       if(i < neigh_write_size - 1) {
         is << " ";
       }
     }
-    is << "\n";
+    is << " ";
+    for(size_t i=0; i < neigh_write_size; i++) { // header for the neighbor distances, 1 per vertex
+      is << "n" << i << "dist";
+      if(i < neigh_write_size - 1) {
+        is << " ";
+      }
+    }
+    if(normals) {
+      is << " ";
+      for(size_t i=0; i < neigh_write_size; i++) { // header for the neighbor vertex normals, 3 per vertex
+        is << "n" << i << "nx" << " " << "n" << i << "ny" << " " << "n" << i << "nz";
+        if(i < neigh_write_size - 1) {
+          is << " ";
+        }
+      }
+    }
+    is << "\n"; // terminate header line.
   }
 
   // Now for the data.
@@ -194,19 +211,30 @@ std::string neighborhoods_to_csv(std::vector<Neighborhood> neigh, size_t neigh_w
 
     // We write one line per neighborhood (source vertex)
     is << neigh[i].index;  // Write the source vertex.
-    for(size_t j=0; j < neigh_write_size; j++) {
-        if(j < neigh[i].size()) {  // Write the neighborhood data.
-          is << " " << neigh[i][j];
+    for(size_t j=0; j < neigh_write_size; j++) {  // Write the neighbor vertex coords.
+      if(j < neigh[i].size()) {
+        is << " " << neigh[i].coords[j][0] << " " << neigh[i].coords[j][1] << " " << neigh[i].coords[j][2];
+      } else {  // Fill with NA values. We know that allow_nan is true, otherwise we had thrown an error earlier.
+        is << " NA NA NA";
+      }
+    }
+    for(size_t j=0; j < neigh_write_size; j++) {  // Write the neighbor distances.
+      if(j < neigh[i].size()) {
+        is << " " << neigh[i].distances[j];
+      } else {  // Fill with NA values. We know that allow_nan is true, otherwise we had thrown an error earlier.
+        is << " NA";
+      }
+    }
+    if(normals) {
+      for(size_t j=0; j < neigh_write_size; j++) {  // Write the neighbor normals.
+        if(j < neigh[i].size()) {
+          is << " " << neigh[i].normals[j][0] << " " << neigh[i].normals[j][1] << " " << neigh[i].normals[j][2];
         } else {  // Fill with NA values. We know that allow_nan is true, otherwise we had thrown an error earlier.
-          is << " NA";
+          is << " NA NA NA";
         }
+      }
     }
     is << "\n";  // End CSV line.
   }
-
-
-
-  is << "not implemented yet\n";
-  std::cerr << "neighborhoods_to_csv: not implemented yet.\n";
   return is.str();
 }
