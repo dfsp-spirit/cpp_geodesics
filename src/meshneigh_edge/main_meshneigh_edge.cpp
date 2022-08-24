@@ -9,6 +9,7 @@
 #include "mesh_export.h"
 #include "mesh_adj.h"
 #include "mesh_geodesic.h"
+#include "mesh_neighborhood.h"
 #include "write_data.h"
 
 
@@ -20,8 +21,9 @@
 #include <chrono>
 
 
-/// Compute edge neighborhood (or graph k ring) for the mesh.
-/// @param k The 'k' for computing the k-ring neighborhood.
+/// @brief Compute edge neighborhood (or graph k ring) for the mesh.
+/// @param input_mesh_file input mesh file path
+/// @param k The 'k' for computing the k-ring neighborhood. Use 1 for direct edge neighbors.
 void mesh_neigh_edge(const std::string& input_mesh_file, const size_t k = 1, const std::string& output_dist_file="edge_distances", const bool include_self=true, const bool write_json=false, const bool write_csv=false, const bool write_vvbin=true) {
 
     std::cout << "Reading mesh '" + input_mesh_file + "' to compute graph " + std::to_string(k) + "-ring edge neighborhoods...\n";
@@ -50,11 +52,22 @@ void mesh_neigh_edge(const std::string& input_mesh_file, const size_t k = 1, con
     std::vector<Neighborhood> nh = neighborhoods_from_edge_neighbors(neigh, m);
     std::cout << "TODO: implement to_csv method for std::vector<Neighborhood> and write 'nh' to files as well.\n";
 
+    const bool write_dists = true;
+    const bool write_neigh = false; // Whether to write neighborhoods in addition to adjacency
+    const std::string output_neigh_file = "neighborhoods_edge";
+
     // Write it to a JSON file.
     if(write_json) {
-        std::string output_dist_file_json = output_dist_file + ".json";
-        strtofile(edge_neigh_to_json(neigh), output_dist_file_json);
-        std::cout << "Neighborhood information written to JSON file '" + output_dist_file_json + "'.\n";
+        if(write_dists) {
+            std::string output_dist_file_json = output_dist_file + ".json";
+            strtofile(edge_neigh_to_json(neigh), output_dist_file_json);
+            std::cout << "Neighborhood edge distance information written to JSON file '" + output_dist_file_json + "'.\n";
+        }
+        if(write_neigh) {
+            std::string output_neigh_file_json = output_neigh_file + ".json";
+            strtofile(neighborhoods_to_json(nh), output_neigh_file_json);
+            std::cout << "Neighborhood information written to JSON file '" + output_neigh_file_json + "'.\n";
+        }
     }
 
     // Write it to a VV file.

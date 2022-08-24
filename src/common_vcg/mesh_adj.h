@@ -141,12 +141,11 @@ std::string edge_neigh_to_csv(std::vector<std::vector<int>> neigh, size_t neigh_
       }
       is << "\n";  // End CSV line.
     }
-
     return is.str();
 }
 
 
-/// Write a string to a text file.
+/// @brief Write a string to a text file.
 ///
 /// TODO: Currently this only print to stderr in case of errors, we should most likely throw an exception instead.
 void strtofile(std::string outstring, std::string filename) {
