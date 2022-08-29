@@ -28,9 +28,9 @@ std::vector<std::vector<float>> mesh_vnormals(MyMesh& m, const bool face_angle_w
     std::vector<std::vector<float>> vnormals = std::vector<std::vector<float>>(m.vn, std::vector<float>(3, 0.0));
     for (int i=0;  i < m.vn; i++) {
       if( ! vi->IsD() )	{
-        vnormals[0][i] = (*vi).N()[0];
-        vnormals[1][i] = (*vi).N()[1];
-        vnormals[2][i] = (*vi).N()[2];
+        vnormals[i][0] = (*vi).N()[0];
+        vnormals[i][1] = (*vi).N()[1];
+        vnormals[i][2] = (*vi).N()[2];
       }
       ++vi;
     }

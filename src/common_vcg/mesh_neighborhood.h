@@ -3,6 +3,8 @@
 #include "libfs.h"
 
 #include "typedef_vcg.h"
+#include "mesh_normals.h"
+#include "mesh_coords.h"
 
 
 #include <string>
@@ -55,21 +57,30 @@ std::vector<Neighborhood> neighborhoods_from_geod_neighbors(const std::vector<st
   std::vector<Neighborhood> neighborhoods;
   size_t neigh_size;
   std::vector<std::vector<float>> neigh_coords;
+  std::vector<std::vector<float>> neigh_normals;
   std::vector<float> neigh_distances;
   std::vector<float> source_vert_coords;
   std::vector<int> neigh_indices;
+
+  std::vector<std::vector<float>> m_vnormals = mesh_vnormals(mesh);
+  std::vector<std::vector<float>> m_vcoords = mesh_vertex_coords(mesh);
+
+  size_t central_vert_mesh_idx;
   size_t neigh_mesh_idx;
   for(size_t i = 0; i < num_neighborhoods; i++) {
+    central_vert_mesh_idx = i;
     neigh_size = geod_neighbors[i].size();
     neigh_indices = std::vector<int>(neigh_size);
     neigh_distances = std::vector<float>(neigh_size);
     neigh_coords = std::vector<std::vector<float> >(neigh_size, std::vector<float> (3, 0.0));
+    neigh_normals = std::vector<std::vector<float> >(neigh_size, std::vector<float> (3, 0.0));
     for(size_t j = 0; j < neigh_size; j++) {
-      neigh_mesh_idx = geod_neighbors[i][j].index;
+      neigh_mesh_idx = geod_neighbors[i][j].index; // absolute index (in full mesh vertex vector)
       neigh_indices[j] = neigh_mesh_idx;
       neigh_distances[j] = geod_neighbors[i][j].distance;  // This is the geodesic distance in this case!
-      neigh_coords[j] = std::vector<float> {mesh.vert[neigh_mesh_idx].P().X(), mesh.vert[neigh_mesh_idx].P().X(), mesh.vert[neigh_mesh_idx].P().Z()};
-      source_vert_coords = std::vector<float> {mesh.vert[i].P().X(), mesh.vert[i].P().Y(), mesh.vert[i].P().Z()};
+      neigh_coords[j] = std::vector<float> {m_vcoords[neigh_mesh_idx][0], m_vcoords[neigh_mesh_idx][1], m_vcoords[neigh_mesh_idx][2]};
+      source_vert_coords = std::vector<float> {m_vcoords[central_vert_mesh_idx][0], m_vcoords[central_vert_mesh_idx][1], m_vcoords[central_vert_mesh_idx][2]};
+      neigh_normals[j] = std::vector<float> {m_vnormals[neigh_mesh_idx][0], m_vnormals[neigh_mesh_idx][1], m_vnormals[neigh_mesh_idx][2]};
       // Center the coords around source vertex (make it the origin):
       for(size_t k = 0; k < 3; k++) {
         neigh_coords[i][k] -= source_vert_coords[k];
