@@ -4,7 +4,9 @@
 
 typedef UpdateTopology<MyMesh>::PEdge SimpleEdge;
 
-/// Compute all edge lengths of the mesh.
+/// @brief Compute all edge lengths of the VCG mesh.
+/// @param m VCGLIB mesh
+/// @return vector of edge lengths for all mesh edges
 std::vector<double> mesh_edge_lengths(MyMesh& m) {
     m.vert.EnableVFAdjacency();
     m.face.EnableFFAdjacency();

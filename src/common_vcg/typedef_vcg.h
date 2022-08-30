@@ -4,12 +4,11 @@
 #include <vector>
 #include <stdio.h>
 #include <cstddef>
-//#include <iostream>
 
 // VCG headers for triangular mesh processing
 
 #include <vcg/complex/complex.h>
-// include update algorithms
+// Update algorithms
 #include <vcg/complex/algorithms/update/topology.h>
 //#include <vcg/complex/algorithms/update/edges.h>
 #include <vcg/complex/algorithms/update/bounding.h>
@@ -21,7 +20,7 @@
 
 #include <vcg/complex/algorithms/clean.h>
 #include <vcg/complex/algorithms/intersection.h>
-//include headers for search grids
+// Headers for search grids
 #include <vcg/space/index/grid_static_ptr.h>
 #include <vcg/space/index/spatial_hashing.h>
 #include <vcg/complex/algorithms/closest.h>
@@ -42,13 +41,10 @@
 #include <vcg/complex/algorithms/refine_loop.h>
 
 //#include <vcg/complex/algorithms/update/curvature.h>
-#ifndef RcppExport
-#define RcppExport extern "C"
-#endif
 
 using namespace vcg;
-//using namespace std;
-// The class prototypes.
+
+// Class prototypes.
 class MyFace;
 class MyEdge;
 class MyVertex;
@@ -74,6 +70,7 @@ class MyVertex  : public Vertex< MyUsedTypes,
     vertex::Curvaturef,
     vertex::CurvatureDirf*/
   >{};
+
 class MyFace: public Face  <MyUsedTypes,
   face::InfoOcf,
   face::VertexRef,
@@ -90,9 +87,9 @@ class MyFace: public Face  <MyUsedTypes,
   > {};
 
 
-// ocf class
+// The ocf class:
 class MyMesh : public vcg::tri::TriMesh< vcg::vertex::vector_ocf<MyVertex>, vcg::face::vector_ocf<MyFace > >{};
-// default class
+// The default class:
 //class MyMesh : public vcg::tri::TriMesh< std::vector<MyVertex>, std::vector<MyFace > >{};
 typedef  MyMesh::ScalarType ScalarType;
 typedef  MyMesh::VertexIterator VertexIterator;
