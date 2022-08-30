@@ -79,7 +79,7 @@ int main(int argc, char** argv) {
     if(do_circle_stats) {
         std::cout << (circle_stats_do_meandists? "Also computing" : "Not computing")  << " geodesic mean distances while computing circle stats.\n";
     }
-    
+
     const std::vector<std::string> hemis = {"lh", "rh"};
     std::string surf_file, hemi, subject;
     fs::Mesh surface;
@@ -95,7 +95,7 @@ int main(int argc, char** argv) {
         for (size_t hemi_idx=0; hemi_idx<hemis.size(); hemi_idx++) {
             std::chrono::time_point<std::chrono::steady_clock> subject_hemi_start_at = std::chrono::steady_clock::now();
             hemi = hemis[hemi_idx];
-            
+
             // Load FreeSurfer mesh from file.
             surf_file = fs::util::fullpath({subjects_dir, subject, "surf", hemi + "." + surface_name});
             try {
@@ -109,7 +109,7 @@ int main(int argc, char** argv) {
 
             std::cout << "   - Handling hemi " << hemi << " for surface '" << surface_name << "' with " << surface.num_vertices() << " vertices and " << surface.num_faces() << " faces.\n";
 
-            // Create a VCGLIB mesh from the libfs Mesh.            
+            // Create a VCGLIB mesh from the libfs Mesh.
             MyMesh m;
             vcgmesh_from_fs_surface(&m, surface);
 
@@ -124,7 +124,7 @@ int main(int argc, char** argv) {
                         if(file_exists(rad_filename) && file_exists(per_filename) && file_exists(mgd_filename)) {
                             std::cout << "     o Skipping computation for hemi " << hemi << ", output files exist.\n";
                             num_skipped_hemis_for_far++;
-                            continue;                            
+                            continue;
                         }
                     } else {
                         if(file_exists(rad_filename) && file_exists(per_filename)) {
@@ -138,13 +138,13 @@ int main(int argc, char** argv) {
                 std::vector<int32_t> qv_cs; // The query vertices (empty vector means to use all of the mesh).
                 std::vector<std::vector<float>> circle_stats = geodesic_circles(m, qv_cs, circ_scale, circle_stats_do_meandists);
                 const std::vector<float> radii = circle_stats[0];
-                const std::vector<float> perimeters = circle_stats[1];                
+                const std::vector<float> perimeters = circle_stats[1];
                 fs::write_curv(rad_filename, radii);
                 std::cout << "     o Geodesic circle radius results for hemi " << hemi << " written to file '" << rad_filename << "'.\n";
                 fs::write_curv(per_filename, perimeters);
                 std::cout << "     o Geodesic circle perimeter results for hemi " << hemi << " written to file '" << per_filename << "'.\n";
                 if(circle_stats_do_meandists) {
-                    const std::vector<float> mean_geodists_circ = circle_stats[2];                    
+                    const std::vector<float> mean_geodists_circ = circle_stats[2];
                     fs::write_curv(mgd_filename, mean_geodists_circ);
                     std::cout << "     o Geodesic mean distance results for hemi " << hemi << " written to file '" << mgd_filename << "'.\n";
                 }
@@ -156,8 +156,8 @@ int main(int argc, char** argv) {
                         num_skipped_hemis_for_far++;
                         continue;
                     }
-                }                
-                const std::vector<float> mean_dists = mean_geodist_p(m);                
+                }
+                const std::vector<float> mean_dists = mean_geodist_p(m);
                 fs::write_curv(mean_geodist_outfile, mean_dists);
                 std::cout << "     o Geodesic mean distance results for hemi " << hemi << " written to file '" << mean_geodist_outfile << "'.\n";
             }
@@ -167,7 +167,7 @@ int main(int argc, char** argv) {
         }
         const std::chrono::time_point<std::chrono::steady_clock> subject_end_at = std::chrono::steady_clock::now();
         const double subject_duration_seconds = std::chrono::duration_cast<std::chrono::milliseconds>(subject_end_at - subject_start_at).count() / 1000.0;
-        const double subjects_so_far_duration_seconds = std::chrono::duration_cast<std::chrono::milliseconds>(subject_end_at - all_subjects_start_at).count() / 1000.0;        
+        const double subjects_so_far_duration_seconds = std::chrono::duration_cast<std::chrono::milliseconds>(subject_end_at - all_subjects_start_at).count() / 1000.0;
         std::cout << "   - Subject " << subject << " took " << secduration(subject_duration_seconds) << ".\n";
         const int num_hemis_computed = ((i+1) * 2) - num_skipped_hemis_for_far; // These are all hemispheres for which computational effort was needed (they were not skipped, for whatever reasons).
         if(i < (subjects.size() - 1) && num_hemis_computed > 0) {   // We do not give a time left estimate if nothing was really done yet or if we are finished.
@@ -175,7 +175,7 @@ int main(int argc, char** argv) {
             const double estimated_time_left = subjects_so_far_duration_seconds / num_subjects_computed * (subjects.size() - num_subjects_computed);
             std::cout << "   - Duration since start " << secduration(subjects_so_far_duration_seconds) << " for " << (i+1) << " subjects. Estimated time left " << secduration(estimated_time_left) << " for " << (subjects.size() - (i+1)) << " subjects.\n";
         }
-        
+
     }
 
     // Report on failed subjects (e.g., failed due to missing files).
@@ -184,7 +184,7 @@ int main(int argc, char** argv) {
         std::sort( failed_subjects.begin(), failed_subjects.end() );
         failed_subjects.erase( unique( failed_subjects.begin(), failed_subjects.end() ), failed_subjects.end() );
         std::cout << "Computation failed for " << failed_subjects.size() << " of the " << subjects.size() << " subjects:\n";
-        for (const auto subj: failed_subjects) {        
+        for (const auto& subj: failed_subjects) {
             std::cout << subj << ' ';
         }
         std::cout << '\n';
