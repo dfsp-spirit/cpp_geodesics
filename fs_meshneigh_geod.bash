@@ -7,10 +7,10 @@ apptag="[GEOD_DIST]"
 # Positional trailing command line arguments for meshneigh_geod
 include_self="true"
 json="false"
-csv="false"
-vv="true"
+csv="true"
+vv="false"
 with_neigh="true"
-extra_args="${include_self} ${json} ${csv} ${vv} {$with_neigh}"
+extra_args="${include_self} ${json} ${csv} ${vv} ${with_neigh}"
 
 for subject in fsaverage6 fsaverage; do
     if [ ! -d "${subjects_dir}/${subject}" ]; then
