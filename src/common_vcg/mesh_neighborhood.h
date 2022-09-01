@@ -88,7 +88,7 @@ std::vector<Neighborhood> neighborhoods_from_geod_neighbors(const std::vector<st
         neigh_coords[j][k] -= source_vert_coords[k];
       }
     }
-    neighborhoods.push_back(Neighborhood(i, neigh_coords, neigh_distances));
+    neighborhoods.push_back(Neighborhood(i, neigh_coords, neigh_distances, neigh_normals));
   }
   return neighborhoods;
 }
@@ -101,6 +101,7 @@ std::vector<Neighborhood> neighborhoods_from_edge_neighbors(const std::vector<st
   std::vector<Neighborhood> neighborhoods;
   size_t neigh_size, neigh_mesh_idx;
   std::vector<std::vector<float>> neigh_coords;
+  std::vector<std::vector<float>> neigh_normals;
   std::vector<float> neigh_distances;
   std::vector<float> source_vert_coords;
   std::vector<int> neigh_indices;
@@ -116,20 +117,22 @@ std::vector<Neighborhood> neighborhoods_from_edge_neighbors(const std::vector<st
     neigh_indices = std::vector<int>(neigh_size);
     neigh_distances = std::vector<float>(neigh_size);
     neigh_coords = std::vector<std::vector<float> >(neigh_size, std::vector<float> (3, 0.0));
+    neigh_normals = std::vector<std::vector<float> >(neigh_size, std::vector<float> (3, 0.0));
     for(size_t j = 0; j < neigh_size; j++) {
       //std::cout << ">>>   Handling neighborhood #" << i << " neighbor# " << j << " of " << neigh_size << ".\n";
       neigh_mesh_idx = edge_neighbors[i][j];
       //std::cout << ">>>   abs mesh index of this neighbor is " << neigh_mesh_idx << ", mesh has " << mesh.vn << " vertices.\n";
       neigh_indices[j] = neigh_mesh_idx;
       neigh_coords[j] = std::vector<float> {m_vcoords[neigh_mesh_idx][0], m_vcoords[neigh_mesh_idx][1], m_vcoords[neigh_mesh_idx][2]};
+      neigh_normals[j] = std::vector<float> {m_vnormals[neigh_mesh_idx][0], m_vnormals[neigh_mesh_idx][1], m_vnormals[neigh_mesh_idx][2]};
       source_vert_coords = std::vector<float> {m_vcoords[central_vert_mesh_idx][0], m_vcoords[central_vert_mesh_idx][1], m_vcoords[central_vert_mesh_idx][2]};
-      //neigh_distances[j] = dist_euclid(neigh_coords[j], source_vert_coords); // This is the Euclidean distance in this case!
+      neigh_distances[j] = dist_euclid(neigh_coords[j], source_vert_coords); // This is the Euclidean distance in this case!
       // Center the coords around source vertex (make it the origin):
       for(size_t k = 0; k < 3; k++) {
         neigh_coords[j][k] -= source_vert_coords[k];
       }
     }
-    neighborhoods.push_back(Neighborhood(i, neigh_coords, neigh_distances));
+    neighborhoods.push_back(Neighborhood(i, neigh_coords, neigh_distances, neigh_normals));
   }
   std::cout << ">>> neighborhoods_from_edge_neighbors done.\n";
   return neighborhoods;
