@@ -122,7 +122,7 @@ int main(int argc, char** argv) {
         std::cout << "   <json>          : bool, whether to write JSON output, must be 'true' or 'false'. Default: 'false'.\n";
         std::cout << "   <csv>           : bool, whether to write CSV output, must be 'true' or 'false'. Default: 'false'.\n";
         std::cout << "   <vv>            : bool, whether to write VV output, must be 'true' or 'false'. Default: 'true'.\n";
-        std::cout << "   <with_neigh>    : bool, whether to also write unified Neighborhood format files, must be 'true' or 'false'. Default: 'true'.\n";
+        std::cout << "   <with_neigh>    : bool, whether to also write unified Neighborhood format files, must be 'true' or 'false'. Default: 'false'.\n";
         exit(1);
     }
     input_mesh_file = argv[1];

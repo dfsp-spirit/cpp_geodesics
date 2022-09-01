@@ -108,9 +108,10 @@ int main(int argc, char** argv) {
     bool include_self = true;
     bool json = false;
     bool csv = false;
-    bool vv = true;
+    bool vvbin = true;
+    bool with_neigh = false;
 
-    if(argc < 2 || argc > 8) {
+    if(argc < 2 || argc > 9) {
         std::cout << "===" << argv[0] << " -- Compute geodesic neighborhoods for mesh vertices. ===\n";
         std::cout << "Usage: " << argv[0] << " <input_mesh> [<max_dist> [<output_file> [<include_self> [json]]]]>\n";
         std::cout << "   <input_mesh>    : str, a mesh file in a format supported by libfs, e.g., FreeSurfer, PLY, OBJ, OFF.\n";
@@ -120,6 +121,7 @@ int main(int argc, char** argv) {
         std::cout << "   <json>          : bool, whether to write JSON text output, must be 'true' or 'false'. Default: 'false'.\n";
         std::cout << "   <csv>           : bool, whether to write CSV text output, must be 'true' or 'false'. Default: 'false'.\n";
         std::cout << "   <vv>            : bool, whether to write custom binary VV output, must be 'true' or 'false'. Default: 'true'.\n";
+        std::cout << "   <with_neigh>    : bool, whether to also write unified Neighborhood format files, must be 'true' or 'false'. Default: 'false'.\n";
         exit(1);
     }
     input_mesh_file = argv[1];
@@ -168,17 +170,30 @@ int main(int argc, char** argv) {
     if(argc >= 8) {
         std::string vvout = argv[7];
         if(vvout == "true") {
-            vv = true;
+            vvbin = true;
         } else if(vvout == "false") {
-            vv = false;
+            vvbin = false;
         } else {
             throw std::runtime_error("Argument vv must be 'true' or 'false'.\n");
         }
     }
+    if(argc >= 9) {
+        std::string swith_neigh = argv[8];
+        if(swith_neigh == "true") {
+            with_neigh = true;
+        } else if(swith_neigh == "false") {
+            with_neigh = false;
+        } else {
+            throw std::runtime_error("Argument 'with_neigh' must be 'true' or 'false'.\n");
+        }
+    }
 
-    if((!json) && (!csv) && (!vv)) {
+    std::cout << "meshneigh_geod: base settings: input_mesh_file=" << input_mesh_file << ", max_dist=" << max_dist << ", output_dist_file=" << output_dist_file << ", include_self=" << include_self << "\n";
+    std::cout << "meshneigh_geod: output settings: json=" << json << ", csv=" << csv << ", vvbin=" << vvbin << "with_neigh=" << with_neigh << "\n";
+
+    if((!json) && (!csv) && (!vvbin)) {
         throw std::runtime_error("At least one of the arguments json, csv, and vv must be 'true'.\n");
     }
-    mesh_neigh_geod(input_mesh_file, max_dist, output_dist_file, include_self, json, csv, vv);
+    mesh_neigh_geod(input_mesh_file, max_dist, output_dist_file, include_self, json, csv, vvbin);
     exit(0);
 }
