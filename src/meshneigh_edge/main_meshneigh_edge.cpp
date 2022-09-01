@@ -54,7 +54,7 @@ void mesh_neigh_edge(const std::string& input_mesh_file, const size_t k = 1, con
 
     const bool write_dists = true;
 
-    const std::string output_neigh_file = "neighborhoods_edge";
+    const std::string output_neigh_file = output_dist_file + "_neigh";
     if(with_neigh) {
         nh = neighborhoods_from_edge_neighbors(neigh, m);
     }
@@ -185,6 +185,9 @@ int main(int argc, char** argv) {
             throw std::runtime_error("Argument 'with_neigh' must be 'true' or 'false'.\n");
         }
     }
+
+    std::cout << "meshneigh_edge: base settings: input_mesh_file=" << input_mesh_file << ", k=" << k << ", output_dist_file=" << output_dist_file << ", include_self=" << include_self << "\n";
+    std::cout << "meshneigh_edge: output settings: json=" << json << ", csv=" << csv << ", vvbin=" << vvbin << "with_neigh=" << with_neigh << "\n";
 
     mesh_neigh_edge(input_mesh_file, k, output_dist_file, include_self, json, csv, vvbin, with_neigh);
     exit(0);

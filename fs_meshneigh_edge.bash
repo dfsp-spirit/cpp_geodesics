@@ -7,8 +7,8 @@ apptag="[EDGE_DIST]"
 # Positional trailing command line arguments for meshneigh_edge
 include_self="true"
 json="false"
-csv="false"
-vv="true"
+csv="true"
+vv="false"
 with_neigh="true"
 extra_args="${include_self} ${json} ${csv} ${vv} ${with_neigh}"
 
