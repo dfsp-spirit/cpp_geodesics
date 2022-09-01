@@ -96,7 +96,7 @@ void mesh_neigh_edge(const std::string& input_mesh_file, const size_t k = 1, con
         if(with_neigh) {
             std::string output_neigh_file_csv = output_neigh_file + ".csv";
             strtofile(neighborhoods_to_csv(nh), output_neigh_file_csv);
-            std::cout << "Neighborhood information written to CSV file '" + output_neigh_file_csv + "'.\n";
+            std::cout << "Neighborhood information based on Euclidean distance written to CSV file '" + output_neigh_file_csv + "'.\n";
         }
     }
 }

@@ -23,7 +23,7 @@
 
 /// Compute geodesic neighborhood up to max dist for the mesh.
 /// @param max_dist float, the distance defining the geodesic neighborhood circle.
-void mesh_neigh_geod(const std::string& input_mesh_file, const float max_dist = 5.0, const std::string& output_dist_file="geod_distances", bool include_self = true, const bool write_json=false, const bool write_csv=false, const bool write_vvbin=true) {
+void mesh_neigh_geod(const std::string& input_mesh_file, const float max_dist = 5.0, const std::string& output_dist_file="geod_distances", bool include_self = true, const bool write_json=false, const bool write_csv=false, const bool write_vvbin=true, const bool with_neigh=false) {
 
     std::cout << "Reading mesh '" + input_mesh_file + "' to compute geodesic distance up to " + std::to_string(max_dist) + " along mesh...\n";
     if(include_self) {
@@ -48,14 +48,21 @@ void mesh_neigh_geod(const std::string& input_mesh_file, const float max_dist = 
     }
     std::vector<std::vector<GeodNeighbor>> neigh = geod_neighborhood(m, max_dist, include_self);
 
-    std::vector<Neighborhood> nh = neighborhoods_from_geod_neighbors(neigh, m);
-    std::cout << "TODO: implement to_csv method for std::vector<Neighborhood> and write 'nh' to files as well.\n";
+    std::vector<Neighborhood> nh;
+    const std::string output_neigh_file = output_dist_file + "_neigh";
+    if (with_neigh) {
+        nh = neighborhoods_from_geod_neighbors(neigh, m);
+    }
 
     // Write it to a JSON file if requested.
     if(write_json) {
         std::string output_dist_file_json = output_dist_file + ".json";
         strtofile(geod_neigh_to_json(neigh), output_dist_file_json);
         std::cout << "Neighborhood information written to JSON file '" + output_dist_file_json + "'.\n";
+
+        if(with_neigh) {
+            std::cout << "WARNING: Writing Neighborhood information to JSON format not supported yet, skipping. Use CSV instead.\n";
+        }
     }
 
     // Write it to a CSV file if requested.
@@ -63,6 +70,11 @@ void mesh_neigh_geod(const std::string& input_mesh_file, const float max_dist = 
         std::string output_dist_file_csv = output_dist_file + ".csv";
         strtofile(geod_neigh_to_csv(neigh), output_dist_file_csv);
         std::cout << "Neighborhood information written to CSV file '" + output_dist_file_csv + "'.\n";
+        if(with_neigh) {
+            std::string output_neigh_file_csv = output_neigh_file + ".csv";
+            strtofile(neighborhoods_to_csv(nh), output_neigh_file_csv);
+            std::cout << "Neighborhood information based on geodesic distance written to CSV file '" + output_neigh_file_csv + "'.\n";
+        }
     }
 
     // Write it to VV files.
@@ -82,6 +94,10 @@ void mesh_neigh_geod(const std::string& input_mesh_file, const float max_dist = 
         std::cout << "Geodesic Neighborhood indices written to vv file '" + output_dist_file_index + "'.\n";
         write_vv<float>(output_dist_file_dist, neigh_dist);
         std::cout << "Geodesic Neighborhood distances written to vv file '" + output_dist_file_dist + "'.\n";
+
+        if(with_neigh) {
+            std::cout << "WARNING: Writing Neighborhood information to VV format not supported yet, skipping. Use CSV instead.\n";
+        }
     }
 }
 
