@@ -192,7 +192,7 @@ std::string neighborhoods_to_csv(std::vector<Neighborhood> neigh, size_t neigh_w
 
   if(neigh_write_size == 0) {
       neigh_write_size = min_neighbor_count;
-      std::cout << "Using auto-determined neighborhood size " << neigh_write_size << " during CSV export.\n";
+      std::cout << "Using auto-determined neighborhood size " << neigh_write_size << " during Neighborhood CSV export.\n";
   }
 
   std::cout << "Exporting " << neigh.size() << " neighborhoods, with " << neigh_write_size << " entries per neighborhood. Min neighborhood size = " << min_neighbor_count << ", max = " << max_neighbor_count << ".\n";

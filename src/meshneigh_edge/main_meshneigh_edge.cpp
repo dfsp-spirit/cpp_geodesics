@@ -187,7 +187,7 @@ int main(int argc, char** argv) {
     }
 
     std::cout << "meshneigh_edge: base settings: input_mesh_file=" << input_mesh_file << ", k=" << k << ", output_dist_file=" << output_dist_file << ", include_self=" << include_self << "\n";
-    std::cout << "meshneigh_edge: output settings: json=" << json << ", csv=" << csv << ", vvbin=" << vvbin << "with_neigh=" << with_neigh << "\n";
+    std::cout << "meshneigh_edge: output settings: json=" << json << ", csv=" << csv << ", vvbin=" << vvbin << ", with_neigh=" << with_neigh << "\n";
 
     mesh_neigh_edge(input_mesh_file, k, output_dist_file, include_self, json, csv, vvbin, with_neigh);
     exit(0);

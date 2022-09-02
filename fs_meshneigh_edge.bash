@@ -2,12 +2,25 @@
 # Pre-compute mesh edge distances for FreeSurfer meshes and save them in JSON format.
 
 subjects_dir="$FREESURFER_HOME/subjects"
-apptag="[EDGE_DIST]"
+apptag="[EDGE_DIST_BASH]"
 
 subjects_list="fsaverage fsaverage6"
 
-#subjects_file="${subjects_dir}/subjects.txt"
-#subjects_list=$(cat $subjects_file | tr '\n' ' ')
+use_subjects_file="false"  # Set to "false" or "true".
+
+subjects_file="${subjects_dir}/subjects.txt"
+
+if [ "${use_subjects_file}" = "true" ]; then
+    if [ ! -f "${subjects_file}"  ]; then
+        echo "$apptag ERROR: Cannot read subjects file '${subjects_file}'. Exiting."
+        exit 1
+    else
+        subjects_list=$(cat $subjects_file | tr '\n' ' ')
+        log_tag_from=" from subjects file '${subjects_file}'"
+    fi
+else
+    log_tag_from=" from hardcoded, internal subjects list"
+fi
 
 num_subjects=$(echo ${subjects_list} | wc -w)
 
@@ -20,8 +33,8 @@ vv="false"
 with_neigh="true"
 extra_args="${include_self} ${json} ${csv} ${vv} ${with_neigh}"
 
-echo "$apptag Info: Using meshneigh_edge extra_args '$extra_args'."
-echo "$apptag Info: Handling ${num_subjects} subjects."
+echo "$apptag INFO: Using meshneigh_edge extra_args '$extra_args'."
+echo "$apptag INFO: Handling ${num_subjects} subjects${log_tag_from}."
 
 num_handled=0
 for subject in ${subjects_list}; do
@@ -46,6 +59,6 @@ for subject in ${subjects_list}; do
     done
 done
 
-echo "$apptag All done, exiting."
+echo "$apptag INFO: All ${num_subjects} subjects${log_tag_from} done, exiting."
 
 

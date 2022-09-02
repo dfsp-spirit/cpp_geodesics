@@ -97,7 +97,7 @@ std::string edge_neigh_to_csv(std::vector<std::vector<int>> neigh, size_t neigh_
     }
     if(neigh_write_size == 0) {
       neigh_write_size = min_neighbor_count;
-      std::cout << "Using auto-determined neighborhood size " << neigh_write_size << " during CSV export.\n";
+      std::cout << "Using auto-determined neighborhood size " << neigh_write_size << " during edge neighborhood CSV export.\n";
     }
 
     // Pre-check if allow_nan is false, so we do not start writing something that will not be finished.
