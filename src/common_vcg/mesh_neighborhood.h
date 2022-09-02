@@ -14,6 +14,7 @@
 #include <iterator>
 #include <numeric>
 #include <cassert>
+#include <limits>
 
 
 
@@ -142,6 +143,7 @@ std::vector<Neighborhood> neighborhoods_from_edge_neighbors(const std::vector<st
 /// @brief Get JSON representation on mesh neighborhoods.
 /// TODO: This could become a static method of Neighborhood
 std::string neighborhoods_to_json(std::vector<Neighborhood> neigh) {
+  // NOT READY YET
     std::stringstream is;
     is << "{\n";
     is << "  \"neighborhoods\": {\n";
@@ -178,15 +180,22 @@ std::string neighborhoods_to_csv(std::vector<Neighborhood> neigh, size_t neigh_w
 
   // Get min size over all neighborhoods.
   size_t min_neighbor_count = (size_t)-1;  // Set to max possible value.
+  size_t max_neighbor_count = 0; // FYI, only used in the log output.
   for(size_t i=0; i < neigh.size(); i++) {
     if(neigh[i].size() < min_neighbor_count) {
       min_neighbor_count = neigh[i].size();
     }
+    if(neigh[i].size() > max_neighbor_count) {
+      max_neighbor_count = neigh[i].size();
+    }
   }
+
   if(neigh_write_size == 0) {
       neigh_write_size = min_neighbor_count;
       std::cout << "Using auto-determined neighborhood size " << neigh_write_size << " during CSV export.\n";
   }
+
+  std::cout << "Exporting " << neigh.size() << " neighborhoods, with " << neigh_write_size << " entries per neighborhood. Min neighborhood size = " << min_neighbor_count << ", max = " << max_neighbor_count << ".\n";
 
   // Pre-check if allow_nan is false, so we do not start writing something that will not be finished.
   std::vector<int> failed_neighborhoods; // These will only 'fail' if NAN values are not allowed.
@@ -230,6 +239,24 @@ std::string neighborhoods_to_csv(std::vector<Neighborhood> neigh, size_t neigh_w
       }
     }
     is << "\n"; // terminate header line.
+  }
+
+  // Report on neigh dists for user.
+  bool do_report = true;
+  if(do_report) {
+    float min_neigh_dist = std::numeric_limits<float>::max();
+    float max_neigh_dist = 0.0;
+    for(size_t i=0; i < neigh.size(); i++) {
+      for(size_t j=0; j < neigh_write_size; j++) {  // Write the neighbor distances.
+        if(neigh[i].distances[j] < min_neigh_dist) {
+          min_neigh_dist = neigh[i].distances[j];
+        }
+        if(neigh[i].distances[j] > max_neigh_dist) {
+          max_neigh_dist = neigh[i].distances[j];
+        }
+      }
+    }
+    std::cout << "For exported neighborhoods, the minimal distance is " << min_neigh_dist << " and the maximal one is " << max_neigh_dist << ".\n";
   }
 
   // Now for the data: coordinates, distances, and normals
