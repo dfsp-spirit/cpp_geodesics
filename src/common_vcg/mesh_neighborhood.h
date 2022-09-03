@@ -195,10 +195,10 @@ std::string neighborhoods_to_csv(std::vector<Neighborhood> neigh, size_t neigh_w
 
   if(neigh_write_size == 0) {
       neigh_write_size = min_neighbor_count;
-      std::cout << std::string(APPTAG) << "Using auto-determined neighborhood size " << neigh_write_size << " during Neighborhood CSV export.\n";
+      debug_print(CPP_GEOD_DEBUG_LVL_INFO, "Using auto-determined neighborhood size " + std::to_string(neigh_write_size) + " during Neighborhood CSV export.\n");
   }
 
-  std::cout << std::string(APPTAG) << "Exporting " << neigh.size() << " neighborhoods, with " << neigh_write_size << " entries per neighborhood. Min neighborhood size = " << min_neighbor_count << ", max = " << max_neighbor_count << ".\n";
+  debug_print(CPP_GEOD_DEBUG_LVL_INFO, "Exporting " + std::to_string(neigh.size()) + " neighborhoods, with " + std::to_string(neigh_write_size) + " entries per neighborhood. Min neighborhood size = " + std::to_string(min_neighbor_count) + ", max = " + std::to_string(max_neighbor_count) + ".");
 
   // Pre-check if allow_nan is false, so we do not start writing something that will not be finished.
   std::vector<int> failed_neighborhoods; // These will only 'fail' if NAN values are not allowed.

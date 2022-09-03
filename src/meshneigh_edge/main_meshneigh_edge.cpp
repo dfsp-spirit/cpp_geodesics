@@ -4,6 +4,8 @@
 // The neighborhood is defined by edge distance in the mesh (aka graph distance).
 
 #define APPTAG "[cpp_edge] "
+#define CPP_GEOD_DEBUG_LEVEL 4
+#include "cppgeod_settings.h"
 
 #include "libfs.h"
 #include "typedef_vcg.h"
@@ -23,29 +25,31 @@
 #include <chrono>
 
 
+
+
 /// @brief Compute edge neighborhood (or graph k ring) for the mesh.
 /// @param input_mesh_file input mesh file path
 /// @param k The 'k' for computing the k-ring neighborhood. Use 1 for direct edge neighbors.
 /// @param with_neigh whether to also write data based on unified Neighborhood format (supported for geodesic and Euclidean distances).
 void mesh_neigh_edge(const std::string& input_mesh_file, const size_t k = 1, const std::string& output_dist_file="edge_distances", const bool include_self=true, const bool write_json=false, const bool write_csv=false, const bool write_vvbin=true, const bool with_neigh=false) {
 
-    std::cout << std::string(APPTAG) << "Reading mesh '" + input_mesh_file + "' to compute graph " + std::to_string(k) + "-ring edge neighborhoods...\n";
+    debug_print(CPP_GEOD_DEBUG_LVL_VERBOSE, "Reading mesh '" + input_mesh_file + "' to compute graph " + std::to_string(k) + "-ring edge neighborhoods...");
     if(include_self) {
-        std::cout << std::string(APPTAG) << " * Neighborhoods will include the query vertex itself.\n";
+        debug_print(CPP_GEOD_DEBUG_LVL_INFO, " * Neighborhoods will include the query vertex itself.");
     } else {
-        std::cout << std::string(APPTAG) << " * Neighborhoods will NOT include the query vertex itself.\n";
+        debug_print(CPP_GEOD_DEBUG_LVL_INFO, " * Neighborhoods will NOT include the query vertex itself.");
     }
 
     fs::Mesh surface;
     fs::read_surf(&surface, input_mesh_file);
 
     // Create a VCGLIB mesh from the libfs Mesh.
-    std::cout << std::string(APPTAG) << "Creating VCG mesh from brain surface with " << surface.num_vertices() << " vertices and " << surface.num_faces() << " faces.\n";
+    debug_print(CPP_GEOD_DEBUG_LVL_VERBOSE, "Creating VCG mesh from brain surface with " + std::to_string(surface.num_vertices()) + " vertices and " + std::to_string(surface.num_faces()) + " faces.");
     MyMesh m;
     vcgmesh_from_fs_surface(&m, surface);
 
     // Compute adjacency list representation of mesh
-    std::cout << std::string(APPTAG) << "Computing neighborhoods...\n";
+    debug_print(CPP_GEOD_DEBUG_LVL_INFO, "Computing neighborhoods...");
     std::vector<int> query_vertices(surface.num_vertices());
     for(int i=0; i<m.vn; i++) {
         query_vertices[i] = i;
@@ -72,7 +76,7 @@ void mesh_neigh_edge(const std::string& input_mesh_file, const size_t k = 1, con
             //std::string output_neigh_file_json = output_neigh_file + ".json";
             //strtofile(neighborhoods_to_json(nh), output_neigh_file_json);
             //std::cout << "Neighborhood information written to JSON file '" + output_neigh_file_json + "'.\n";
-            std::cout << std::string(APPTAG) << "WARNING: Writing Neighborhood information to JSON format not supported yet, skipping. Use CSV instead.\n";
+            debug_print(CPP_GEOD_DEBUG_LVL_WARN, "Writing Neighborhood information to JSON format not supported yet, skipping. Use CSV instead.");
         }
     }
 
@@ -81,10 +85,10 @@ void mesh_neigh_edge(const std::string& input_mesh_file, const size_t k = 1, con
         if(write_dists) {
             std::string output_dist_file_vv = output_dist_file + ".vv";
             write_vv<int32_t>(output_dist_file_vv, neigh);
-            std::cout << std::string(APPTAG) << "Neighborhood information written to vv file '" + output_dist_file_vv + "'.\n";
+            debug_print(CPP_GEOD_DEBUG_LVL_INFO, "Neighborhood information written to vv file '" + output_dist_file_vv + "'.");
         }
         if(with_neigh) {
-            std::cout << std::string(APPTAG) << "WARNING: Writing Neighborhood information to VV format not supported yet, skipping. Use CSV instead.\n";
+            debug_print(CPP_GEOD_DEBUG_LVL_WARN, "WARNING: Writing Neighborhood information to VV format not supported yet, skipping. Use CSV instead.");
         }
     }
 
@@ -93,12 +97,12 @@ void mesh_neigh_edge(const std::string& input_mesh_file, const size_t k = 1, con
         if(write_dists) {
             std::string output_dist_file_csv = output_dist_file + ".csv";
             strtofile(edge_neigh_to_csv(neigh), output_dist_file_csv);
-            std::cout << std::string(APPTAG) << "Neighborhood edge distance information written to CSV file '" + output_dist_file_csv + "'.\n";
+            debug_print(CPP_GEOD_DEBUG_LVL_INFO, "Neighborhood edge distance information written to CSV file '" + output_dist_file_csv + "'.");
         }
         if(with_neigh) {
             std::string output_neigh_file_csv = output_neigh_file + ".csv";
             strtofile(neighborhoods_to_csv(nh), output_neigh_file_csv);
-            std::cout << std::string(APPTAG) << "Neighborhood information based on Euclidean distance written to CSV file '" + output_neigh_file_csv + "'.\n";
+            debug_print(CPP_GEOD_DEBUG_LVL_INFO, "Neighborhood information based on Euclidean distance written to CSV file '" + output_neigh_file_csv + "'.");
         }
     }
 }

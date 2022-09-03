@@ -11,9 +11,8 @@
 #include <iterator>
 #include <sstream>
 
-#ifndef APPTAG
-#define APPTAG "[cpp_geod] "
-#endif
+#include "cppgeod_settings.h"
+
 
 
 std::vector<std::vector<int>> mesh_adj(MyMesh& m, std::vector<int> query_vertices, int numstep=1, bool include_self=false) {
