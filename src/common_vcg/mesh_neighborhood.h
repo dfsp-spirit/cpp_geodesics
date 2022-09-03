@@ -17,6 +17,11 @@
 #include <limits>
 
 
+#ifndef APPTAG
+#define APPTAG "[cpp_geod] "
+#endif
+
+
 
 /// @brief Struct modeling a spatial neighborhood with coordinates, and geodesic or Euclidean distances of neighbors to central vertex.
 ///
@@ -53,9 +58,8 @@ class Neighborhood {
 /// @param mesh: the mesh, used to get the vertex coordinates from the vertex indices in geod_neighbors.
 /// @return vector of `n` Neighborhood instances
 std::vector<Neighborhood> neighborhoods_from_geod_neighbors(const std::vector<std::vector<GeodNeighbor> > geod_neighbors, MyMesh &mesh) {
-  std::cout << ">>> neighborhoods_from_geod_neighbors called.\n";
   size_t num_neighborhoods = geod_neighbors.size();
-  std::cout << "Computing neighborhoods for " << num_neighborhoods << " vertices and their geodesic neighbors." << "\n";
+  std::cout << std::string(APPTAG) << "Computing neighborhoods for " << num_neighborhoods << " vertices and their geodesic neighbors." << "\n";
   std::vector<Neighborhood> neighborhoods;
   size_t neigh_size;
   std::vector<std::vector<float>> neigh_coords;
@@ -77,7 +81,7 @@ std::vector<Neighborhood> neighborhoods_from_geod_neighbors(const std::vector<st
     neigh_coords = std::vector<std::vector<float> >(neigh_size, std::vector<float> (3, 0.0));
     neigh_normals = std::vector<std::vector<float> >(neigh_size, std::vector<float> (3, 0.0));
     for(size_t j = 0; j < neigh_size; j++) {
-      std::cout << ">>> Handling neighborhood #" << i << " of " << num_neighborhoods << " with size " << neigh_size << "\n";
+      //std::cout << ">>> Handling neighborhood #" << i << " of " << num_neighborhoods << " with size " << neigh_size << "\n";
       neigh_mesh_idx = geod_neighbors[i][j].index; // absolute index (in full mesh vertex vector)
       neigh_indices[j] = neigh_mesh_idx;
       neigh_distances[j] = geod_neighbors[i][j].distance;  // This is the geodesic distance in this case!
@@ -97,7 +101,6 @@ std::vector<Neighborhood> neighborhoods_from_geod_neighbors(const std::vector<st
 /// @brief Computes neighborhoods where the distance is the geodesic distance.
 /// @details The distances in the return value are Euclidean distances.
 std::vector<Neighborhood> neighborhoods_from_edge_neighbors(const std::vector<std::vector<int> > edge_neighbors, MyMesh &mesh) {
-  //std::cout << ">>> neighborhoods_from_edge_neighbors called.\n";
   size_t num_neighborhoods = edge_neighbors.size();
   std::vector<Neighborhood> neighborhoods;
   size_t neigh_size, neigh_mesh_idx;
@@ -135,7 +138,7 @@ std::vector<Neighborhood> neighborhoods_from_edge_neighbors(const std::vector<st
     }
     neighborhoods.push_back(Neighborhood(i, neigh_coords, neigh_distances, neigh_normals));
   }
-  std::cout << ">>> neighborhoods_from_edge_neighbors done.\n";
+  std::cout << std::string(APPTAG) << "neighborhoods_from_edge_neighbors done.\n";
   return neighborhoods;
 }
 
@@ -192,10 +195,10 @@ std::string neighborhoods_to_csv(std::vector<Neighborhood> neigh, size_t neigh_w
 
   if(neigh_write_size == 0) {
       neigh_write_size = min_neighbor_count;
-      std::cout << "Using auto-determined neighborhood size " << neigh_write_size << " during Neighborhood CSV export.\n";
+      std::cout << std::string(APPTAG) << "Using auto-determined neighborhood size " << neigh_write_size << " during Neighborhood CSV export.\n";
   }
 
-  std::cout << "Exporting " << neigh.size() << " neighborhoods, with " << neigh_write_size << " entries per neighborhood. Min neighborhood size = " << min_neighbor_count << ", max = " << max_neighbor_count << ".\n";
+  std::cout << std::string(APPTAG) << "Exporting " << neigh.size() << " neighborhoods, with " << neigh_write_size << " entries per neighborhood. Min neighborhood size = " << min_neighbor_count << ", max = " << max_neighbor_count << ".\n";
 
   // Pre-check if allow_nan is false, so we do not start writing something that will not be finished.
   std::vector<int> failed_neighborhoods; // These will only 'fail' if NAN values are not allowed.
@@ -209,7 +212,7 @@ std::string neighborhoods_to_csv(std::vector<Neighborhood> neigh, size_t neigh_w
       throw std::runtime_error("Failed to generate mesh neighborhood CSV representation:'" + std::to_string(failed_neighborhoods.size()) + " neighborhoods are smaller than neigh_write_size "  + std::to_string(neigh_write_size) + ", and allow_nan is false.\n");
     }
   } else {
-    std::cout << "There are " << failed_neighborhoods.size() << " neighborhoods smaller than neigh_write_size " << neigh_write_size << ", will pad with 'NA' values.";
+    std::cout << std::string(APPTAG) << "There are " << failed_neighborhoods.size() << " neighborhoods smaller than neigh_write_size " << neigh_write_size << ", will pad with 'NA' values.";
   }
 
   // Write header for coordinates, distances, and normals
@@ -256,7 +259,7 @@ std::string neighborhoods_to_csv(std::vector<Neighborhood> neigh, size_t neigh_w
         }
       }
     }
-    std::cout << "For exported neighborhoods, the minimal distance is " << min_neigh_dist << " and the maximal one is " << max_neigh_dist << ".\n";
+    std::cout << std::string(APPTAG) << "For exported neighborhoods, the minimal distance is " << min_neigh_dist << " and the maximal one is " << max_neigh_dist << ".\n";
   }
 
   // Now for the data: coordinates, distances, and normals

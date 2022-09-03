@@ -3,6 +3,8 @@
 // The program computes neighborhoods of vertices on meshes and saves them to files.
 // The neighborhood is defined by edge distance in the mesh (aka graph distance).
 
+#define APPTAG "[cpp_edge] "
+
 #include "libfs.h"
 #include "typedef_vcg.h"
 #include "fs_mesh_to_vcg.h"
@@ -27,23 +29,23 @@
 /// @param with_neigh whether to also write data based on unified Neighborhood format (supported for geodesic and Euclidean distances).
 void mesh_neigh_edge(const std::string& input_mesh_file, const size_t k = 1, const std::string& output_dist_file="edge_distances", const bool include_self=true, const bool write_json=false, const bool write_csv=false, const bool write_vvbin=true, const bool with_neigh=false) {
 
-    std::cout << "Reading mesh '" + input_mesh_file + "' to compute graph " + std::to_string(k) + "-ring edge neighborhoods...\n";
+    std::cout << std::string(APPTAG) << "Reading mesh '" + input_mesh_file + "' to compute graph " + std::to_string(k) + "-ring edge neighborhoods...\n";
     if(include_self) {
-        std::cout << " * Neighborhoods will include the query vertex itself.\n";
+        std::cout << std::string(APPTAG) << " * Neighborhoods will include the query vertex itself.\n";
     } else {
-        std::cout << " * Neighborhoods will NOT include the query vertex itself.\n";
+        std::cout << std::string(APPTAG) << " * Neighborhoods will NOT include the query vertex itself.\n";
     }
 
     fs::Mesh surface;
     fs::read_surf(&surface, input_mesh_file);
 
     // Create a VCGLIB mesh from the libfs Mesh.
-    std::cout << "Creating VCG mesh from brain surface with " << surface.num_vertices() << " vertices and " << surface.num_faces() << " faces.\n";
+    std::cout << std::string(APPTAG) << "Creating VCG mesh from brain surface with " << surface.num_vertices() << " vertices and " << surface.num_faces() << " faces.\n";
     MyMesh m;
     vcgmesh_from_fs_surface(&m, surface);
 
     // Compute adjacency list representation of mesh
-    std::cout << "Computing neighborhoods...\n";
+    std::cout << std::string(APPTAG) << "Computing neighborhoods...\n";
     std::vector<int> query_vertices(surface.num_vertices());
     for(int i=0; i<m.vn; i++) {
         query_vertices[i] = i;
@@ -64,13 +66,13 @@ void mesh_neigh_edge(const std::string& input_mesh_file, const size_t k = 1, con
         if(write_dists) {
             std::string output_dist_file_json = output_dist_file + ".json";
             strtofile(edge_neigh_to_json(neigh), output_dist_file_json);
-            std::cout << "Neighborhood edge distance information written to JSON file '" + output_dist_file_json + "'.\n";
+            std::cout << std::string(APPTAG) << "Neighborhood edge distance information written to JSON file '" + output_dist_file_json + "'.\n";
         }
         if(with_neigh) {
             //std::string output_neigh_file_json = output_neigh_file + ".json";
             //strtofile(neighborhoods_to_json(nh), output_neigh_file_json);
             //std::cout << "Neighborhood information written to JSON file '" + output_neigh_file_json + "'.\n";
-            std::cout << "WARNING: Writing Neighborhood information to JSON format not supported yet, skipping. Use CSV instead.\n";
+            std::cout << std::string(APPTAG) << "WARNING: Writing Neighborhood information to JSON format not supported yet, skipping. Use CSV instead.\n";
         }
     }
 
@@ -79,10 +81,10 @@ void mesh_neigh_edge(const std::string& input_mesh_file, const size_t k = 1, con
         if(write_dists) {
             std::string output_dist_file_vv = output_dist_file + ".vv";
             write_vv<int32_t>(output_dist_file_vv, neigh);
-            std::cout << "Neighborhood information written to vv file '" + output_dist_file_vv + "'.\n";
+            std::cout << std::string(APPTAG) << "Neighborhood information written to vv file '" + output_dist_file_vv + "'.\n";
         }
         if(with_neigh) {
-            std::cout << "WARNING: Writing Neighborhood information to VV format not supported yet, skipping. Use CSV instead.\n";
+            std::cout << std::string(APPTAG) << "WARNING: Writing Neighborhood information to VV format not supported yet, skipping. Use CSV instead.\n";
         }
     }
 
@@ -91,12 +93,12 @@ void mesh_neigh_edge(const std::string& input_mesh_file, const size_t k = 1, con
         if(write_dists) {
             std::string output_dist_file_csv = output_dist_file + ".csv";
             strtofile(edge_neigh_to_csv(neigh), output_dist_file_csv);
-            std::cout << "Neighborhood edge distance information written to CSV file '" + output_dist_file_csv + "'.\n";
+            std::cout << std::string(APPTAG) << "Neighborhood edge distance information written to CSV file '" + output_dist_file_csv + "'.\n";
         }
         if(with_neigh) {
             std::string output_neigh_file_csv = output_neigh_file + ".csv";
             strtofile(neighborhoods_to_csv(nh), output_neigh_file_csv);
-            std::cout << "Neighborhood information based on Euclidean distance written to CSV file '" + output_neigh_file_csv + "'.\n";
+            std::cout << std::string(APPTAG) << "Neighborhood information based on Euclidean distance written to CSV file '" + output_neigh_file_csv + "'.\n";
         }
     }
 }
@@ -186,8 +188,8 @@ int main(int argc, char** argv) {
         }
     }
 
-    std::cout << "meshneigh_edge: base settings: input_mesh_file=" << input_mesh_file << ", k=" << k << ", output_dist_file=" << output_dist_file << ", include_self=" << include_self << "\n";
-    std::cout << "meshneigh_edge: output settings: json=" << json << ", csv=" << csv << ", vvbin=" << vvbin << ", with_neigh=" << with_neigh << "\n";
+    std::cout << std::string(APPTAG) << "base settings: input_mesh_file=" << input_mesh_file << ", k=" << k << ", output_dist_file=" << output_dist_file << ", include_self=" << include_self << "\n";
+    std::cout << std::string(APPTAG) << "output settings: json=" << json << ", csv=" << csv << ", vvbin=" << vvbin << ", with_neigh=" << with_neigh << "\n";
 
     mesh_neigh_edge(input_mesh_file, k, output_dist_file, include_self, json, csv, vvbin, with_neigh);
     exit(0);
