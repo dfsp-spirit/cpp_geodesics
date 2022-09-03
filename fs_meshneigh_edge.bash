@@ -1,12 +1,12 @@
 #!/bin/bash
 # Pre-compute mesh edge distances for FreeSurfer meshes and save them in JSON format.
 
-subjects_dir="$FREESURFER_HOME/subjects"
+subjects_dir="$SUBJECTS_DIR"
 apptag="[EDGE_DIST_BASH]"
 
 subjects_list="fsaverage fsaverage6"
 
-use_subjects_file="false"  # Set to "false" or "true".
+use_subjects_file="true"  # Set to "false" or "true".
 
 subjects_file="${subjects_dir}/subjects.txt"
 
@@ -44,8 +44,8 @@ for subject in ${subjects_list}; do
       exit 1
     fi
     for hemi in lh rh; do
-        for surface in white; do
-            for distance in 1 2 3 4 5; do
+        for surface in pial; do
+            for distance in 5; do
                 echo "$apptag === Handling subject #${num_handled} of ${num_subjects} named '${subject}': hemi ${hemi} surface ${surface} at distance ${distance}... ==="
                 mesh_file="${subjects_dir}/${subject}/surf/${hemi}.${surface}"
                 if [ ! -f "${mesh_file}" ]; then

@@ -138,7 +138,6 @@ std::vector<Neighborhood> neighborhoods_from_edge_neighbors(const std::vector<st
     }
     neighborhoods.push_back(Neighborhood(i, neigh_coords, neigh_distances, neigh_normals));
   }
-  std::cout << std::string(APPTAG) << "neighborhoods_from_edge_neighbors done.\n";
   return neighborhoods;
 }
 
@@ -179,7 +178,16 @@ std::string neighborhoods_to_json(std::vector<Neighborhood> neigh) {
 /// @param header: whether to write a header line
 /// @param normals whether to write vertex normals
 /// @return CSV string representation of edge neighborhoods
-std::string neighborhoods_to_csv(std::vector<Neighborhood> neigh, size_t neigh_write_size = 0, bool allow_nan = false, bool header=true, bool normals = true) {
+std::string neighborhoods_to_csv(std::vector<Neighborhood> neigh, size_t neigh_write_size = 0, bool allow_nan = false, bool header=true, bool normals = true, const std::string& input_pvd_file = "") {
+
+  // Read per-vertex data (thickness, pial_lGI, or whatever), if a filename for it was given.
+  std::vector<float> pvd;
+  if(! input_pvd_file.empty()) {
+    pvd = fs::read_curv_data(input_pvd_file);
+    if(pvd.size() != neigh.size()) {
+      throw std::runtime_error("Length of per-vertex data " + std::to_string(pvd.size()) + " from file '" + input_pvd_file + "' does not match neighborhood count " + std::to_string(neigh.size()) + ".\n");
+    }
+  }
 
   // Get min size over all neighborhoods.
   size_t min_neighbor_count = (size_t)-1;  // Set to max possible value.
@@ -241,6 +249,9 @@ std::string neighborhoods_to_csv(std::vector<Neighborhood> neigh, size_t neigh_w
         }
       }
     }
+    if(! input_pvd_file.empty()) {  // Write header for the label, i.e., the per-vertex descritptor data for this vertex.
+      is << " label";
+    }
     is << "\n"; // terminate header line.
   }
 
@@ -249,17 +260,24 @@ std::string neighborhoods_to_csv(std::vector<Neighborhood> neigh, size_t neigh_w
   if(do_report) {
     float min_neigh_dist = std::numeric_limits<float>::max();
     float max_neigh_dist = 0.0;
+    float dist_sum = 0.0;
+    size_t num_dists_considered = 0;
     for(size_t i=0; i < neigh.size(); i++) {
       for(size_t j=0; j < neigh_write_size; j++) {  // Write the neighbor distances.
-        if(neigh[i].distances[j] < min_neigh_dist) {
-          min_neigh_dist = neigh[i].distances[j];
-        }
-        if(neigh[i].distances[j] > max_neigh_dist) {
-          max_neigh_dist = neigh[i].distances[j];
+        if(j < neigh[i].size()) {
+          num_dists_considered++;
+          dist_sum += neigh[i].distances[j];
+          if(neigh[i].distances[j] < min_neigh_dist) {
+            min_neigh_dist = neigh[i].distances[j];
+          }
+          if(neigh[i].distances[j] > max_neigh_dist) {
+            max_neigh_dist = neigh[i].distances[j];
+          }
         }
       }
     }
-    std::cout << std::string(APPTAG) << "For exported neighborhoods, the minimal distance is " << min_neigh_dist << " and the maximal one is " << max_neigh_dist << ".\n";
+    float mean_neigh_dist = dist_sum / (float)num_dists_considered;
+    std::cout << std::string(APPTAG) << "For exported neighborhoods (" << neigh_write_size << " entries max), the minimal distance is " << min_neigh_dist << ", mean is " << mean_neigh_dist << ", and max is " << max_neigh_dist << ".\n";
   }
 
   // Now for the data: coordinates, distances, and normals
@@ -289,6 +307,9 @@ std::string neighborhoods_to_csv(std::vector<Neighborhood> neigh, size_t neigh_w
           is << " NA NA NA";
         }
       }
+    }
+    if(! input_pvd_file.empty()) {
+      is << " " << pvd[i];  // Write descriptor value.
     }
     is << "\n";  // End CSV line.
   }

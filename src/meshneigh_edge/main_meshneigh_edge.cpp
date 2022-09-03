@@ -31,7 +31,7 @@
 /// @param input_mesh_file input mesh file path
 /// @param k The 'k' for computing the k-ring neighborhood. Use 1 for direct edge neighbors.
 /// @param with_neigh whether to also write data based on unified Neighborhood format (supported for geodesic and Euclidean distances).
-void mesh_neigh_edge(const std::string& input_mesh_file, const size_t k = 1, const std::string& output_dist_file="edge_distances", const bool include_self=true, const bool write_json=false, const bool write_csv=false, const bool write_vvbin=true, const bool with_neigh=false) {
+void mesh_neigh_edge(const std::string& input_mesh_file, const size_t k = 1, const std::string& output_dist_file="edge_distances", const bool include_self=true, const bool write_json=false, const bool write_csv=false, const bool write_vvbin=true, const bool with_neigh=false, const std::string& input_pvd_file="") {
 
     debug_print(CPP_GEOD_DEBUG_LVL_VERBOSE, "Reading mesh '" + input_mesh_file + "' to compute graph " + std::to_string(k) + "-ring edge neighborhoods...");
     if(include_self) {
@@ -101,7 +101,7 @@ void mesh_neigh_edge(const std::string& input_mesh_file, const size_t k = 1, con
         }
         if(with_neigh) {
             std::string output_neigh_file_csv = output_neigh_file + ".csv";
-            strtofile(neighborhoods_to_csv(nh), output_neigh_file_csv);
+            strtofile(neighborhoods_to_csv(nh, 0, false, true, true, input_pvd_file), output_neigh_file_csv);
             debug_print(CPP_GEOD_DEBUG_LVL_INFO, "Neighborhood information based on Euclidean distance written to CSV file '" + output_neigh_file_csv + "'.");
         }
     }
@@ -117,8 +117,9 @@ int main(int argc, char** argv) {
     bool vvbin = true;
     bool with_neigh = false;
     size_t k = 1;
+    std::string input_pvd_file = "";
 
-    if(argc < 2 || argc > 9) {
+    if(argc < 2 || argc > 10) {
         std::cout << "===" << argv[0] << " -- Compute edge neighborhoods for mesh vertices. ===\n";
         std::cout << "Usage: " << argv[0] << " <input_mesh> [<k> [<output_file] [<include_self> [<json>] [<csv>] [<vv>]]]]>\n";
         std::cout << "   <input_mesh>    : str, a mesh file in a format supported by libfs, e.g., FreeSurfer, PLY, OBJ, OFF.\n";
@@ -129,6 +130,7 @@ int main(int argc, char** argv) {
         std::cout << "   <csv>           : bool, whether to write CSV output, must be 'true' or 'false'. Default: 'false'.\n";
         std::cout << "   <vv>            : bool, whether to write VV output, must be 'true' or 'false'. Default: 'true'.\n";
         std::cout << "   <with_neigh>    : bool, whether to also write unified Neighborhood format files, must be 'true' or 'false'. Default: 'false'.\n";
+        std::cout << "   <input_pvd>     : str, a per-vertex value file in a format supported by libfs, e.g., FreeSurfer curv or MGH format. Optional, only used for CSV export.\n";
         exit(1);
     }
     input_mesh_file = argv[1];
@@ -191,10 +193,14 @@ int main(int argc, char** argv) {
             throw std::runtime_error("Argument 'with_neigh' must be 'true' or 'false'.\n");
         }
     }
+    if(argc >= 10) {
+        input_pvd_file = argv[9];
+    }
 
-    std::cout << std::string(APPTAG) << "base settings: input_mesh_file=" << input_mesh_file << ", k=" << k << ", output_dist_file=" << output_dist_file << ", include_self=" << include_self << "\n";
-    std::cout << std::string(APPTAG) << "output settings: json=" << json << ", csv=" << csv << ", vvbin=" << vvbin << ", with_neigh=" << with_neigh << "\n";
 
-    mesh_neigh_edge(input_mesh_file, k, output_dist_file, include_self, json, csv, vvbin, with_neigh);
+    std::cout << std::string(APPTAG) << "base settings: input_mesh_file=" << input_mesh_file << ", input_pvd_file=" << input_pvd_file << ", k=" << k << "" << ", include_self=" << include_self << "\n";
+    std::cout << std::string(APPTAG) << "output settings: json=" << json << ", csv=" << csv << ", vvbin=" << vvbin << ", with_neigh=" << with_neigh << ", output_dist_file=" << output_dist_file << "\n";
+
+    mesh_neigh_edge(input_mesh_file, k, output_dist_file, include_self, json, csv, vvbin, with_neigh, input_pvd_file);
     exit(0);
 }
