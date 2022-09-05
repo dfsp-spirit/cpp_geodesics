@@ -14,6 +14,12 @@
 #include <iterator>
 #include <numeric>
 #include <cassert>
+#include <limits>
+
+
+#ifndef APPTAG
+#define APPTAG "[cpp_geod] "
+#endif
 
 
 
@@ -52,9 +58,8 @@ class Neighborhood {
 /// @param mesh: the mesh, used to get the vertex coordinates from the vertex indices in geod_neighbors.
 /// @return vector of `n` Neighborhood instances
 std::vector<Neighborhood> neighborhoods_from_geod_neighbors(const std::vector<std::vector<GeodNeighbor> > geod_neighbors, MyMesh &mesh) {
-  std::cout << ">>> neighborhoods_from_geod_neighbors called.\n";
   size_t num_neighborhoods = geod_neighbors.size();
-  std::cout << "Computing neighborhoods for " << num_neighborhoods << " vertices and their geodesic neighbors." << "\n";
+  std::cout << std::string(APPTAG) << "Computing neighborhoods for " << num_neighborhoods << " vertices and their geodesic neighbors." << "\n";
   std::vector<Neighborhood> neighborhoods;
   size_t neigh_size;
   std::vector<std::vector<float>> neigh_coords;
@@ -76,7 +81,7 @@ std::vector<Neighborhood> neighborhoods_from_geod_neighbors(const std::vector<st
     neigh_coords = std::vector<std::vector<float> >(neigh_size, std::vector<float> (3, 0.0));
     neigh_normals = std::vector<std::vector<float> >(neigh_size, std::vector<float> (3, 0.0));
     for(size_t j = 0; j < neigh_size; j++) {
-      std::cout << ">>> Handling neighborhood #" << i << " of " << num_neighborhoods << " with size " << neigh_size << "\n";
+      //std::cout << ">>> Handling neighborhood #" << i << " of " << num_neighborhoods << " with size " << neigh_size << "\n";
       neigh_mesh_idx = geod_neighbors[i][j].index; // absolute index (in full mesh vertex vector)
       neigh_indices[j] = neigh_mesh_idx;
       neigh_distances[j] = geod_neighbors[i][j].distance;  // This is the geodesic distance in this case!
@@ -88,7 +93,7 @@ std::vector<Neighborhood> neighborhoods_from_geod_neighbors(const std::vector<st
         neigh_coords[j][k] -= source_vert_coords[k];
       }
     }
-    neighborhoods.push_back(Neighborhood(i, neigh_coords, neigh_distances));
+    neighborhoods.push_back(Neighborhood(i, neigh_coords, neigh_distances, neigh_normals));
   }
   return neighborhoods;
 }
@@ -96,11 +101,11 @@ std::vector<Neighborhood> neighborhoods_from_geod_neighbors(const std::vector<st
 /// @brief Computes neighborhoods where the distance is the geodesic distance.
 /// @details The distances in the return value are Euclidean distances.
 std::vector<Neighborhood> neighborhoods_from_edge_neighbors(const std::vector<std::vector<int> > edge_neighbors, MyMesh &mesh) {
-  //std::cout << ">>> neighborhoods_from_edge_neighbors called.\n";
   size_t num_neighborhoods = edge_neighbors.size();
   std::vector<Neighborhood> neighborhoods;
   size_t neigh_size, neigh_mesh_idx;
   std::vector<std::vector<float>> neigh_coords;
+  std::vector<std::vector<float>> neigh_normals;
   std::vector<float> neigh_distances;
   std::vector<float> source_vert_coords;
   std::vector<int> neigh_indices;
@@ -116,22 +121,23 @@ std::vector<Neighborhood> neighborhoods_from_edge_neighbors(const std::vector<st
     neigh_indices = std::vector<int>(neigh_size);
     neigh_distances = std::vector<float>(neigh_size);
     neigh_coords = std::vector<std::vector<float> >(neigh_size, std::vector<float> (3, 0.0));
+    neigh_normals = std::vector<std::vector<float> >(neigh_size, std::vector<float> (3, 0.0));
     for(size_t j = 0; j < neigh_size; j++) {
       //std::cout << ">>>   Handling neighborhood #" << i << " neighbor# " << j << " of " << neigh_size << ".\n";
       neigh_mesh_idx = edge_neighbors[i][j];
       //std::cout << ">>>   abs mesh index of this neighbor is " << neigh_mesh_idx << ", mesh has " << mesh.vn << " vertices.\n";
       neigh_indices[j] = neigh_mesh_idx;
       neigh_coords[j] = std::vector<float> {m_vcoords[neigh_mesh_idx][0], m_vcoords[neigh_mesh_idx][1], m_vcoords[neigh_mesh_idx][2]};
+      neigh_normals[j] = std::vector<float> {m_vnormals[neigh_mesh_idx][0], m_vnormals[neigh_mesh_idx][1], m_vnormals[neigh_mesh_idx][2]};
       source_vert_coords = std::vector<float> {m_vcoords[central_vert_mesh_idx][0], m_vcoords[central_vert_mesh_idx][1], m_vcoords[central_vert_mesh_idx][2]};
-      //neigh_distances[j] = dist_euclid(neigh_coords[j], source_vert_coords); // This is the Euclidean distance in this case!
+      neigh_distances[j] = dist_euclid(neigh_coords[j], source_vert_coords); // This is the Euclidean distance in this case!
       // Center the coords around source vertex (make it the origin):
       for(size_t k = 0; k < 3; k++) {
         neigh_coords[j][k] -= source_vert_coords[k];
       }
     }
-    neighborhoods.push_back(Neighborhood(i, neigh_coords, neigh_distances));
+    neighborhoods.push_back(Neighborhood(i, neigh_coords, neigh_distances, neigh_normals));
   }
-  std::cout << ">>> neighborhoods_from_edge_neighbors done.\n";
   return neighborhoods;
 }
 
@@ -139,6 +145,7 @@ std::vector<Neighborhood> neighborhoods_from_edge_neighbors(const std::vector<st
 /// @brief Get JSON representation on mesh neighborhoods.
 /// TODO: This could become a static method of Neighborhood
 std::string neighborhoods_to_json(std::vector<Neighborhood> neigh) {
+  // NOT READY YET
     std::stringstream is;
     is << "{\n";
     is << "  \"neighborhoods\": {\n";
@@ -171,19 +178,35 @@ std::string neighborhoods_to_json(std::vector<Neighborhood> neigh) {
 /// @param header: whether to write a header line
 /// @param normals whether to write vertex normals
 /// @return CSV string representation of edge neighborhoods
-std::string neighborhoods_to_csv(std::vector<Neighborhood> neigh, size_t neigh_write_size = 0, bool allow_nan = false, bool header=true, bool normals = true) {
+std::string neighborhoods_to_csv(std::vector<Neighborhood> neigh, size_t neigh_write_size = 0, bool allow_nan = false, bool header=true, bool normals = true, const std::string& input_pvd_file = "") {
+
+  // Read per-vertex data (thickness, pial_lGI, or whatever), if a filename for it was given.
+  std::vector<float> pvd;
+  if(! input_pvd_file.empty()) {
+    pvd = fs::read_curv_data(input_pvd_file);
+    if(pvd.size() != neigh.size()) {
+      throw std::runtime_error("Length of per-vertex data " + std::to_string(pvd.size()) + " from file '" + input_pvd_file + "' does not match neighborhood count " + std::to_string(neigh.size()) + ".\n");
+    }
+  }
 
   // Get min size over all neighborhoods.
   size_t min_neighbor_count = (size_t)-1;  // Set to max possible value.
+  size_t max_neighbor_count = 0; // FYI, only used in the log output.
   for(size_t i=0; i < neigh.size(); i++) {
     if(neigh[i].size() < min_neighbor_count) {
       min_neighbor_count = neigh[i].size();
     }
+    if(neigh[i].size() > max_neighbor_count) {
+      max_neighbor_count = neigh[i].size();
+    }
   }
+
   if(neigh_write_size == 0) {
       neigh_write_size = min_neighbor_count;
-      std::cout << "Using auto-determined neighborhood size " << neigh_write_size << " during CSV export.\n";
+      debug_print(CPP_GEOD_DEBUG_LVL_INFO, "Using auto-determined neighborhood size " + std::to_string(neigh_write_size) + " during Neighborhood CSV export.\n");
   }
+
+  debug_print(CPP_GEOD_DEBUG_LVL_INFO, "Exporting " + std::to_string(neigh.size()) + " neighborhoods, with " + std::to_string(neigh_write_size) + " entries per neighborhood. Min neighborhood size = " + std::to_string(min_neighbor_count) + ", max = " + std::to_string(max_neighbor_count) + ".");
 
   // Pre-check if allow_nan is false, so we do not start writing something that will not be finished.
   std::vector<int> failed_neighborhoods; // These will only 'fail' if NAN values are not allowed.
@@ -197,7 +220,7 @@ std::string neighborhoods_to_csv(std::vector<Neighborhood> neigh, size_t neigh_w
       throw std::runtime_error("Failed to generate mesh neighborhood CSV representation:'" + std::to_string(failed_neighborhoods.size()) + " neighborhoods are smaller than neigh_write_size "  + std::to_string(neigh_write_size) + ", and allow_nan is false.\n");
     }
   } else {
-    std::cout << "There are " << failed_neighborhoods.size() << " neighborhoods smaller than neigh_write_size " << neigh_write_size << ", will pad with 'NA' values.";
+    std::cout << std::string(APPTAG) << "There are " << failed_neighborhoods.size() << " neighborhoods smaller than neigh_write_size " << neigh_write_size << ", will pad with 'NA' values.";
   }
 
   // Write header for coordinates, distances, and normals
@@ -226,7 +249,35 @@ std::string neighborhoods_to_csv(std::vector<Neighborhood> neigh, size_t neigh_w
         }
       }
     }
+    if(! input_pvd_file.empty()) {  // Write header for the label, i.e., the per-vertex descritptor data for this vertex.
+      is << " label";
+    }
     is << "\n"; // terminate header line.
+  }
+
+  // Report on neigh dists for user.
+  bool do_report = true;
+  if(do_report) {
+    float min_neigh_dist = std::numeric_limits<float>::max();
+    float max_neigh_dist = 0.0;
+    float dist_sum = 0.0;
+    size_t num_dists_considered = 0;
+    for(size_t i=0; i < neigh.size(); i++) {
+      for(size_t j=0; j < neigh_write_size; j++) {  // Write the neighbor distances.
+        if(j < neigh[i].size()) {
+          num_dists_considered++;
+          dist_sum += neigh[i].distances[j];
+          if(neigh[i].distances[j] < min_neigh_dist) {
+            min_neigh_dist = neigh[i].distances[j];
+          }
+          if(neigh[i].distances[j] > max_neigh_dist) {
+            max_neigh_dist = neigh[i].distances[j];
+          }
+        }
+      }
+    }
+    float mean_neigh_dist = dist_sum / (float)num_dists_considered;
+    std::cout << std::string(APPTAG) << "For exported neighborhoods (" << neigh_write_size << " entries max), the minimal distance is " << min_neigh_dist << ", mean is " << mean_neigh_dist << ", and max is " << max_neigh_dist << ".\n";
   }
 
   // Now for the data: coordinates, distances, and normals
@@ -256,6 +307,9 @@ std::string neighborhoods_to_csv(std::vector<Neighborhood> neigh, size_t neigh_w
           is << " NA NA NA";
         }
       }
+    }
+    if(! input_pvd_file.empty()) {
+      is << " " << pvd[i];  // Write descriptor value.
     }
     is << "\n";  // End CSV line.
   }
