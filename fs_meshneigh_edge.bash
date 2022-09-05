@@ -5,10 +5,12 @@
 
 subjects_dir="$SUBJECTS_DIR"
 apptag="[EDGE_DIST_BASH]"
-subjects_list="fsaverage fsaverage6"
+subjects_list="fsaverage fsaverage6" # Ignored if 'use_subjects_file=true'.
 use_subjects_file="true"  # Set to "false" or "true".
 subjects_file="${subjects_dir}/subjects.txt"
 pvd_descriptor="pial_lgi" # Set to something like "thickness", "volume", "area", or the empty string "" for none.
+run_with_gnu_parallel="true"
+gnu_parallel_num_parallel_jobs=$(nproc)
 
 ### End of Settings
 
@@ -39,11 +41,18 @@ echo "$apptag INFO: Using meshneigh_edge extra_args '$extra_args'."
 echo "$apptag INFO: Handling ${num_subjects} subjects${log_tag_from}."
 
 
-run_with_gnu_parallel="true"
-
 if [ "${run_with_gnu_parallel}" = "true" ]; then
 
-    echo "$APPTAG Running in parallel with `GNU Parallel`."
+    echo "$APPTAG Running ${gnu_parallel_num_parallel_jobs} jobs in in parallel with 'GNU Parallel'."
+    date_tag=$(date '+%Y-%m-%d_%H-%M-%S')
+    for hemi in lh rh; do
+        for surface in pial; do
+            for distance in 5; do
+                echo ${subjects_list} | tr ' ' '\n' | parallel --jobs ${gnu_parallel_num_parallel_jobs} --workdir . --joblog LOGFILE_MESHNEIGH_EDGE__PARALLEL_${hemi}_${surface}_${distance}_${date_tag}.txt \
+                ./meshneigh_edge "${subjects_dir}/"{}"/surf/${hemi}.${surface}" $distance {}"_${hemi}_${surface}_meshdist_edge_${distance}" ${extra_args} "${subjects_dir}/"{}"/surf/${hemi}.${pvd_descriptor}"
+            done
+        done
+    done
 else
     echo "$APPTAG Running sequentially."
 
