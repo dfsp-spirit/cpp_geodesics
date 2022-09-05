@@ -423,7 +423,7 @@ namespace fs {
     /// const std::string in_path = fs::util::fullpath({"/tmp", "mesh.obj"});
     /// fs::Mesh::from_obj(&surface, in_path);
     /// @endcode
-    static void from_obj(Mesh* mesh, std::ifstream* is) {
+    static void from_obj(Mesh* mesh, std::istream* is) {
       std::string line;
       int line_idx = -1;
 
@@ -518,9 +518,15 @@ namespace fs {
 
 
     /// @brief Read a brainmesh from an Object File format (OFF) stream.
+    /// @param mesh pointer to fs:Mesh instance to be filled.
+    /// @param is An open std::istream or derived class stream from which to read the data, e.g., std::ifstream or std::istringstream.
+    /// @param source_filename optional, used in error messages only. The source file name, if any.
     /// @see There exists an overloaded version that reads from a file.
     /// @throws std::domain_error if the file format is invalid.
-    static void from_off(Mesh* mesh, std::ifstream* is) {
+    static void from_off(Mesh* mesh, std::istream* is, const std::string& source_filename="") {
+
+      std::string msg_source_file_part = source_filename.empty() ? "" : "'" + source_filename + "'";
+
       std::string line;
       int line_idx = -1;
       int noncomment_line_idx = -1;
@@ -548,18 +554,18 @@ namespace fs {
               throw std::domain_error("Could not parse first header line " + std::to_string(line_idx+1) + " of OFF data, invalid format.\n");
             }
             if(!(off_header_magic == "OFF" || off_header_magic == "COFF")) {
-              throw std::domain_error("OFF magic string invalid, file not in OFF format.\n");
+              throw std::domain_error("OFF magic string invalid, file " + msg_source_file_part + " not in OFF format.\n");
             }
             //has_color = off_header_magic == "COFF";
           } else if (noncomment_line_idx == 1) {
             if (!(iss >> num_vertices >> num_faces >> num_edges)) {
-              throw std::domain_error("Could not parse element count header line " + std::to_string(line_idx+1) + " of OFF data, invalid format.\n");
+              throw std::domain_error("Could not parse element count header line " + std::to_string(line_idx+1) + " of OFF data " + msg_source_file_part + ", invalid format.\n");
             }
           } else {
 
             if(num_verts_parsed < num_vertices) {
               if (!(iss >> x >> y >> z)) {
-                throw std::domain_error("Could not parse vertex coordinate line " + std::to_string(line_idx+1) + " of OFF data, invalid format.\n");
+                throw std::domain_error("Could not parse vertex coordinate line " + std::to_string(line_idx+1) + " of OFF data " + msg_source_file_part + ", invalid format.\n");
               }
               vertices.push_back(x);
               vertices.push_back(y);
@@ -568,10 +574,10 @@ namespace fs {
             } else {
               if(num_faces_parsed < num_faces) {
                 if (!(iss >> num_verts_this_face >> v0 >> v1 >> v2)) {
-                  throw std::domain_error("Could not parse face line " + std::to_string(line_idx+1) + " of OFF data, invalid format.\n");
+                  throw std::domain_error("Could not parse face line " + std::to_string(line_idx+1) + " of OFF data " + msg_source_file_part + ", invalid format.\n");
                 }
                 if(num_verts_this_face != 3) {
-                  throw std::domain_error("At OFF line " + std::to_string(line_idx+1) + ": only triangular meshes supported.\n");
+                  throw std::domain_error("At OFF data " + msg_source_file_part + " line " + std::to_string(line_idx+1) + ": only triangular meshes supported.\n");
                 }
                 faces.push_back(v0);
                 faces.push_back(v1);
@@ -583,10 +589,10 @@ namespace fs {
         }
       }
       if(num_verts_parsed < num_vertices) {
-        throw std::domain_error("Vertex count mismatch between OFF header (" + std::to_string(num_vertices) + ") and data (" + std::to_string(num_verts_parsed) + ").\n");
+        throw std::domain_error("Vertex count mismatch between OFF data " + msg_source_file_part + " header (" + std::to_string(num_vertices) + ") and data (" + std::to_string(num_verts_parsed) + ").\n");
       }
       if(num_faces_parsed < num_faces) {
-        throw std::domain_error("Face count mismatch between OFF header  (" + std::to_string(num_faces) + ") and data (" + std::to_string(num_faces_parsed) + ").\n");
+        throw std::domain_error("Face count mismatch between OFF data " + msg_source_file_part + " header  (" + std::to_string(num_faces) + ") and data (" + std::to_string(num_faces_parsed) + ").\n");
       }
       mesh->vertices = vertices;
       mesh->faces = faces;
@@ -619,9 +625,11 @@ namespace fs {
 
 
     /// @brief Read a brainmesh from a Stanford PLY format stream.
+    /// @param mesh pointer to fs:Mesh instance to be filled.
+    /// @param is An open std::istream or derived class stream from which to read the data, e.g., std::ifstream or std::istringstream.
     /// @see There exists an overloaded version that reads from a file.
     /// @throws std::domain_error if the file format is invalid.
-    static void from_ply(Mesh* mesh, std::ifstream* is) {
+    static void from_ply(Mesh* mesh, std::istream* is) {
       std::string line;
       int line_idx = -1;
       int noncomment_line_idx = -1;
@@ -1527,7 +1535,7 @@ namespace fs {
     if(is.is_open()) {
       int magic = _fread3(is);
       if(magic != SURF_TRIS_MAGIC) {
-        throw std::domain_error("Magic did not match: expected " + std::to_string(SURF_TRIS_MAGIC) + ", found " + std::to_string(magic) + ".\n");
+        throw std::domain_error("Surf file '" + filename + "' magic code in header did not match: expected " + std::to_string(SURF_TRIS_MAGIC) + ", found " + std::to_string(magic) + ".\n");
       }
       std::string created_line = _freadstringnewline(is);
       std::string comment_line = _freadstringnewline(is);
@@ -1592,18 +1600,19 @@ namespace fs {
   /// @param curv A Curv instance to be filled.
   /// @param is An open istream from which to read the curv data.
   /// @throws domain_error if the curv file magic mismatches or the curv file header claims that the file contains more than 1 value per vertex.
-  void read_curv(Curv* curv, std::istream *is) {
+  void read_curv(Curv* curv, std::istream *is, const std::string& source_filename="") {
+    const std::string msg_source_file_part = source_filename.empty() ? "" : "'" + source_filename + "' ";
     const int CURV_MAGIC = 16777215;
     int magic = _fread3(*is);
     if(magic != CURV_MAGIC) {
-      throw std::domain_error("Magic did not match: expected " + std::to_string(CURV_MAGIC) + ", found " + std::to_string(magic) + ".\n");
+      throw std::domain_error("Curv file " + msg_source_file_part + "header magic did not match: expected " + std::to_string(CURV_MAGIC) + ", found " + std::to_string(magic) + ".\n");
     }
     curv->num_vertices = _freadt<int32_t>(*is);
     curv->num_faces =  _freadt<int32_t>(*is);
     curv->num_values_per_vertex = _freadt<int32_t>(*is);
     //std::cout << "Read file with " << num_verts << " vertices, " << num_faces << " faces and " << num_values_per_vertex << " values per vertex.\n";
     if(curv->num_values_per_vertex != 1) { // Not supported, I know no case where this is used. Please submit a PR with a demo file if you have one, and let me know where it came from.
-      throw std::domain_error("Curv file must contain exactly 1 value per vertex, found " + std::to_string(curv->num_values_per_vertex) + ".\n");
+      throw std::domain_error("Curv file " + msg_source_file_part + "must contain exactly 1 value per vertex, found " + std::to_string(curv->num_values_per_vertex) + ".\n");
     }
     std::vector<float> data;
     for(int i=0; i<curv->num_vertices; i++) {
@@ -1628,7 +1637,7 @@ namespace fs {
   void read_curv(Curv* curv, const std::string& filename) {
     std::ifstream is(filename);
     if(is.is_open()) {
-      read_curv(curv, &is);
+      read_curv(curv, &is, filename);
       is.close();
     } else {
       throw std::runtime_error("Could not open curv file '" + filename + "' for reading.\n");
@@ -2111,14 +2120,13 @@ namespace fs {
     }
   }
 
-
   /// @brief Read a FreeSurfer ASCII label from a stream.
   /// @details A label is a list of vertices (for a surface label, given by index) or voxels (for a volume label, given by the xyz coordinates) and one floating point value per vertex/voxel. Sometimes a label is only used to define a set of vertices/voxels (like a certain brain region), and the values are irrelevant (and typically left at 0.0).
   /// @param label A Label instance that should be filled.
-  /// @param is An open stream from which to read the label.
+  /// @param is An open std::istream or derived class stream from which to read the data, e.g., std::ifstream or std::istringstream.
   /// @see There exists an overload to read from a file instead.
   /// @throws std::domain_error if the label data format is incorrect
-  void read_label(Label* label, std::ifstream* is) {
+  void read_label(Label* label, std::istream* is) {
     std::string line;
     int line_idx = -1;
     size_t num_entries_header = 0;  // number of vertices/voxels according to header
