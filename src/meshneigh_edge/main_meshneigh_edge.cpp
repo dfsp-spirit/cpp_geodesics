@@ -88,7 +88,9 @@ void mesh_neigh_edge(const std::string& input_mesh_file, const size_t k = 1, con
             debug_print(CPP_GEOD_DEBUG_LVL_INFO, "Neighborhood information written to vv file '" + output_dist_file_vv + "'.");
         }
         if(with_neigh) {
-            debug_print(CPP_GEOD_DEBUG_LVL_WARN, "WARNING: Writing Neighborhood information to VV format not supported yet, skipping. Use CSV instead.");
+            std::string output_neigh_file_vv = output_neigh_file + ".vv";
+            write_vv<float>(output_neigh_file_vv, neighborhoods_to_vvbin(nh));
+            debug_print(CPP_GEOD_DEBUG_LVL_INFO, "Neighborhood information based on Euclidean distance written to vvbin file '" + output_neigh_file_vv + "'.");
         }
     }
 

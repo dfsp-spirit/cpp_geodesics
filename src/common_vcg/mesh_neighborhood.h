@@ -382,7 +382,7 @@ std::string neighborhoods_to_csv(std::vector<Neighborhood> neigh, size_t neigh_w
 }
 
 
-void neighborhoods_to_vvbin_file(std::vector<Neighborhood> neigh, size_t neigh_write_size = 0, const bool allow_nan = false, const bool normals = true, const std::string& input_pvd_file = "", const std::string& output_vvbin_file="neighborhoods.vv") {
+std::vector<std::vector<float>> neighborhoods_to_vvbin(std::vector<Neighborhood> neigh, size_t neigh_write_size = 0, const bool allow_nan = false, const bool normals = true, const std::string& input_pvd_file = "") {
   // Read per-vertex data (thickness, pial_lGI, or whatever), if a filename for it was given.
   std::vector<float> pvd;
   if(! input_pvd_file.empty()) {
@@ -441,5 +441,5 @@ void neighborhoods_to_vvbin_file(std::vector<Neighborhood> neigh, size_t neigh_w
   for(size_t i=0; i < neigh.size(); i++) {
     neigh_mat[i] = neigh[i].to_row(neigh_write_size, pvd[i], (! input_pvd_file.empty()), normals);
   }
-  write_vv<float>(output_vvbin_file, neigh_mat);
+  return neigh_mat;
 }
