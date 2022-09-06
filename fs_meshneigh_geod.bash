@@ -15,7 +15,7 @@ apptag="[GEOD_DIST]"
 include_self="true"
 json="false"
 csv="true"
-vv="false"
+vv="true"
 with_neigh="true"
 extra_args="${include_self} ${json} ${csv} ${vv} ${with_neigh}"
 
