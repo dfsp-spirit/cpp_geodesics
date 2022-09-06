@@ -58,7 +58,7 @@ void mesh_neigh_edge(const std::string& input_mesh_file, const size_t k = 1, con
 
     std::vector<Neighborhood> nh;
 
-    const bool write_dists = true;
+    const bool write_dists = false;
 
     const std::string output_neigh_file = output_dist_file + "_neigh";
     if(with_neigh) {
