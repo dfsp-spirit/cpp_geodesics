@@ -11,6 +11,7 @@ subjects_file="${subjects_dir}/subjects.txt"
 pvd_descriptor="pial_lgi" # Set to something like "thickness", "volume", "area", or the empty string "" for none.
 run_with_gnu_parallel="true"
 gnu_parallel_num_parallel_jobs=$(nproc)
+output_dir="output" # Must exist. Set to '.' for current directory. Do not leave completely empty.
 
 ### End of Settings
 
@@ -28,6 +29,15 @@ fi
 
 num_subjects=$(echo ${subjects_list} | wc -w)
 
+if [ -z "${output_dir}" ]; then
+    output_dir="."
+    echo "$APPTAG WARNING: Adjusted empty 'output_dir' setting to '${output_dir}'."
+fi
+
+if [ ! -d "${output_dir}" ]; then
+    echo "$APPTAG ERROR: Output directory '${output_dir}' does not exist or cannot be read."
+    exit 1
+fi
 
 # Positional trailing command line arguments for meshneigh_edge
 include_self="true"
@@ -49,7 +59,7 @@ if [ "${run_with_gnu_parallel}" = "true" ]; then
             for distance in 5; do
                 start_date_tag=$(date '+%Y-%m-%d_%H-%M-%S')
                 echo "$APPTAG Running in parallel for hemi '${hemi}', surface ${surface} with distance '${distance}'."
-                echo ${subjects_list} | tr ' ' '\n' | parallel --jobs ${gnu_parallel_num_parallel_jobs} --workdir . --joblog LOGFILE_MESHNEIGH_EDGE__PARALLEL_${hemi}_${surface}_${distance}_${start_date_tag}.txt ./meshneigh_edge "${subjects_dir}/"{}"/surf/${hemi}.${surface}" $distance {}"_${hemi}_${surface}_meshdist_edge_${distance}" ${extra_args} "${subjects_dir}/"{}"/surf/${hemi}.${pvd_descriptor}"
+                echo ${subjects_list} | tr ' ' '\n' | parallel --jobs ${gnu_parallel_num_parallel_jobs} --workdir . --joblog LOGFILE_MESHNEIGH_EDGE__PARALLEL_${hemi}_${surface}_${distance}_${start_date_tag}.txt ./meshneigh_edge "${subjects_dir}/"{}"/surf/${hemi}.${surface}" $distance "${output_dir}/"{}"_${hemi}_${surface}_meshdist_edge_${distance}" ${extra_args} "${subjects_dir}/"{}"/surf/${hemi}.${pvd_descriptor}"
                 end_date_tag=$(date '+%Y-%m-%d_%H-%M-%S')
                 echo "Done running in parallel for hemi '${hemi}', surface ${surface} with distance '${distance}'. Startet at '${start_date_tag}', done at '${end_date_tag}'."
             done
@@ -83,7 +93,7 @@ else
                         pvd_descriptor_file="${subjects_dir}/${subject}/surf/${hemi}.${pvd_descriptor}"
                     fi
 
-                    ./meshneigh_edge "${mesh_file}" ${distance} "${output_file}" ${extra_args} ${pvd_descriptor_file} && echo "$apptag Edge results for hemi $hemi surface $surface distance $distance written to file '${output_file}'".
+                    ./meshneigh_edge "${mesh_file}" ${distance} "${output_dir}/${output_file}" ${extra_args} ${pvd_descriptor_file} && echo "$apptag Edge results for hemi $hemi surface $surface distance $distance written to file '${output_file}'".
                 done
             done
             this_hemi_done_date_tag=$(date '+%Y-%m-%d_%H-%M-%S')
