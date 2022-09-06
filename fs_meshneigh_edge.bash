@@ -48,7 +48,7 @@ if [ "${run_with_gnu_parallel}" = "true" ]; then
         for surface in pial; do
             for distance in 5; do
                 start_date_tag=$(date '+%Y-%m-%d_%H-%M-%S')
-                echo "Running in parallel for hemi '${hemi}', surface ${surface} with distance '${distance}'"
+                echo "$APPTAG Running in parallel for hemi '${hemi}', surface ${surface} with distance '${distance}'."
                 echo ${subjects_list} | tr ' ' '\n' | parallel --jobs ${gnu_parallel_num_parallel_jobs} --workdir . --joblog LOGFILE_MESHNEIGH_EDGE__PARALLEL_${hemi}_${surface}_${distance}_${start_date_tag}.txt ./meshneigh_edge "${subjects_dir}/"{}"/surf/${hemi}.${surface}" $distance {}"_${hemi}_${surface}_meshdist_edge_${distance}" ${extra_args} "${subjects_dir}/"{}"/surf/${hemi}.${pvd_descriptor}"
                 end_date_tag=$(date '+%Y-%m-%d_%H-%M-%S')
                 echo "Done running in parallel for hemi '${hemi}', surface ${surface} with distance '${distance}'. Startet at '${start_date_tag}', done at '${end_date_tag}'."

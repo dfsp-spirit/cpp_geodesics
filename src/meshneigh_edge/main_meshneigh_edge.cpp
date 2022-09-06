@@ -134,6 +134,12 @@ int main(int argc, char** argv) {
         exit(1);
     }
     input_mesh_file = argv[1];
+
+    if(! fs::util::file_exists(input_mesh_file)) {
+        std::cerr << "Input mesh file '" << input_mesh_file << "' cannot be read. Exiting.\n";
+        exit(1);
+    }
+
     if(argc >= 3) {
         std::istringstream iss( argv[2] );
         if(!(iss >> k)) {
@@ -195,6 +201,10 @@ int main(int argc, char** argv) {
     }
     if(argc >= 10) {
         input_pvd_file = argv[9];
+        if(! fs::util::file_exists(input_pvd_file)) {
+            std::cerr << "Input per-vertex descriptor file '" << input_pvd_file << "' cannot be read. Exiting.\n";
+            exit(1);
+        }
     }
 
 
