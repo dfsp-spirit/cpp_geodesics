@@ -44,17 +44,20 @@ echo "$apptag INFO: Handling ${num_subjects} subjects${log_tag_from}."
 if [ "${run_with_gnu_parallel}" = "true" ]; then
 
     echo "$APPTAG Running ${gnu_parallel_num_parallel_jobs} jobs in in parallel with 'GNU Parallel'."
-    date_tag=$(date '+%Y-%m-%d_%H-%M-%S')
     for hemi in lh rh; do
         for surface in pial; do
             for distance in 5; do
-                echo ${subjects_list} | tr ' ' '\n' | parallel --jobs ${gnu_parallel_num_parallel_jobs} --workdir . --joblog LOGFILE_MESHNEIGH_EDGE__PARALLEL_${hemi}_${surface}_${distance}_${date_tag}.txt \
-                ./meshneigh_edge "${subjects_dir}/"{}"/surf/${hemi}.${surface}" $distance {}"_${hemi}_${surface}_meshdist_edge_${distance}" ${extra_args} "${subjects_dir}/"{}"/surf/${hemi}.${pvd_descriptor}"
+                start_date_tag=$(date '+%Y-%m-%d_%H-%M-%S')
+                echo "Running in parallel for hemi '${hemi}', surface ${surface} with distance '${distance}'"
+                echo ${subjects_list} | tr ' ' '\n' | parallel --jobs ${gnu_parallel_num_parallel_jobs} --workdir . --joblog LOGFILE_MESHNEIGH_EDGE__PARALLEL_${hemi}_${surface}_${distance}_${start_date_tag}.txt ./meshneigh_edge "${subjects_dir}/"{}"/surf/${hemi}.${surface}" $distance {}"_${hemi}_${surface}_meshdist_edge_${distance}" ${extra_args} "${subjects_dir}/"{}"/surf/${hemi}.${pvd_descriptor}"
+                end_date_tag=$(date '+%Y-%m-%d_%H-%M-%S')
+                echo "Done running in parallel for hemi '${hemi}', surface ${surface} with distance '${distance}'. Startet at '${start_date_tag}', done at '${end_date_tag}'."
             done
         done
     done
 else
-    echo "$APPTAG Running sequentially."
+    start_date_tag=$(date '+%Y-%m-%d_%H-%M-%S')
+    echo "$APPTAG Running sequentially, starting at '${start_date_tag}'."
 
     num_handled=0
     for subject in ${subjects_list}; do
@@ -64,6 +67,7 @@ else
         exit 1
         fi
         for hemi in lh rh; do
+            this_hemi_done_start_tag=$(date '+%Y-%m-%d_%H-%M-%S')
             for surface in pial; do
                 for distance in 5; do
                     echo "$apptag === Handling subject #${num_handled} of ${num_subjects} named '${subject}': hemi ${hemi} surface ${surface} at distance ${distance}... ==="
@@ -82,10 +86,14 @@ else
                     ./meshneigh_edge "${mesh_file}" ${distance} "${output_file}" ${extra_args} ${pvd_descriptor_file} && echo "$apptag Edge results for hemi $hemi surface $surface distance $distance written to file '${output_file}'".
                 done
             done
+            this_hemi_done_date_tag=$(date '+%Y-%m-%d_%H-%M-%S')
+            echo "$APPTAG Data for hemi '${hemi}' done, started at '${this_hemi_done_start_tag}', done now at '${this_hemi_done_date_tag}'."
         done
     done
+    end_date_tag=$(date '+%Y-%m-%d_%H-%M-%S')
+    echo "$APPTAG Done running sequentially, started at '${start_date_tag}', done at '${end_date_tag}'."
 fi
 
-echo "$apptag INFO: All ${num_subjects} subjects${log_tag_from} done, exiting."
+echo "$apptag INFO: All ${num_subjects} subjects${log_tag_from} done at '${end_date_tag}', exiting."
 
 
