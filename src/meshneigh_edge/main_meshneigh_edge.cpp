@@ -73,6 +73,13 @@ void mesh_neigh_edge(const std::string& input_mesh_file, const size_t k = 1, con
         nh = neighborhoods_from_edge_neighbors(neigh, m);
     }
 
+    std::vector<bool> is_cortex = std::vector<bool>(m.vn, true);
+    if(! input_ctx_file.empty()) {
+        fs::Label lab;
+        fs::read_label(&lab, input_ctx_file);
+        is_cortex = lab.vert_in_label(m.vn);
+    }
+
     // Write it to a JSON file.
     if(write_json) {
         if(write_dists) {
