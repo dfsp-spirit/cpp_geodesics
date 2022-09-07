@@ -168,7 +168,7 @@ std::vector<Neighborhood> neighborhoods_from_geod_neighbors(const std::vector<st
 /// @param mesh VCGLIB mesh instance
 /// @param keep_verts vector with same length as edge_neighbors, whether to keep a certain vertex (neighborhood around this vertex). If left at default or empty vector is passed instead, all vertices will be kept (no filtering happens). Note that vertices ignored as centers of neighborhoods may still show up as part of a neighborhood of another source vertex.
 /// @details The distances in the return value are Euclidean distances.
-std::vector<Neighborhood> neighborhoods_from_edge_neighbors(const std::vector<std::vector<int> > edge_neighbors, MyMesh &mesh, const std::vector<bool> keep_verts = std::vector<bool>()) {
+std::vector<Neighborhood> neighborhoods_from_edge_neighbors(const std::vector<std::vector<int> > edge_neighbors, MyMesh &mesh, std::vector<bool> keep_verts = std::vector<bool>()) {
 
   size_t num_neighborhoods = edge_neighbors.size();
 
