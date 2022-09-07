@@ -30,8 +30,16 @@
 /// @brief Compute edge neighborhood (or graph k ring) for the mesh.
 /// @param input_mesh_file input mesh file path
 /// @param k The 'k' for computing the k-ring neighborhood. Use 1 for direct edge neighbors.
+/// @param output_dist_file base name for distance output. will get file extension added.
+/// @param include_self bool, whether to include central vertex itself in neighborhood
 /// @param with_neigh whether to also write data based on unified Neighborhood format (supported for geodesic and Euclidean distances).
-void mesh_neigh_edge(const std::string& input_mesh_file, const size_t k = 1, const std::string& output_dist_file="edge_distances", const bool include_self=true, const bool write_json=false, const bool write_csv=false, const bool write_vvbin=true, const bool with_neigh=false, const std::string& input_pvd_file="") {
+/// @param write_json bool, whether to export in JSON format. not recommended, too bloated.
+/// @param write_csv bool, whether to export in CSV format. recommended, large but standard for ML.
+/// @param write_vvbin bool, whether to export in custom, binary vvbin format. small but non-standard. easy and quick to parse, but you may need to write loader if reading with another programming language.
+/// @param with_neigh bool, whether to write Neighborhood information (as opposed to only distances). Highly recommended.
+/// @param input_pvd_file str, path to per-vertex data (like pial lgi, thickness) file for mesh.
+/// @param input_ctx_file str, path to cortex label file for mesh to identify cortex versus medial wall vertices and remove the latter.
+void mesh_neigh_edge(const std::string& input_mesh_file, const size_t k = 1, const std::string& output_dist_file="edge_distances", const bool include_self=true, const bool write_json=false, const bool write_csv=false, const bool write_vvbin=true, const bool with_neigh=false, const std::string& input_pvd_file="", const std::string& input_ctx_file="") {
 
     debug_print(CPP_GEOD_DEBUG_LVL_VERBOSE, "Reading mesh '" + input_mesh_file + "' to compute graph " + std::to_string(k) + "-ring edge neighborhoods...");
     if(include_self) {
@@ -120,8 +128,9 @@ int main(int argc, char** argv) {
     bool with_neigh = false;
     size_t k = 1;
     std::string input_pvd_file = "";
+    std::string input_ctx_file = "";
 
-    if(argc < 2 || argc > 10) {
+    if(argc < 2 || argc > 11) {
         std::cout << "===" << argv[0] << " -- Compute edge neighborhoods for mesh vertices. ===\n";
         std::cout << "Usage: " << argv[0] << " <input_mesh> [<k> [<output_file] [<include_self> [<json>] [<csv>] [<vv>]]]]>\n";
         std::cout << "   <input_mesh>    : str, a mesh file in a format supported by libfs, e.g., FreeSurfer, PLY, OBJ, OFF.\n";
@@ -132,7 +141,8 @@ int main(int argc, char** argv) {
         std::cout << "   <csv>           : bool, whether to write CSV output, must be 'true' or 'false'. Default: 'false'.\n";
         std::cout << "   <vv>            : bool, whether to write VV output, must be 'true' or 'false'. Default: 'true'.\n";
         std::cout << "   <with_neigh>    : bool, whether to also write unified Neighborhood format files, must be 'true' or 'false'. Default: 'false'.\n";
-        std::cout << "   <input_pvd>     : str, a per-vertex value file in a format supported by libfs, e.g., FreeSurfer curv or MGH format. Optional, only used for CSV export.\n";
+        std::cout << "   <input_pvd>     : str, a per-vertex value file in a format supported by libfs, e.g., FreeSurfer curv or MGH format. Optional, only used for CSV/vv export.\n";
+        std::cout << "   <input_ctx>     : str, a file containing label for the cortex versus non-cortex, e.g., typically 'surf/?h.cortex.label'. Optional, used to filter exported vertices.\n";
         exit(1);
     }
     input_mesh_file = argv[1];
@@ -208,11 +218,18 @@ int main(int argc, char** argv) {
             exit(1);
         }
     }
+    if(argc >= 11) {
+        input_ctx_file = argv[9];
+        if(! fs::util::file_exists(input_ctx_file)) {
+            std::cerr << "Input cortex label file '" << input_ctx_file << "' cannot be read. Exiting.\n";
+            exit(1);
+        }
+    }
 
 
-    std::cout << std::string(APPTAG) << "base settings: input_mesh_file=" << input_mesh_file << ", input_pvd_file=" << input_pvd_file << ", k=" << k << "" << ", include_self=" << include_self << "\n";
+    std::cout << std::string(APPTAG) << "base settings: input_mesh_file=" << input_mesh_file << ", input_pvd_file=" << input_pvd_file << ", input_ctx_file=" << input_ctx_file << ", k=" << k << "" << ", include_self=" << include_self << "\n";
     std::cout << std::string(APPTAG) << "output settings: json=" << json << ", csv=" << csv << ", vvbin=" << vvbin << ", with_neigh=" << with_neigh << ", output_dist_file=" << output_dist_file << "\n";
 
-    mesh_neigh_edge(input_mesh_file, k, output_dist_file, include_self, json, csv, vvbin, with_neigh, input_pvd_file);
+    mesh_neigh_edge(input_mesh_file, k, output_dist_file, include_self, json, csv, vvbin, with_neigh, input_pvd_file, input_ctx_file);
     exit(0);
 }
