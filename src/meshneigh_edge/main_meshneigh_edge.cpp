@@ -7,6 +7,7 @@
 #define CPP_GEOD_DEBUG_LEVEL 4
 #include "cppgeod_settings.h"
 
+#define LIBFS_DBG_WARNING   // Setup debug level for libfs.
 #include "libfs.h"
 #include "typedef_vcg.h"
 #include "fs_mesh_to_vcg.h"
@@ -70,15 +71,20 @@ void mesh_neigh_edge(const std::string& input_mesh_file, const size_t k = 1, con
 
     const std::string output_neigh_file = output_dist_file + "_neigh";
     if(with_neigh) {
-        nh = neighborhoods_from_edge_neighbors(neigh, m);
+        std::vector<bool> is_cortex = std::vector<bool>(m.vn, true); // filter nothing by default.
+        if(! input_ctx_file.empty()) {
+            debug_print(CPP_GEOD_DEBUG_LVL_INFO, "Reading cortex label file '" + input_ctx_file + "' and filtering Neighborhoods to keep only those in cortex.");
+            fs::Label lab;
+            fs::read_label(&lab, input_ctx_file);
+            is_cortex = lab.vert_in_label(m.vn);
+            assert(is_cortex.size() == m.vn);
+            debug_print(CPP_GEOD_DEBUG_LVL_INFO, "Read cortex label file '" + input_ctx_file + "'. Keeping " + lab.num_entries() + " of " + m.vn " vertices. Filtered out " + (m.vn - lab.num_entries()) + " vertices.\n");
+        }
+
+        nh = neighborhoods_from_edge_neighbors(neigh, m, is_cortex);
     }
 
-    std::vector<bool> is_cortex = std::vector<bool>(m.vn, true);
-    if(! input_ctx_file.empty()) {
-        fs::Label lab;
-        fs::read_label(&lab, input_ctx_file);
-        is_cortex = lab.vert_in_label(m.vn);
-    }
+
 
     // Write it to a JSON file.
     if(write_json) {

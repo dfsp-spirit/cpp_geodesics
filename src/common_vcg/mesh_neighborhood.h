@@ -164,9 +164,19 @@ std::vector<Neighborhood> neighborhoods_from_geod_neighbors(const std::vector<st
 }
 
 /// @brief Computes neighborhoods where the distance is the geodesic distance.
+/// @param edge_neighbors compute edge neighbors, see
+/// @param mesh VCGLIB mesh instance
+/// @param keep_verts vector with same length as edge_neighbors, whether to keep a certain vertex (neighborhood around this vertex). If left at default or empty vector is passed instead, all vertices will be kept (no filtering happens).
 /// @details The distances in the return value are Euclidean distances.
-std::vector<Neighborhood> neighborhoods_from_edge_neighbors(const std::vector<std::vector<int> > edge_neighbors, MyMesh &mesh) {
+std::vector<Neighborhood> neighborhoods_from_edge_neighbors(const std::vector<std::vector<int> > edge_neighbors, MyMesh &mesh, const std::vector<bool> keep_verts = std::vector<bool>()) {
+
   size_t num_neighborhoods = edge_neighbors.size();
+
+  if(keep_verts.empty()) {
+    keep_verts = std::vector<bool>(num_neighborhoods, true);
+  }
+  assert(keep_verts.size() == num_neighborhoods); // Can fail if keep_verts was passed non-empty.
+
   std::vector<Neighborhood> neighborhoods;
   size_t neigh_size, neigh_mesh_idx;
   std::vector<std::vector<float>> neigh_coords;
@@ -180,6 +190,9 @@ std::vector<Neighborhood> neighborhoods_from_edge_neighbors(const std::vector<st
 
   size_t central_vert_mesh_idx;
   for(size_t i = 0; i < num_neighborhoods; i++) {
+    if(! keep_verts[i]) {
+      continue;
+    }
     central_vert_mesh_idx = i;
     neigh_size = edge_neighbors[i].size();
     //std::cout << ">>> Handling neighborhood #" << i << " of " << num_neighborhoods << " with size " << neigh_size << "\n";
