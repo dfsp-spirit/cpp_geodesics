@@ -232,7 +232,7 @@ int main(int argc, char** argv) {
         }
     }
     if(argc >= 11) {
-        input_ctx_file = argv[9];
+        input_ctx_file = argv[10];
         if(! fs::util::file_exists(input_ctx_file)) {
             std::cerr << "Input cortex label file '" << input_ctx_file << "' cannot be read. Exiting.\n";
             exit(1);
