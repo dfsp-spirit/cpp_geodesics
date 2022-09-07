@@ -262,9 +262,6 @@ std::string neighborhoods_to_csv(std::vector<Neighborhood> neigh, size_t neigh_w
   std::vector<float> pvd;
   if(! input_pvd_file.empty()) {
     pvd = fs::read_curv_data(input_pvd_file);
-    if(pvd.size() != neigh.size()) {
-      throw std::runtime_error("Length of per-vertex data " + std::to_string(pvd.size()) + " from file '" + input_pvd_file + "' does not match neighborhood count " + std::to_string(neigh.size()) + ".\n");
-    }
   }
 
   // Get min size over all neighborhoods.
@@ -281,7 +278,7 @@ std::string neighborhoods_to_csv(std::vector<Neighborhood> neigh, size_t neigh_w
 
   if(neigh_write_size == 0) {
       neigh_write_size = min_neighbor_count;
-      debug_print(CPP_GEOD_DEBUG_LVL_INFO, "Using auto-determined neighborhood size " + std::to_string(neigh_write_size) + " during Neighborhood CSV export.\n");
+      debug_print(CPP_GEOD_DEBUG_LVL_IMPORTANT, "Using auto-determined neighborhood size " + std::to_string(neigh_write_size) + " during Neighborhood CSV export.");
   }
 
   debug_print(CPP_GEOD_DEBUG_LVL_INFO, "Exporting " + std::to_string(neigh.size()) + " neighborhoods, with " + std::to_string(neigh_write_size) + " entries per neighborhood. Min neighborhood size = " + std::to_string(min_neighbor_count) + ", max = " + std::to_string(max_neighbor_count) + ".");
@@ -387,7 +384,7 @@ std::string neighborhoods_to_csv(std::vector<Neighborhood> neigh, size_t neigh_w
       }
     }
     if(! input_pvd_file.empty()) {
-      is << " " << pvd[i];  // Write descriptor value.
+      is << " " << pvd[neigh[i].index];  // Write descriptor value.
     }
     is << "\n";  // End CSV line.
   }
@@ -400,9 +397,6 @@ std::vector<std::vector<float>> neighborhoods_to_vvbin(std::vector<Neighborhood>
   std::vector<float> pvd;
   if(! input_pvd_file.empty()) {
     pvd = fs::read_curv_data(input_pvd_file);
-    if(pvd.size() != neigh.size()) {
-      throw std::runtime_error("Length of per-vertex data " + std::to_string(pvd.size()) + " from file '" + input_pvd_file + "' does not match neighborhood count " + std::to_string(neigh.size()) + ".\n");
-    }
   } else {
     pvd = std::vector<float>(neigh.size(), 0.0); // fill with zeros
   }
@@ -452,7 +446,7 @@ std::vector<std::vector<float>> neighborhoods_to_vvbin(std::vector<Neighborhood>
 
   std::vector<std::vector<float>> neigh_mat = std::vector<std::vector<float> >(neigh.size(), std::vector<float> (row_length));
   for(size_t i=0; i < neigh.size(); i++) {
-    neigh_mat[i] = neigh[i].to_row(neigh_write_size, pvd[i], (! input_pvd_file.empty()), normals);
+    neigh_mat[i] = neigh[i].to_row(neigh_write_size, pvd[neigh[i].index], (! input_pvd_file.empty()), normals);
   }
   return neigh_mat;
 }

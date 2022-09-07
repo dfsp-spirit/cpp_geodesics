@@ -4,7 +4,7 @@
 // The neighborhood is defined by edge distance in the mesh (aka graph distance).
 
 #define APPTAG "[cpp_edge] "
-#define CPP_GEOD_DEBUG_LEVEL 4
+#define CPP_GEOD_DEBUG_LEVEL 5 // 2=warn, 3=important, 4=log, 5=info, 6=verbose
 #include "cppgeod_settings.h"
 
 #define LIBFS_DBG_WARNING   // Setup debug level for libfs.
@@ -40,7 +40,8 @@
 /// @param with_neigh bool, whether to write Neighborhood information (as opposed to only distances). Highly recommended.
 /// @param input_pvd_file str, path to per-vertex data (like pial lgi, thickness) file for mesh.
 /// @param input_ctx_file str, path to cortex label file for mesh to identify cortex versus medial wall vertices and remove the latter.
-void mesh_neigh_edge(const std::string& input_mesh_file, const size_t k = 1, const std::string& output_dist_file="edge_distances", const bool include_self=true, const bool write_json=false, const bool write_csv=false, const bool write_vvbin=true, const bool with_neigh=false, const std::string& input_pvd_file="", const std::string& input_ctx_file="") {
+/// @param neigh_write_size int, number of vertices to export per neighborhood, even if more are part of it. used to force CSV rows to a fixed length over several meshes for machine learning input.
+void mesh_neigh_edge(const std::string& input_mesh_file, const size_t k = 1, const std::string& output_dist_file="edge_distances", const bool include_self=true, const bool write_json=false, const bool write_csv=false, const bool write_vvbin=true, const bool with_neigh=false, const std::string& input_pvd_file="", const std::string& input_ctx_file="", const size_t neigh_write_size = 0) {
 
     debug_print(CPP_GEOD_DEBUG_LVL_VERBOSE, "Reading mesh '" + input_mesh_file + "' to compute graph " + std::to_string(k) + "-ring edge neighborhoods...");
     if(include_self) {
@@ -110,7 +111,7 @@ void mesh_neigh_edge(const std::string& input_mesh_file, const size_t k = 1, con
         }
         if(with_neigh) {
             std::string output_neigh_file_vv = output_neigh_file + ".vv";
-            write_vv<float>(output_neigh_file_vv, neighborhoods_to_vvbin(nh));
+            write_vv<float>(output_neigh_file_vv, neighborhoods_to_vvbin(nh, neigh_write_size, neigh_write_size!=0, true, input_pvd_file));
             debug_print(CPP_GEOD_DEBUG_LVL_INFO, "Neighborhood information based on Euclidean distance written to vvbin file '" + output_neigh_file_vv + "'.");
         }
     }
@@ -124,7 +125,7 @@ void mesh_neigh_edge(const std::string& input_mesh_file, const size_t k = 1, con
         }
         if(with_neigh) {
             std::string output_neigh_file_csv = output_neigh_file + ".csv";
-            strtofile(neighborhoods_to_csv(nh, 0, false, true, true, input_pvd_file), output_neigh_file_csv);
+            strtofile(neighborhoods_to_csv(nh, neigh_write_size, neigh_write_size!=0, true, true, input_pvd_file), output_neigh_file_csv);
             debug_print(CPP_GEOD_DEBUG_LVL_INFO, "Neighborhood information based on Euclidean distance written to CSV file '" + output_neigh_file_csv + "'.");
         }
     }
@@ -142,20 +143,22 @@ int main(int argc, char** argv) {
     size_t k = 1;
     std::string input_pvd_file = "";
     std::string input_ctx_file = "";
+    size_t neigh_write_size = 0;
 
-    if(argc < 2 || argc > 11) {
+    if(argc < 2 || argc > 12) {
         std::cout << "===" << argv[0] << " -- Compute edge neighborhoods for mesh vertices. ===\n";
         std::cout << "Usage: " << argv[0] << " <input_mesh> [<k> [<output_file] [<include_self> [<json>] [<csv>] [<vv>]]]]>\n";
-        std::cout << "   <input_mesh>    : str, a mesh file in a format supported by libfs, e.g., FreeSurfer, PLY, OBJ, OFF.\n";
-        std::cout << "   <k>             : int, the k for the k-ring neighborhood computation. Defaults to 1.\n";
-        std::cout << "   <output_file>   : str, file name for the output file (suffix gets added, will be overwritten if existing). Default: edge_distances.\n";
-        std::cout << "   <include_self>  : bool, whether to include vertex itself in neighborhood, must be 'true' or 'false'. Default: 'true'.\n";
-        std::cout << "   <json>          : bool, whether to write JSON output, must be 'true' or 'false'. Default: 'false'.\n";
-        std::cout << "   <csv>           : bool, whether to write CSV output, must be 'true' or 'false'. Default: 'false'.\n";
-        std::cout << "   <vv>            : bool, whether to write VV output, must be 'true' or 'false'. Default: 'true'.\n";
-        std::cout << "   <with_neigh>    : bool, whether to also write unified Neighborhood format files, must be 'true' or 'false'. Default: 'false'.\n";
-        std::cout << "   <input_pvd>     : str, a per-vertex value file in a format supported by libfs, e.g., FreeSurfer curv or MGH format. Optional, only used for CSV/vv export.\n";
-        std::cout << "   <input_ctx>     : str, a file containing label for the cortex versus non-cortex, e.g., typically 'surf/?h.cortex.label'. Optional, used to filter exported vertices.\n";
+        std::cout << "  <input_mesh>       : str, a mesh file in a format supported by libfs, e.g., FreeSurfer, PLY, OBJ, OFF.\n";
+        std::cout << "  <k>                : int, the k for the k-ring neighborhood computation. Defaults to 1.\n";
+        std::cout << "  <output_file>      : str, file name for the output file (suffix gets added, will be overwritten if existing). Default: edge_distances.\n";
+        std::cout << "  <include_self>     : bool, whether to include vertex itself in neighborhood, must be 'true' or 'false'. Default: 'true'.\n";
+        std::cout << "  <json>             : bool, whether to write JSON output, must be 'true' or 'false'. Default: 'false'.\n";
+        std::cout << "  <csv>              : bool, whether to write CSV output, must be 'true' or 'false'. Default: 'false'.\n";
+        std::cout << "  <vv>               : bool, whether to write VV output, must be 'true' or 'false'. Default: 'true'.\n";
+        std::cout << "  <with_neigh>       : bool, whether to also write unified Neighborhood format files, must be 'true' or 'false'. Default: 'false'.\n";
+        std::cout << "  <input_pvd>        : str, a per-vertex value file in a format supported by libfs, e.g., FreeSurfer curv or MGH format. Optional, only used for CSV/vv export.\n";
+        std::cout << "  <input_ctx>        : str, a file containing label for the cortex versus non-cortex, e.g., typically 'surf/?h.cortex.label'. Optional, used to filter exported vertices.\n";
+        std::cout << "  <neigh_write_size> : int, number of verts to export in CSV per neighborhood. Set to 0 for auto-determin from data (of a single mesh).\n";
         exit(1);
     }
     input_mesh_file = argv[1];
@@ -227,22 +230,30 @@ int main(int argc, char** argv) {
     if(argc >= 10) {
         input_pvd_file = argv[9];
         if(! fs::util::file_exists(input_pvd_file)) {
-            std::cerr << "Input per-vertex descriptor file '" << input_pvd_file << "' cannot be read. Exiting.\n";
+            std::cerr << std::string(APPTAG) << "Input per-vertex descriptor file '" << input_pvd_file << "' cannot be read. Exiting.\n";
             exit(1);
         }
     }
     if(argc >= 11) {
         input_ctx_file = argv[10];
         if(! fs::util::file_exists(input_ctx_file)) {
-            std::cerr << "Input cortex label file '" << input_ctx_file << "' cannot be read. Exiting.\n";
+            std::cerr << std::string(APPTAG)  << "Input cortex label file '" << input_ctx_file << "' cannot be read. Exiting.\n";
             exit(1);
+        }
+    }
+    if(argc >= 12) {
+        std::istringstream iss( argv[11] );
+        if(!(iss >> neigh_write_size)) {
+            throw std::runtime_error("Could not convert argument neigh_write_size to positive integer or zero.\n");
         }
     }
 
 
-    std::cout << std::string(APPTAG) << "base settings: input_mesh_file=" << input_mesh_file << ", input_pvd_file=" << input_pvd_file << ", input_ctx_file=" << input_ctx_file << ", k=" << k << "" << ", include_self=" << include_self << "\n";
+
+    std::cout << std::string(APPTAG) << "base settings: k=" << k << "" << ", include_self=" << include_self << ", neigh_write_size=" << neigh_write_size << "\n";
+    std::cout << std::string(APPTAG) << "input settings: input_mesh_file=" << input_mesh_file << ", input_pvd_file=" << input_pvd_file << ", input_ctx_file=" << input_ctx_file << "\n";
     std::cout << std::string(APPTAG) << "output settings: json=" << json << ", csv=" << csv << ", vvbin=" << vvbin << ", with_neigh=" << with_neigh << ", output_dist_file=" << output_dist_file << "\n";
 
-    mesh_neigh_edge(input_mesh_file, k, output_dist_file, include_self, json, csv, vvbin, with_neigh, input_pvd_file, input_ctx_file);
+    mesh_neigh_edge(input_mesh_file, k, output_dist_file, include_self, json, csv, vvbin, with_neigh, input_pvd_file, input_ctx_file, neigh_write_size);
     exit(0);
 }

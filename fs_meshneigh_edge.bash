@@ -21,6 +21,7 @@ csv="true"
 vv="false"
 with_neigh="true"
 extra_args="${include_self} ${json} ${csv} ${vv} ${with_neigh}"
+neigh_write_size=50
 
 ### End of Settings
 
@@ -67,7 +68,7 @@ if [ "${run_with_gnu_parallel}" = "true" ]; then
             for distance in 5; do
                 start_date_tag=$(date '+%Y-%m-%d_%H-%M-%S')
                 echo "$apptag Running in parallel for hemi '${hemi}', surface ${surface} with distance '${distance}'."
-                echo ${subjects_list} | tr ' ' '\n' | parallel --jobs ${gnu_parallel_num_parallel_jobs} --workdir . --joblog LOGFILE_MESHNEIGH_EDGE__PARALLEL_${hemi}_${surface}_${distance}_${start_date_tag}.txt ./meshneigh_edge "${subjects_dir}/"{}"/surf/${hemi}.${surface}" $distance "${output_dir}/"{}"_${hemi}_${surface}_meshdist_edge_${distance}" ${extra_args} "${subjects_dir}/"{}"/surf/${hemi}.${pvd_descriptor}" "${subjects_dir}/"{}"/label/${hemi}.cortex.label"
+                echo ${subjects_list} | tr ' ' '\n' | parallel --jobs ${gnu_parallel_num_parallel_jobs} --workdir . --joblog LOGFILE_MESHNEIGH_EDGE__PARALLEL_${hemi}_${surface}_${distance}_${start_date_tag}.txt ./meshneigh_edge "${subjects_dir}/"{}"/surf/${hemi}.${surface}" $distance "${output_dir}/"{}"_${hemi}_${surface}_meshdist_edge_${distance}" ${extra_args} "${subjects_dir}/"{}"/surf/${hemi}.${pvd_descriptor}" "${subjects_dir}/"{}"/label/${hemi}.cortex.label" $neigh_write_size
                 end_date_tag=$(date '+%Y-%m-%d_%H-%M-%S')
                 echo "Done running in parallel for hemi '${hemi}', surface ${surface} with distance '${distance}'. Startet at '${start_date_tag}', done at '${end_date_tag}'."
             done
@@ -103,7 +104,7 @@ else
 
                     cortex_label_file="${subjects_dir}/${subject}/label/${hemi}.cortex.label"
 
-                    ./meshneigh_edge "${mesh_file}" ${distance} "${output_dir}/${output_file}" ${extra_args} ${pvd_descriptor_file} ${cortex_label_file} && echo "$apptag Edge results for hemi $hemi surface $surface distance $distance written to file '${output_file}'".
+                    ./meshneigh_edge "${mesh_file}" ${distance} "${output_dir}/${output_file}" ${extra_args} ${pvd_descriptor_file} ${cortex_label_file} $neigh_write_size && echo "$apptag Edge results for hemi $hemi surface $surface distance $distance written to file '${output_file}'".
                 done
             done
             this_hemi_done_date_tag=$(date '+%Y-%m-%d_%H-%M-%S')
