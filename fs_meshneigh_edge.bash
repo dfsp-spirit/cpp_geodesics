@@ -101,7 +101,7 @@ else
                         pvd_descriptor_file="${subjects_dir}/${subject}/surf/${hemi}.${pvd_descriptor}"
                     fi
 
-                    cortex_label_file=="${subjects_dir}/${subject}/label/${hemi}.cortex.label"
+                    cortex_label_file="${subjects_dir}/${subject}/label/${hemi}.cortex.label"
 
                     ./meshneigh_edge "${mesh_file}" ${distance} "${output_dir}/${output_file}" ${extra_args} ${pvd_descriptor_file} ${cortex_label_file} && echo "$apptag Edge results for hemi $hemi surface $surface distance $distance written to file '${output_file}'".
                 done
