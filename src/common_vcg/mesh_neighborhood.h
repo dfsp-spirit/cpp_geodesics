@@ -166,7 +166,7 @@ std::vector<Neighborhood> neighborhoods_from_geod_neighbors(const std::vector<st
 /// @brief Computes neighborhoods where the distance is the geodesic distance.
 /// @param edge_neighbors compute edge neighbors, see
 /// @param mesh VCGLIB mesh instance
-/// @param keep_verts vector with same length as edge_neighbors, whether to keep a certain vertex (neighborhood around this vertex). If left at default or empty vector is passed instead, all vertices will be kept (no filtering happens).
+/// @param keep_verts vector with same length as edge_neighbors, whether to keep a certain vertex (neighborhood around this vertex). If left at default or empty vector is passed instead, all vertices will be kept (no filtering happens). Note that vertices ignored as centers of neighborhoods may still show up as part of a neighborhood of another source vertex.
 /// @details The distances in the return value are Euclidean distances.
 std::vector<Neighborhood> neighborhoods_from_edge_neighbors(const std::vector<std::vector<int> > edge_neighbors, MyMesh &mesh, const std::vector<bool> keep_verts = std::vector<bool>()) {
 
