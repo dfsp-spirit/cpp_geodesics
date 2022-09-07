@@ -39,14 +39,89 @@
  *
  * To see full demo programs and compilation instructions, check the <a href="https://github.com/dfsp-spirit/libfs/tree/main/examples">examples/ directory</a> in the GitHub repository linked below.
  *
+ * \subsection logging Logging with libfs
+ *
+ * You can define the output produced by libfs from your application. To do so,
+ * `#define` _one_ of the following debug levels in your application, *before* including 'libfs.h':
+ *
+ *  - `LIBFS_DBG_CRITICAL`     // print only crtical errors that will raise an expection and most likely cause application to stop (unless caught).
+ *  - `LIBFS_DBG_ERROR`        // prints errors (and more severe things).
+ *  - `LIBFS_DBG_WARNING`      // the default, prints warnings (and more severe things).
+ *  - `LIBFS_DBG_IMPORTANT`    // prints important messages that may indicate atypical behaviour.
+ *  - `LIBFS_DBG_INFO`         // prints info messages, like what is currently being done.
+ *  - `LIBFS_DBG_VERBOSE`      // prints info messages inside loops, may considerable slow down apps and litter stdout.
+ *  - `LIBFS_DBG_EXCESSIVE`    // prints info messages in nested loops, will considerable slow down apps and quickly litter stdout.
+ *
+ *
+ * Things you should know about logging and controlling libfs output:
+ *
+ *   - The debug levels are ordered in the list above, and defining a single one will automatically enable
+ * all levels of higher importance (e.g., defining `LIBFS_DBG_WARNING` also enables `LIBFS_DBG_ERROR` and `LIBFS_DBG_CRITICAL`).
+ *   - If you define nothing at all, libfs defaults to `LIBFS_DBG_WARNING`.
+ *   - If you do not want any ouput from libfs, define `LIBFS_DBG_NONE`. This is not recommended though, as it completely disabled
+ *     all output, including critical error messages. This means that your application may terminate without any message,
+ *     and is only advisable if you are very sure that you catch all possible exceptions and then produce an error message
+ *     for users in your application code.
+ *   - Currently all debug output goes to `stdout`, i.e., typically to the terminal.
+ *
  *
  * \subsection intro-website The libfs project website
  *
  * The project page for libfs can be found at https://github.com/dfsp-spirit/libfs. It contains information on all documentation available for libfs.
  *
+ *
  */
 
 
+// Set apptag (printed as prefix of debug messages) for debug messages.
+// Users can overwrite this by defining LIBFS_APPTAG before including 'libfs.h'.
+#ifndef LIBFS_APPTAG
+#define LIBFS_APPTAG "[libfs] "
+#endif
+
+// Set default.
+#define LIBFS_DBG_WARNING
+
+// If the user wants something below our default, remove our default.
+#ifdef LIBFS_DBG_NONE
+#undef LIBFS_DBG_WARNING
+#endif
+
+#ifdef LIBFS_DBG_CRITICAL
+#undef LIBFS_DBG_WARNING
+#endif
+
+#ifdef LIBFS_DBG_ERROR
+#undef LIBFS_DBG_WARNING
+#endif
+
+// Ensure that the user does not have to define all debug levels
+// up to the one they actually want, by defining all lower ones for them.
+#ifdef LIBFS_DBG_EXCESSIVE
+#define LIBFS_DBG_VERBOSE
+#endif
+
+#ifdef LIBFS_DBG_VERBOSE
+#define LIBFS_DBG_INFO
+#endif
+
+#ifdef LIBFS_DBG_INFO
+#define LIBFS_DBG_IMPORTANT
+#endif
+
+#ifdef LIBFS_DBG_IMPORTANT
+#define LIBFS_DBG_WARNING
+#endif
+
+#ifdef LIBFS_DBG_WARNING
+#define LIBFS_DBG_ERROR
+#endif
+
+#ifdef LIBFS_DBG_ERROR
+#define LIBFS_DBG_CRITICAL
+#endif
+
+// End of debug handling.
 
 namespace fs {
 
@@ -182,6 +257,9 @@ namespace fs {
     void str_to_file(const std::string& filename, const std::string rep) {
       std::ofstream ofs;
       ofs.open(filename, std::ofstream::out);
+      #ifdef LIBFS_DBG_VERBOSE
+      std::cout << LIBFS_APPTAG << "Opening file '" << filename << "' for writing.\n";
+      #endif
       if(ofs.is_open()) {
           ofs << rep;
           ofs.close();
@@ -484,9 +562,11 @@ namespace fs {
 
         }
       }
+      #ifdef LIBFS_DBG_INFO
       if(num_lines_ignored > 0) {
-        std::cerr << "Ignored " << num_lines_ignored << " lines in Wavefront OBJ format mesh file.\n";
+        std::cout << LIBFS_APPTAG << "Ignored " << num_lines_ignored << " lines in Wavefront OBJ format mesh file.\n";
       }
+      #endif
       mesh->vertices = vertices;
       mesh->faces = faces;
     }
@@ -1262,9 +1342,11 @@ namespace fs {
       std::vector<short> data = _read_mgh_data_short(&mgh_header, filename);
       mgh->data.data_mri_short = data;
     } else {
+      #ifdef LIBFS_DBG_INFO
       if(fs::util::ends_with(filename, ".mgz")) {
-        std::cout << "Note: your MGH filename ends with '.mgz'. Keep in mind that MGZ format is not supported directly. You can ignore this message if you wrapped a gz stream.\n";
+        std::cout << LIBFS_APPTAG << "Note: your MGH filename ends with '.mgz'. Keep in mind that MGZ format is not supported directly. You can ignore this message if you wrapped a gz stream.\n";
       }
+      #endif
       throw std::runtime_error("Not reading MGH data from file '" + filename + "', data type " + std::to_string(mgh->header.dtype) + " not supported yet.\n");
     }
   }
@@ -1541,7 +1623,9 @@ namespace fs {
       std::string comment_line = _freadstringnewline(is);
       int num_verts =  _freadt<int32_t>(is);
       int num_faces =  _freadt<int32_t>(is);
-      //std::cout << "Read surface file with " << num_verts << " vertices, " << num_faces << " faces.\n";
+      #ifdef LIBFS_DBG_INFO
+      std::cout << LIBFS_APPTAG << "Read surface file with " << num_verts << " vertices, " << num_faces << " faces.\n";
+      #endif
       std::vector<float> vdata;
       for(int i=0; i<(num_verts*3); i++) {
         vdata.push_back( _freadt<float>(is));
@@ -1610,7 +1694,9 @@ namespace fs {
     curv->num_vertices = _freadt<int32_t>(*is);
     curv->num_faces =  _freadt<int32_t>(*is);
     curv->num_values_per_vertex = _freadt<int32_t>(*is);
-    //std::cout << "Read file with " << num_verts << " vertices, " << num_faces << " faces and " << num_values_per_vertex << " values per vertex.\n";
+    #ifdef LIBFS_DBG_INFO
+    std::cout << LIBFS_APPTAG << "Read curv file with " << curv->num_vertices << " vertices, " << curv->num_faces << " faces and " << curv->num_values_per_vertex << " values per vertex.\n";
+    #endif
     if(curv->num_values_per_vertex != 1) { // Not supported, I know no case where this is used. Please submit a PR with a demo file if you have one, and let me know where it came from.
       throw std::domain_error("Curv file " + msg_source_file_part + "must contain exactly 1 value per vertex, found " + std::to_string(curv->num_values_per_vertex) + ".\n");
     }
@@ -1840,7 +1926,6 @@ namespace fs {
       b1 = _swap_endian<unsigned char>(b1);
       b2 = _swap_endian<unsigned char>(b2);
       b3 = _swap_endian<unsigned char>(b3);
-      //std::cout << "Produced swapped BE values " << (int)b1 << "," << (int)b2 << "," << (int)b3 << ".\n";
     }
 
     os.write( reinterpret_cast<const char*>( &b1 ), sizeof(b1));
@@ -2031,11 +2116,9 @@ namespace fs {
       if(surface_num_verts < this->vertex.size()) { // nonsense, so we warn (but don't throw, maybe the user really wants this).
         std::cerr << "Invalid number of vertices for surface, must be at least " << this->vertex.size() << "\n";
       }
-      std::vector<bool> is_in;
-      for(size_t i=0; i <surface_num_verts; i++) {
-        is_in.push_back(false);
-      }
-      for(size_t i=0; i <this->vertex.size(); i++) {
+      std::vector<bool> is_in = std::vector<bool>(surface_num_verts, false);
+
+      for(size_t i=0; i < this->vertex.size(); i++) {
         is_in[this->vertex[i]] = true;
       }
       return(is_in);
@@ -2146,7 +2229,6 @@ namespace fs {
           if (!(iss >> vertex >> x >> y >> z >> value)) {
             throw std::domain_error("Could not parse line " + std::to_string(line_idx+1) + " of label file, invalid format.\n");
           }
-          //std::cout << "Line " << (line_idx+1) << ": vertex=" << vertex << ", x=" << x << ", y=" << y << ", z=" << z << ", value=" << value << ".\n";
           label->vertex.push_back(vertex);
           label->coord_x.push_back(x);
           label->coord_y.push_back(y);
