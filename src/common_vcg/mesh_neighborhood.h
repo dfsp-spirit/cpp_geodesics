@@ -295,7 +295,7 @@ std::string neighborhoods_to_csv(std::vector<Neighborhood> neigh, size_t neigh_w
       throw std::runtime_error("Failed to generate mesh neighborhood CSV representation:'" + std::to_string(failed_neighborhoods.size()) + " neighborhoods are smaller than neigh_write_size "  + std::to_string(neigh_write_size) + ", and allow_nan is false.\n");
     }
   } else {
-    std::cout << std::string(APPTAG) << "There are " << failed_neighborhoods.size() << " neighborhoods smaller than neigh_write_size " << neigh_write_size << ", will pad with 'NA' values.";
+    std::cout << std::string(APPTAG) << "There are " << failed_neighborhoods.size() << " neighborhoods smaller than neigh_write_size " << neigh_write_size << ", will pad with 'NA' values.\n";
   }
 
   // Write header for coordinates, distances, and normals
@@ -432,7 +432,7 @@ std::vector<std::vector<float>> neighborhoods_to_vvbin(std::vector<Neighborhood>
       throw std::runtime_error("Failed to generate mesh neighborhood vvbin representation:'" + std::to_string(failed_neighborhoods.size()) + " neighborhoods are smaller than neigh_write_size "  + std::to_string(neigh_write_size) + ", and allow_nan is false.\n");
     }
   } else {
-    std::cout << std::string(APPTAG) << "There are " << failed_neighborhoods.size() << " neighborhoods smaller than neigh_write_size " << neigh_write_size << ", will pad with 'NA' values.";
+    std::cout << std::string(APPTAG) << "There are " << failed_neighborhoods.size() << " neighborhoods smaller than neigh_write_size " << neigh_write_size << ", will pad with 'NA' values.\n";
   }
 
   // Now for the actual data: coordinates, distances, and normals

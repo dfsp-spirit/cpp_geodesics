@@ -7,12 +7,13 @@ subjects_dir="$SUBJECTS_DIR"
 apptag="[EDGE_DIST_BASH]"
 #subjects_list="fsaverage fsaverage6" # Ignored if 'use_subjects_file=true'.
 subjects_list="Caltech_0051459"
-use_subjects_file="false"  # Set to "false" or "true".
+use_subjects_file="true"  # Set to "false" or "true".
 subjects_file="${subjects_dir}/subjects.txt"
 pvd_descriptor="pial_lgi" # Set to something like "thickness", "volume", "area", or the empty string "" for none.
 run_with_gnu_parallel="true"
 gnu_parallel_num_parallel_jobs=$(nproc)
-output_dir="output" # Must exist. Set to '.' for current directory. Do not leave completely empty.
+#output_dir="output" # Must exist. Set to '.' for current directory. Do not leave completely empty.
+output_dir="/media/spirit/science/data/abide_meshlearn"
 
 # Positional trailing command line arguments for meshneigh_edge
 include_self="true"
