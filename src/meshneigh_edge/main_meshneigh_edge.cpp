@@ -79,7 +79,7 @@ void mesh_neigh_edge(const std::string& input_mesh_file, const size_t k = 1, con
             fs::read_label(&lab, input_ctx_file);
             is_cortex = lab.vert_in_label(m.vn);
             assert((int)is_cortex.size() == m.vn);
-            debug_print(CPP_GEOD_DEBUG_LVL_INFO, "Read cortex label file '" + input_ctx_file + "'. Keeping " + std::to_string(lab.num_entries()) + " of " + std::to_string(m.vn) + " vertices. Filtered out " + std::to_string(m.vn - lab.num_entries()) + " vertices.\n");
+            debug_print(CPP_GEOD_DEBUG_LVL_INFO, "Read cortex label file '" + input_ctx_file + "'. Keeping " + std::to_string(lab.num_entries()) + " of " + std::to_string(m.vn) + " vertices. Filtered out " + std::to_string(m.vn - lab.num_entries()) + " vertices.");
         }
 
         nh = neighborhoods_from_edge_neighbors(neigh, m, is_cortex);

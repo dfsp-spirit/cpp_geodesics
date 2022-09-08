@@ -7,7 +7,7 @@ subjects_dir="$SUBJECTS_DIR"
 apptag="[EDGE_DIST_BASH]"
 #subjects_list="fsaverage fsaverage6" # Ignored if 'use_subjects_file=true'.
 subjects_list="Caltech_0051459"
-use_subjects_file="true"  # Set to "false" or "true".
+use_subjects_file="false"  # Set to "false" or "true".
 subjects_file="${subjects_dir}/subjects.txt"
 pvd_descriptor="pial_lgi" # Set to something like "thickness", "volume", "area", or the empty string "" for none.
 run_with_gnu_parallel="true"
