@@ -59,8 +59,9 @@ class Neighborhood {
   /// @param pvd float, per-vertex descriptor value for this vertex. See `use_pvd` below if you do not want/have this.
   /// @param use_pvd bool, whether to write the value 'pvd' to the ouput (if not, resulting returned vector will be shorter).
   /// @param normals whether to write the normals. Can set to false if they are empty or filled with junk because you did not compute them.
+  /// @param allow_nan bool, whether to allow nans. If false, and a short neighborhood (smaller than neigh_write_size) leads to production of NAN values in the output vector, an empty vector will be returned instead. The caller can then act on the vector length, e.g. decide to skip this row.
   /// @return float vector representation of neighborhood, handy for CSV or vvbin export
-  std::vector<float> to_row(const size_t neigh_write_size, const float pvd=0.0, const bool use_pvd=false, const bool normals=true) {
+  std::vector<float> to_row(const size_t neigh_write_size, const float pvd=0.0, const bool use_pvd=false, const bool normals=true, const bool allow_nan=true) {
     size_t row_length = 1 + ((3 + 1) * neigh_write_size); // the source index, plus for each neighbor: the 3 coords (x,y,z), the distance
     if(normals) {
       row_length += 3 * neigh_write_size; // for each neighbor: the normals
@@ -81,7 +82,10 @@ class Neighborhood {
         row[num_written] = this->coords[j][0]; num_written++;
         row[num_written] = this->coords[j][1]; num_written++;
         row[num_written] = this->coords[j][2]; num_written++;
-      } else {  // Fill with NA values. We know that allow_nan is true, otherwise we had thrown an error earlier.
+      } else {  // Fill with NA values.
+        if(! allow_nan) {
+          return std::vector<float>();
+        }
         row[num_written] = NAN; num_written++;
         row[num_written] = NAN; num_written++;
         row[num_written] = NAN; num_written++;
@@ -91,7 +95,10 @@ class Neighborhood {
     for(size_t j=0; j < neigh_write_size; j++) {  // Write the neighbor distances.
       if(j < this->size()) {
         row[num_written] = this->distances[j]; num_written++;
-      } else {  // Fill with NA values. We know that allow_nan is true, otherwise we had thrown an error earlier.
+      } else {  // Fill with NA values.
+        if(! allow_nan) {
+          return std::vector<float>();
+        }
         row[num_written] = NAN; num_written++;
       }
     }
@@ -102,7 +109,10 @@ class Neighborhood {
           row[num_written] = this->normals[j][0]; num_written++;
           row[num_written] = this->normals[j][1]; num_written++;
           row[num_written] = this->normals[j][2]; num_written++;
-        } else {  // Fill with NA values. We know that allow_nan is true, otherwise we had thrown an error earlier.
+        } else {  // Fill with NA values.
+          if(! allow_nan) {
+            return std::vector<float>();
+          }
           row[num_written] = NAN; num_written++;
           row[num_written] = NAN; num_written++;
           row[num_written] = NAN; num_written++;
@@ -429,7 +439,7 @@ std::vector<std::vector<float>> neighborhoods_to_vvbin(std::vector<Neighborhood>
   }
   if(! allow_nan) {
     if(failed_neighborhoods.size() >= 1) {
-      throw std::runtime_error("Failed to generate mesh neighborhood vvbin representation:'" + std::to_string(failed_neighborhoods.size()) + " neighborhoods are smaller than neigh_write_size "  + std::to_string(neigh_write_size) + ", and allow_nan is false.\n");
+      std::cout << std::string(APPTAG) << "There are " << std::to_string(failed_neighborhoods.size()) << " neighborhoods smaller than neigh_write_size "  << std::to_string(neigh_write_size) << ", and allow_nan is false, they will be filtered out.\n";
     }
   } else {
     std::cout << std::string(APPTAG) << "There are " << failed_neighborhoods.size() << " neighborhoods smaller than neigh_write_size " << neigh_write_size << ", will pad with 'NA' values.\n";
@@ -444,9 +454,13 @@ std::vector<std::vector<float>> neighborhoods_to_vvbin(std::vector<Neighborhood>
     row_length += 1; // the label (central vertex descriptor value)
   }
 
-  std::vector<std::vector<float>> neigh_mat = std::vector<std::vector<float> >(neigh.size(), std::vector<float> (row_length));
+  std::vector<std::vector<float>> neigh_mat = std::vector<std::vector<float> >(0, std::vector<float> ());
+  std::vector<float> row;
   for(size_t i=0; i < neigh.size(); i++) {
-    neigh_mat[i] = neigh[i].to_row(neigh_write_size, pvd[neigh[i].index], (! input_pvd_file.empty()), normals);
+    row = neigh[i].to_row(neigh_write_size, pvd[neigh[i].index], (! input_pvd_file.empty()), normals, allow_nan);
+    if(! row.empty()) { // Filter out rows with NANs, which will be returned as empty vectors if `allow_nan` is false.
+        neigh_mat.push_back(row);
+    }
   }
   return neigh_mat;
 }
