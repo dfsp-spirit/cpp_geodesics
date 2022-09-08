@@ -257,6 +257,23 @@ std::string neighborhoods_to_json(std::vector<Neighborhood> neigh) {
 }
 
 
+/// @brief Turn vector into string representing a CSV row, including newline at end.
+/// @param vec data values
+/// @return string with values seperated by separator ' '.
+std::string vec_to_csv_row(std::vector<float> vec) {
+  std::stringstream is;
+  for(size_t idx = 0; idx < vec.size(); idx++) {
+    is << vec[idx];
+    if(idx < vec.size() - 1) {
+      is << " ";
+    }
+  }
+  is << "\n";
+  return is.str();
+}
+
+
+
 /// @brief Write Neighborhoods vector to CSV string representation.
 /// @param neigh_write_size: the number of neihbors to write for each vertex (number of neighbor columns). If shorther
 ///             than actual number of neighbors, the list will be truncated. If longer than the real available
@@ -348,7 +365,7 @@ std::string neighborhoods_to_csv(std::vector<Neighborhood> neigh, size_t neigh_w
     float dist_sum = 0.0;
     size_t num_dists_considered = 0;
     for(size_t i=0; i < neigh.size(); i++) {
-      for(size_t j=0; j < neigh_write_size; j++) {  // Write the neighbor distances.
+      for(size_t j=0; j < neigh_write_size; j++) {
         if(j < neigh[i].size()) {
           num_dists_considered++;
           dist_sum += neigh[i].distances[j];
@@ -365,44 +382,57 @@ std::string neighborhoods_to_csv(std::vector<Neighborhood> neigh, size_t neigh_w
     std::cout << std::string(APPTAG) << "For exported neighborhoods (" << neigh_write_size << " entries max), the minimal distance is " << min_neigh_dist << ", mean is " << mean_neigh_dist << ", and max is " << max_neigh_dist << ".\n";
   }
 
-  // Now for the data: coordinates, distances, and normals
-  for(size_t i=0; i < neigh.size(); i++) {
+  bool use_to_row = true;
+  if(use_to_row) {
+    std::vector<float> row;
+    for(size_t i=0; i < neigh.size(); i++) {
+      row = neigh[i].to_row(neigh_write_size, pvd[neigh[i].index], (! input_pvd_file.empty()), normals, allow_nan);
+      if(! row.empty()) { // Filter out rows with NANs, which will be returned as empty vectors if `allow_nan` is false.
+          is << vec_to_csv_row(row);
+      }
+    }
 
-    // We write one line per neighborhood (source vertex)
-    is << neigh[i].index;  // Write the source vertex.
-    for(size_t j=0; j < neigh_write_size; j++) {  // Write the neighbor vertex coords.
-      if(j < neigh[i].size()) {
-        is << " " << neigh[i].coords[j][0] << " " << neigh[i].coords[j][1] << " " << neigh[i].coords[j][2];
-      } else {  // Fill with NA values. We know that allow_nan is true, otherwise we had thrown an error earlier.
-        is << " NA NA NA";
-      }
-    }
-    for(size_t j=0; j < neigh_write_size; j++) {  // Write the neighbor distances.
-      if(j < neigh[i].size()) {
-        is << " " << neigh[i].distances[j];
-      } else {  // Fill with NA values. We know that allow_nan is true, otherwise we had thrown an error earlier.
-        is << " NA";
-      }
-    }
-    if(normals) {
-      for(size_t j=0; j < neigh_write_size; j++) {  // Write the neighbor normals.
+  } else {
+
+    // Now for the data: write coordinates, distances, and normals
+    for(size_t i=0; i < neigh.size(); i++) {
+
+      // We write one line per neighborhood (source vertex)
+      is << neigh[i].index;  // Write the source vertex.
+      for(size_t j=0; j < neigh_write_size; j++) {  // Write the neighbor vertex coords.
         if(j < neigh[i].size()) {
-          is << " " << neigh[i].normals[j][0] << " " << neigh[i].normals[j][1] << " " << neigh[i].normals[j][2];
+          is << " " << neigh[i].coords[j][0] << " " << neigh[i].coords[j][1] << " " << neigh[i].coords[j][2];
         } else {  // Fill with NA values. We know that allow_nan is true, otherwise we had thrown an error earlier.
           is << " NA NA NA";
         }
       }
+      for(size_t j=0; j < neigh_write_size; j++) {  // Write the neighbor distances.
+        if(j < neigh[i].size()) {
+          is << " " << neigh[i].distances[j];
+        } else {  // Fill with NA values. We know that allow_nan is true, otherwise we had thrown an error earlier.
+          is << " NA";
+        }
+      }
+      if(normals) {
+        for(size_t j=0; j < neigh_write_size; j++) {  // Write the neighbor normals.
+          if(j < neigh[i].size()) {
+            is << " " << neigh[i].normals[j][0] << " " << neigh[i].normals[j][1] << " " << neigh[i].normals[j][2];
+          } else {  // Fill with NA values. We know that allow_nan is true, otherwise we had thrown an error earlier.
+            is << " NA NA NA";
+          }
+        }
+      }
+      if(! input_pvd_file.empty()) {
+        is << " " << pvd[neigh[i].index];  // Write descriptor value.
+      }
+      is << "\n";  // End CSV line.
     }
-    if(! input_pvd_file.empty()) {
-      is << " " << pvd[neigh[i].index];  // Write descriptor value.
-    }
-    is << "\n";  // End CSV line.
   }
   return is.str();
 }
 
 
-std::vector<std::vector<float>> neighborhoods_to_vvbin(std::vector<Neighborhood> neigh, size_t neigh_write_size = 0, const bool allow_nan = false, const bool normals = true, const std::string& input_pvd_file = "") {
+std::vector<std::vector<float>> neighborhoods_to_vvbin_mat(std::vector<Neighborhood> neigh, size_t neigh_write_size = 0, const bool allow_nan = false, const bool normals = true, const std::string& input_pvd_file = "") {
   // Read per-vertex data (thickness, pial_lGI, or whatever), if a filename for it was given.
   std::vector<float> pvd;
   if(! input_pvd_file.empty()) {
@@ -445,14 +475,6 @@ std::vector<std::vector<float>> neighborhoods_to_vvbin(std::vector<Neighborhood>
     std::cout << std::string(APPTAG) << "There are " << failed_neighborhoods.size() << " neighborhoods smaller than neigh_write_size " << neigh_write_size << ", will pad with 'NA' values.\n";
   }
 
-  // Now for the actual data: coordinates, distances, and normals
-  size_t row_length = 1 + ((3 + 1) * neigh_write_size); // the source index, plus for each neighbor: the 3 coords (x,y,z), the distance
-  if(normals) {
-    row_length += 3 * neigh_write_size; // for each neighbor: the normals
-  }
-  if(! input_pvd_file.empty()) {
-    row_length += 1; // the label (central vertex descriptor value)
-  }
 
   std::vector<std::vector<float>> neigh_mat = std::vector<std::vector<float> >(0, std::vector<float> ());
   std::vector<float> row;
