@@ -120,6 +120,6 @@ To build the unit tests, simply follow the instructions in the section `Building
 
 Please open an issue here on GitHub if you find a bug or have any question or comment.
 
-The programs in this repo were written by [Tim Schäfer](http://rcmd.org/ts).
+The programs in this repo were written by [Tim Schäfer](https://ts.rcmd.org).
 
 Thanks to all the great people who wrote the [dependencies](./third_party/) (and their dependencies).
