@@ -24,7 +24,7 @@ int main(int argc, char** argv) {
 
     if(argc < 2 || argc > 7) {
         std::cout << "== Compute mean geodesic distances and circle stats for FreeSurfer brain meshes ==.\n";
-        std::cout << "Usage: " << argv[0] << " <subjects_file> [<subjects_dir> [<surface> [<do_circle_stats>]]]\n";
+        std::cout << "Usage: " << argv[0] << " <subjects_file> [<subjects_dir> [<surface> [<do_circle_stats> [<keep_existing> [<circ_scale>]]]]]\n";
         std::cout << "  <subjects_file> : text file containing one subject identifier per line.\n";
         std::cout << "  <subjects_dir>  : directory containing the FreeSurfer recon-all output for the subjects. Defaults to current working directory.\n";
         std::cout << "  <surface>       : the surface file to load from the surf/ subdir of each subject, without hemi part. Defaults to 'pial'.\n";
