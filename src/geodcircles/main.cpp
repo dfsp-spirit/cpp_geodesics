@@ -136,6 +136,10 @@ int main(int argc, char** argv) {
                     }
                 }
 
+                // TODO: we could support ignoring the medial wall by reading ?h.cortex.label and
+                //  passing it to 'geodesic_circles()' below. That function needs to pass it on further until
+                //  we call VCGLIB's PerVertexDijkstraCompute() function. We could select vertices in the VCG mesh (using vertex.setS(), see http://vcglib.net/flags.html)
+                //  prior to that call, and use the parameter 'avoid_selected' of PerVertexDijkstraCompute to ignore the selected medial wall verts. 
                 std::vector<int32_t> qv_cs; // The query vertices (empty vector means to use all of the mesh).
                 std::vector<std::vector<float>> circle_stats = geodesic_circles(m, qv_cs, circ_scale, circle_stats_do_meandists);
                 const std::vector<float> radii = circle_stats[0];
