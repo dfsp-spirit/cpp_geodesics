@@ -31,6 +31,9 @@ int main(int argc, char** argv) {
         std::cout << "  <do_circle_stat>: flag whether to compute geodesic circle stats as well, must be 0 (off), 1 (on) or 2 (on with mean dists). Defaults to 2.\n";
         std::cout << "  <keep_existing> : flag whether to keep existing output files, must be 0 (off: recompute and overwrite files), or 1 (keep existing files, skip computation if exists). Defaults to 1.\n";
         std::cout << "  <circ_scale> : int, the fraction of the total surface that the circles for the geodesic circle stats should have (in percent). Ignored if do_circle_stats is 0. Defaults to 5.\n";
+        std::cout << "NOTES:\n";
+        std::cout << " * Sorry for the current command line parsing state. You will have to supply all arguments if you want to change the last one.\n";
+        std::cout << " * We recommend to run this on simplified meshes to save computation time, e.g., by scaling the vertex count to that of fsaverage6.\n";
         exit(1);
     }
     std::string subjects_file = std::string(argv[1]);
@@ -75,10 +78,20 @@ int main(int argc, char** argv) {
         circ_scale = std::atoi(argv[6]);
     }
 
+    if (! fs::util::file_exists(subjects_file)) {
+        std::cerr << "Subjects file '" << subjects_file << "' does not exist.\n";
+        exit(1);
+    }
 
     const std::vector<std::string> subjects = fs::read_subjectsfile(subjects_file);
     std::cout << "Found " << subjects.size() << " subjects listed in subjects file '" << subjects_file << "'.\n";
-    std::cout << "Using subject directory '" << subjects_dir << "' and surface '" << surface_name << "'.\n";    
+
+    if (subjects.size() < 1) {
+        std::cerr << "Found no subjects in subjects file '" << subjects_file << "'. Exiting.\n";
+        exit(1);
+    }
+
+    std::cout << "Using subject directory '" << subjects_dir << "' and surface '" << surface_name << "'.\n";
     std::cout << (do_circle_stats? "Computing" : "Not computing")  << " geodesic circle stats" << (do_circle_stats? " with scale " + std::to_string(circ_scale) : "") << ".\n";
     std::cout << (keep_existing_files? "Keeping" : "Not keeping (recomputing data for)")  << " existing output files.\n";
     if(do_circle_stats) {
@@ -154,7 +167,7 @@ int main(int argc, char** argv) {
                 // TODO: we could support ignoring the medial wall by reading ?h.cortex.label and
                 //  passing it to 'geodesic_circles()' below. That function needs to pass it on further until
                 //  we call VCGLIB's PerVertexDijkstraCompute() function. We could select vertices in the VCG mesh (using vertex.setS(), see http://vcglib.net/flags.html)
-                //  prior to that call, and use the parameter 'avoid_selected' of PerVertexDijkstraCompute to ignore the selected medial wall verts. 
+                //  prior to that call, and use the parameter 'avoid_selected' of PerVertexDijkstraCompute to ignore the selected medial wall verts.
                 std::vector<int32_t> qv_cs; // The query vertices (empty vector means to use all of the mesh).
                 std::vector<std::vector<float>> circle_stats = geodesic_circles(m, qv_cs, (float)circ_scale, circle_stats_do_meandists_this_hemi);
                 const std::vector<float> radii = circle_stats[0];
