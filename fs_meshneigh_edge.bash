@@ -7,13 +7,13 @@ subjects_dir="$SUBJECTS_DIR"
 apptag="[EDGE_DIST_BASH]"
 #subjects_list="fsaverage fsaverage6" # Ignored if 'use_subjects_file=true'.
 subjects_list="Caltech_0051459"
-use_subjects_file="false"  # Set to "false" or "true".
+use_subjects_file="true"  # Set to "false" or "true".
 subjects_file="${subjects_dir}/subjects.txt"
 pvd_descriptor="pial_lgi" # Set to something like "thickness", "volume", "area", or the empty string "" for none.
 run_with_gnu_parallel="true"
 gnu_parallel_num_parallel_jobs=$(nproc)
 #output_dir="output" # Must exist. Set to '.' for current directory. Do not leave completely empty.
-output_dir="/media/spirit/science/data/abide_meshlearn"
+output_dir="/media/spirit/science/data/abide_meshlearn_neigh100"
 
 # Positional trailing command line arguments for meshneigh_edge
 include_self="true"
@@ -22,7 +22,8 @@ csv="true"
 vv="false"
 with_neigh="true"
 extra_args="${include_self} ${json} ${csv} ${vv} ${with_neigh}"
-neigh_write_size=50
+neigh_write_size=200
+distances=15 # mesh edge distance, in hops. Higher values are more computationally expensive. Must increase neigh_write_size accordingly for this to make any sense.
 
 ### End of Settings
 
@@ -66,7 +67,7 @@ if [ "${run_with_gnu_parallel}" = "true" ]; then
     echo "$apptag Running ${gnu_parallel_num_parallel_jobs} jobs in in parallel with 'GNU Parallel'."
     for hemi in lh rh; do
         for surface in pial; do
-            for distance in 5; do
+            for distance in $distances; do
                 start_date_tag=$(date '+%Y-%m-%d_%H-%M-%S')
                 echo "$apptag Running in parallel for hemi '${hemi}', surface ${surface} with distance '${distance}'."
                 echo ${subjects_list} | tr ' ' '\n' | parallel --jobs ${gnu_parallel_num_parallel_jobs} --workdir . --joblog LOGFILE_MESHNEIGH_EDGE__PARALLEL_${hemi}_${surface}_${distance}_${start_date_tag}.txt ./meshneigh_edge "${subjects_dir}/"{}"/surf/${hemi}.${surface}" $distance "${output_dir}/"{}"_${hemi}_${surface}_meshdist_edge_${distance}" ${extra_args} "${subjects_dir}/"{}"/surf/${hemi}.${pvd_descriptor}" "${subjects_dir}/"{}"/label/${hemi}.cortex.label" $neigh_write_size
@@ -89,7 +90,7 @@ else
         for hemi in lh rh; do
             this_hemi_done_start_tag=$(date '+%Y-%m-%d_%H-%M-%S')
             for surface in pial; do
-                for distance in 5; do
+                for distance in $distances; do
                     echo "$apptag === Handling subject #${num_handled} of ${num_subjects} named '${subject}': hemi ${hemi} surface ${surface} at distance ${distance}... ==="
                     mesh_file="${subjects_dir}/${subject}/surf/${hemi}.${surface}"
                     if [ ! -f "${mesh_file}" ]; then
