@@ -22,15 +22,18 @@
 
 int main(int argc, char** argv) {
 
-    if(argc < 2 || argc > 7) {
+    std::cout << "=====[ geodcircles ]=====.\n";
+
+    if(argc < 2 || argc > 8) {
         std::cout << "== Compute mean geodesic distances and circle stats for FreeSurfer brain meshes ==.\n";
-        std::cout << "Usage: " << argv[0] << " <subjects_file> [<subjects_dir> [<surface> [<do_circle_stats> [<keep_existing> [<circ_scale>]]]]]\n";
+        std::cout << "Usage: " << argv[0] << " <subjects_file> [<subjects_dir> [<surface> [<do_circle_stats> [<keep_existing> [<circ_scale>] [<cortex_only>]]]]]\n";
         std::cout << "  <subjects_file> : text file containing one subject identifier per line.\n";
         std::cout << "  <subjects_dir>  : directory containing the FreeSurfer recon-all output for the subjects. Defaults to current working directory.\n";
         std::cout << "  <surface>       : the surface file to load from the surf/ subdir of each subject, without hemi part. Defaults to 'pial'.\n";
         std::cout << "  <do_circle_stat>: flag whether to compute geodesic circle stats as well, must be 0 (off), 1 (on) or 2 (on with mean dists). Defaults to 2.\n";
         std::cout << "  <keep_existing> : flag whether to keep existing output files, must be 0 (off: recompute and overwrite files), or 1 (keep existing files, skip computation if exists). Defaults to 1.\n";
-        std::cout << "  <circ_scale> : int, the fraction of the total surface that the circles for the geodesic circle stats should have (in percent). Ignored if do_circle_stats is 0. Defaults to 5.\n";
+        std::cout << "  <circ_scale>    : int, the fraction of the total surface that the circles for the geodesic circle stats should have (in percent). Ignored if do_circle_stats is 0. Defaults to 5.\n";
+        std::cout << "  <cortex_label>  : str, optional file name of a cortex label file. If given, load label and ignore non-cortical vertices, typically the medial wall, during all computations. Defaults to the empty string, i.e., no cortex label file. E.g., 'cortex.label'.\n";
         std::cout << "NOTES:\n";
         std::cout << " * Sorry for the current command line parsing state. You will have to supply all arguments if you want to change the last one.\n";
         std::cout << " * We recommend to run this on simplified meshes to save computation time, e.g., by scaling the vertex count to that of fsaverage6.\n";
@@ -42,6 +45,7 @@ int main(int argc, char** argv) {
     bool do_circle_stats = true;
     bool keep_existing_files = true;
     bool circle_stats_do_meandists = true;
+    std::string cortex_label = "";
     int circ_scale = 5; // The fraction of the total surface that the circles for the geodesic circle stats should have (in percent).
     if(argc >= 3) {
         subjects_dir = std::string(argv[2]);
@@ -77,6 +81,9 @@ int main(int argc, char** argv) {
     if(argc == 7) { // circ_scale
         circ_scale = std::atoi(argv[6]);
     }
+    if(argc == 8) { // cortex_label
+        cortex_label = std::string(argv[7]);
+    }
 
     if (! fs::util::file_exists(subjects_file)) {
         std::cerr << "Subjects file '" << subjects_file << "' does not exist.\n";
@@ -97,6 +104,12 @@ int main(int argc, char** argv) {
     if(do_circle_stats) {
         std::cout << (circle_stats_do_meandists? "Also computing" : "Not computing")  << " geodesic mean distances while computing circle stats.\n";
         std::cout << "Using circ_scale " << circ_scale << "\n";
+    }
+
+    if (cortex_label.size() > 0) {
+        std::cout << "Using cortex label file '" << cortex_label << "' to ignore medial wall vertices.\n";
+    } else {
+        std::cout << "Not using a cortex label file to ignore medial wall vertices, computing for all mesh vertices.\n";
     }
 
     const std::vector<std::string> hemis = {"lh", "rh"};
@@ -134,6 +147,34 @@ int main(int argc, char** argv) {
             // Create a VCGLIB mesh from the libfs Mesh.
             MyMesh m;
             vcgmesh_from_fs_surface(&m, surface);
+
+            // Load cortex label if given.
+            if(cortex_label.size() > 0) {
+                const std::string cortex_label_file = fs::util::fullpath({subjects_dir, subject, "label", hemi + "." + cortex_label});
+                fs::Label label;
+                std::vector<bool> is_vertex_cortical = label.vert_in_label(surface.num_vertices());
+                try {
+                    fs::read_label(&label, cortex_label_file);
+                } catch(const std::exception& e) {
+                    std::cerr << "   - Failed to load cortex label file '" << cortex_label_file << "' for subject " << subject << ", skipping hemi. Details: " << e.what();
+                    failed_subjects.push_back(subject); // This may result in subjects ending up twice in the list, if both hemis fail. That is fine with us for now, and handled at the end when reporting.
+                    num_skipped_hemis_so_far++;
+                    continue;
+                }
+                if(is_vertex_cortical.size() != surface.num_vertices()) {
+                    std::cerr << "   - Cortex label file '" << cortex_label_file << "' for subject " << subject << " has " << label.vertex.size() << " entries, but the surface has " << surface.num_vertices() << " vertices. Skipping hemi.\n";
+                    failed_subjects.push_back(subject); // This may result in subjects ending up twice in the list, if both hemis fail. That is fine with us for now, and handled at the end when reporting.
+                    num_skipped_hemis_so_far++;
+                    continue;
+                }
+                // Set the cortex label data as flags on the VCG mesh.
+                // WARNING: This will get lost during conversion back to libfs Mesh (for OpenMP parallelization), as we do not support selections in libfs.
+                for (size_t i=0; i<label.vertex.size(); i++) {
+                    if(is_vertex_cortical[i]) {
+                        m.vert[i].SetS();
+                    }
+                }
+            }
 
             // Compute the geodesic mean distances and write result file.
             if(do_circle_stats) {
