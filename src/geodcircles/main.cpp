@@ -106,8 +106,10 @@ int main(int argc, char** argv) {
         std::cout << "Using circ_scale " << circ_scale << "\n";
     }
 
-    if (cortex_label.size() > 0) {
+    bool use_cortex_label = cortex_label.size() > 0;
+    if (use_cortex_label) {
         std::cout << "Using cortex label file '" << cortex_label << "' to ignore medial wall vertices.\n";
+        use_cortex_label = true;
     } else {
         std::cout << "Not using a cortex label file to ignore medial wall vertices, computing for all mesh vertices.\n";
     }
@@ -148,11 +150,13 @@ int main(int argc, char** argv) {
             MyMesh m;
             vcgmesh_from_fs_surface(&m, surface);
 
+            std::vector<bool> is_vertex_cortical = std::vector<bool>(surface.num_vertices(), true); // We assume all vertices are cortical by default.
+
             // Load cortex label if given.
-            if(cortex_label.size() > 0) {
+            fs::Label label;
+            if(use_cortex_label) {
                 const std::string cortex_label_file = fs::util::fullpath({subjects_dir, subject, "label", hemi + "." + cortex_label});
-                fs::Label label;
-                std::vector<bool> is_vertex_cortical = label.vert_in_label(surface.num_vertices());
+                is_vertex_cortical = label.vert_in_label(surface.num_vertices());
                 try {
                     fs::read_label(&label, cortex_label_file);
                 } catch(const std::exception& e) {
@@ -161,15 +165,9 @@ int main(int argc, char** argv) {
                     num_skipped_hemis_so_far++;
                     continue;
                 }
-                if(is_vertex_cortical.size() != surface.num_vertices()) {
-                    std::cerr << "   - Cortex label file '" << cortex_label_file << "' for subject " << subject << " has " << label.vertex.size() << " entries, but the surface has " << surface.num_vertices() << " vertices. Skipping hemi.\n";
-                    failed_subjects.push_back(subject); // This may result in subjects ending up twice in the list, if both hemis fail. That is fine with us for now, and handled at the end when reporting.
-                    num_skipped_hemis_so_far++;
-                    continue;
-                }
                 // Set the cortex label data as flags on the VCG mesh.
                 // WARNING: This will get lost during conversion back to libfs Mesh (for OpenMP parallelization), as we do not support selections in libfs.
-                for (size_t i=0; i<label.vertex.size(); i++) {
+                for (size_t i=0; i<surface.num_vertices(); i++) {
                     if(is_vertex_cortical[i]) {
                         m.vert[i].SetS();
                     }
@@ -210,7 +208,7 @@ int main(int argc, char** argv) {
                 //  we call VCGLIB's PerVertexDijkstraCompute() function. We could select vertices in the VCG mesh (using vertex.setS(), see http://vcglib.net/flags.html)
                 //  prior to that call, and use the parameter 'avoid_selected' of PerVertexDijkstraCompute to ignore the selected medial wall verts.
                 std::vector<int32_t> qv_cs; // The query vertices (empty vector means to use all of the mesh).
-                std::vector<std::vector<float>> circle_stats = geodesic_circles(m, qv_cs, (float)circ_scale, circle_stats_do_meandists_this_hemi);
+                std::vector<std::vector<float>> circle_stats = geodesic_circles(m, qv_cs, (float)circ_scale, circle_stats_do_meandists_this_hemi, is_vertex_cortical);
                 const std::vector<float> radii = circle_stats[0];
                 const std::vector<float> perimeters = circle_stats[1];
                 fs::write_curv(rad_filename, radii);

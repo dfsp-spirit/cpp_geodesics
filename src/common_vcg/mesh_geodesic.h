@@ -28,7 +28,7 @@
 
 // Compute pseudo-geodesic distance from query vertices 'verts' to all others (or to those
 // within a maximal distance of maxdist_ if it is > 0). Often 'verts' only contains a single source vertex.
-std::vector<float> geodist(MyMesh& m, std::vector<int> verts, float maxdist) {
+std::vector<float> geodist(MyMesh& m, std::vector<int> verts, float maxdist, bool avoid_selection=false) {
 
     int n = verts.size();
     VertexIterator vi;
@@ -43,18 +43,28 @@ std::vector<float> geodist(MyMesh& m, std::vector<int> verts, float maxdist) {
 
     // Prepare seed vector
     std::vector<MyVertex*> seedVec(verts.size());
-    for (int i=0; i < n; i++) {
-      vi = m.vert.begin()+verts[i];
-      seedVec[i] = &*vi;
+    if (avoid_selection) {  // Only use vertices that are not selected.
+      seedVec.resize(0);
+      for (int i=0; i < n; i++) {
+        vi = m.vert.begin()+verts[i];
+        if (!vi->IsS()) {
+          seedVec.push_back(&*vi);
+        }
+      }
+    } else {  // Just use all vertices as seeds.
+      for (int i=0; i < n; i++) {
+        vi = m.vert.begin()+verts[i];
+        seedVec[i] = &*vi;
+      }
     }
 
     // Compute pseudo-geodesic distance by summing dists along shortest path in graph.
     tri::EuclideanDistance<MyMesh> ed;
-    if(maxdist > 0.0) {
-      tri::Geodesic<MyMesh>::PerVertexDijkstraCompute(m,seedVec,ed,maxdist);
-    } else {
-      tri::Geodesic<MyMesh>::PerVertexDijkstraCompute(m,seedVec,ed);
+    if(maxdist < 0.0) {
+      maxdist = std::numeric_limits<ScalarType>::max();
     }
+
+    tri::Geodesic<MyMesh>::PerVertexDijkstraCompute(m, seedVec, ed, maxdist, NULL, NULL, NULL, avoid_selection);
 
     std::vector<float> geodists(m.vn);
     vi=m.vert.begin();
@@ -399,7 +409,7 @@ std::vector<std::vector<double>> _compute_geodesic_circle_stats(MyMesh& m, std::
 /// distances in a certain radius, not to ALL vertices), but it is faster to do it here instead of separately computing the mean
 /// distances with another function call to mean_geodist_p()/mean_geodist() IF you need them anyways. If in doubt, leave this
 /// disabled for a dramatic speedup (how much depends on the 'scale' parameter).
-std::vector<std::vector<float>> geodesic_circles(MyMesh& m, std::vector<int> query_vertices, float scale=5.0, bool do_meandist=false) {
+std::vector<std::vector<float>> geodesic_circles(MyMesh& m, std::vector<int> query_vertices, float scale=5.0, bool do_meandist=false, std::vector<bool> is_vertex_cortical=std::vector<bool>()) {
 
   double sampling = 10.0;
   double mesh_area = mesh_area_total(m);
@@ -438,10 +448,24 @@ std::vector<std::vector<float>> geodesic_circles(MyMesh& m, std::vector<int> que
   fs::Mesh surf;  // Create FreeSurfer mesh that is copyable for OpenMP.
   fs_surface_from_vcgmesh(&surf, m);
 
+  // Set cortical flag using vcglib selection. If vector was passed as empty, set all to true.
+  if(is_vertex_cortical.size() != m.vn) {
+    is_vertex_cortical.resize(m.vn);
+    for(int i=0; i<m.vn; i++) {
+      is_vertex_cortical[i] = true;
+    }
+  }
+
   # pragma omp parallel for shared(surf, radius, perimeter, meandist)
   for(size_t i=0; i<nqv; i++) {
     MyMesh mt; // per thread, recreated from FreeSurfer mesh
     vcgmesh_from_fs_surface(&mt, surf);
+    // Set cortical flag using vcglib selection.
+    for (size_t i=0; i<m.vn; i++) {
+        if(is_vertex_cortical[i]) {
+            m.vert[i].SetS();
+        }
+    }
     int qv = query_vertices[i];
     std::vector<int> query_vertex = { qv };
     std::vector<float> v_geodist = geodist(mt, query_vertex, max_dist);
