@@ -7,5 +7,5 @@ SUBJECT="subject1"
 LABEL="cortex"
 ICO_ORDER=6
 
-mri_label2label --srclabel "${SUBJECT}"/label/lh.cortex.label --srcsubject "${SUBJECT}" --trglabel ./lh.cortex6.label --trgsubject ico --regmethod surface --hemi lh --trgicoorder ${ICO_ORDER}
-mri_label2label --srclabel "${SUBJECT}"/label/rh.cortex.label --srcsubject "${SUBJECT}" --trglabel ./rh.cortex6.label --trgsubject ico --regmethod surface --hemi rh --trgicoorder ${ICO_ORDER}
+mri_label2label --srclabel ./${SUBJECT}/label/lh.cortex.label --srcsubject "${SUBJECT}" --trglabel ./${SUBJECT}/label/lh.cortex${ICO_ORDER}.label --trgsubject ico --regmethod surface --hemi lh --trgicoorder ${ICO_ORDER}
+mri_label2label --srclabel ./${SUBJECT}/label/rh.cortex.label --srcsubject "${SUBJECT}" --trglabel ./${SUBJECT}/label/rh.cortex${ICO_ORDER}.label --trgsubject ico --regmethod surface --hemi rh --trgicoorder ${ICO_ORDER}
