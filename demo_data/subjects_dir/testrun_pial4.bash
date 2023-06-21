@@ -13,6 +13,11 @@
 
 APPTAG="[TESTRUN]"
 
+# Parameters for geodcircles:
+do_circle_stats=2  # with mean dists
+keep_existing=0    # off
+circ_scale=2       # 2 percent of total area
+
 if [ ! -f subjects.txt ]; then
     echo "${APPTAG} ERROR: File subjects.txt not found. Please run this script from the directory it is stored in."
     exit 1
@@ -50,7 +55,7 @@ fi
 echo "${APPTAG} Running geodcircles on ${surface} surface with ico_order=${ico_order}..."
 echo "${APPTAG} Using cortex label file ${cortex_label_file}."
 
-../../geodcircles subjects.txt . ${surface} 2 1 2 ${cortex_label_file}
+../../geodcircles subjects.txt . ${surface} $do_circle_stats $keep_existing $circ_scale ${cortex_label_file}
 ../../export_brainmesh subject1/surf/lh.${surface} subject1/surf/lh.geocirc_perimeter_vcglib_${surface}_circscale2.curv lh.${surface}_perimeter.ply
 ../../export_brainmesh subject1/surf/lh.${surface} subject1/surf/lh.geocirc_radius_vcglib_${surface}_circscale2.curv lh.${surface}_radius.ply
 ../../export_brainmesh subject1/surf/lh.${surface} subject1/surf/lh.mean_geodist_vcglib_${surface}.curv lh.${surface}_meandist.ply
