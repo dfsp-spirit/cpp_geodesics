@@ -32,18 +32,19 @@ int main(int argc, char** argv) {
 
     std::cout << "=====[ geodcircles ]=====.\n";
 
-    if(argc < 2 || argc > 8) {
+    if(argc < 2 || argc > 9) {
         std::cout << "== Compute mean geodesic distances and circle stats for FreeSurfer brain meshes ==.\n";
-        std::cout << "Usage: " << argv[0] << " <subjects_file> [<subjects_dir> [<surface> [<do_circle_stats> [<keep_existing> [<circ_scale>] [<cortex_only>]]]]]\n";
+        std::cout << "Usage: " << argv[0] << " <subjects_file> [<subjects_dir> [<surface> [<do_circle_stats> [<keep_existing> [<circ_scale> [<cortex_label> [<hemi>]]]]]]]\n";
         std::cout << "  <subjects_file> : text file containing one subject identifier per line.\n";
         std::cout << "  <subjects_dir>  : directory containing the FreeSurfer recon-all output for the subjects. Defaults to current working directory.\n";
         std::cout << "  <surface>       : the surface file to load from the surf/ subdir of each subject, without hemi part. Defaults to 'pial'.\n";
         std::cout << "  <do_circle_stat>: flag whether to compute geodesic circle stats as well, must be 0 (off), 1 (on) or 2 (on with mean dists). Defaults to 2.\n";
         std::cout << "  <keep_existing> : flag whether to keep existing output files, must be 0 (off: recompute and overwrite files), or 1 (keep existing files, skip computation if exists). Defaults to 1.\n";
         std::cout << "  <circ_scale>    : int, the fraction of the total surface that the circles for the geodesic circle stats should have (in percent). Ignored if do_circle_stats is 0. Defaults to 5.\n";
-        std::cout << "  <cortex_label>  : str, optional file name of a cortex label file. If given, load label and ignore non-cortical vertices, typically the medial wall, during all computations. Defaults to the empty string, i.e., no cortex label file. E.g., 'cortex.label'.\n";
+        std::cout << "  <cortex_label>  : str, optional file name of a cortex label file. If given, load label and ignore non-cortical vertices, typically the medial wall, during all computations. Defaults to the empty string, i.e., no cortex label file. E.g., 'cortex.label'. Can be set to 'none' to turn off.\n";
+        std::cout << "  <hemi>          : str, which hemispheres to compute. One of 'lh', 'rh' or 'both'. Defaults to 'both'.\n";
         std::cout << "NOTES:\n";
-        std::cout << " * Sorry for the current command line parsing state. You will have to supply all arguments if you want to change the last one.\n";
+        std::cout << " * Sorry for the current command line parsing state: you will have to supply all arguments if you want to change the last one.\n";
         std::cout << " * We recommend to run this on simplified meshes to save computation time, e.g., by scaling the vertex count to that of fsaverage6.\n";
         exit(1);
     }
@@ -55,6 +56,7 @@ int main(int argc, char** argv) {
     bool circle_stats_do_meandists = true;
     std::string cortex_label = "";
     int circ_scale = 5; // The fraction of the total surface that the circles for the geodesic circle stats should have (in percent).
+    string arg_hemi = "both";
     if(argc >= 3) {
         subjects_dir = std::string(argv[2]);
     }
@@ -89,8 +91,11 @@ int main(int argc, char** argv) {
     if(argc >= 7) { // circ_scale
         circ_scale = std::atoi(argv[6]);
     }
-    if(argc == 8) { // cortex_label
+    if(argc >= 8) { // cortex_label
         cortex_label = std::string(argv[7]);
+    }
+    if(argc == 9) {
+        arg_hemi = std::string(argv[8]);
     }
 
     if (! fs::util::file_exists(subjects_file)) {
@@ -115,7 +120,7 @@ int main(int argc, char** argv) {
         std::cout << "Using circ_scale " << circ_scale << "\n";
     }
 
-    bool use_cortex_label = cortex_label.size() > 0;
+    bool use_cortex_label = cortex_label.size() > 0 && cortex_label != "none";
     if (use_cortex_label) {
         std::cout << "Using cortex label file '" << cortex_label << "' to ignore medial wall vertices.\n";
         use_cortex_label = true;
@@ -125,7 +130,18 @@ int main(int argc, char** argv) {
 
     std::cout << "=Starting computation=\n";
 
-    const std::vector<std::string> hemis = {"lh", "rh"};
+    std::vector<std::string> hemis;
+    if(arg_hemi == "lh") {
+        hemis = {"lh"};
+    } else if(arg_hemi == "rh") {
+        hemis = {"rh"};
+    } else if(arg_hemi == "both") {
+        hemis = {"lh", "rh"};
+    } else {
+        std::cerr << "Invalid value for parameter 'hemi'. Must be 'lh', 'rh' or 'both'.\n";
+        exit(1);
+    }
+
     std::string surf_file, hemi, subject;
     fs::Mesh surface;
 
@@ -221,11 +237,14 @@ int main(int argc, char** argv) {
                 // and have the wrong size.
             }
 
+            std::string cortex_outfilepart = use_cortex_label ? "cortex" : "wholebrain";
+
             // Compute the geodesic mean distances and write result file.
             if(do_circle_stats) {
-                const std::string rad_filename = fs::util::fullpath({subjects_dir, subject, "surf", hemi + ".geocirc_radius_vcglib_" + surface_name + "_circscale" + std::to_string(circ_scale) + ".curv"});
-                const std::string per_filename = fs::util::fullpath({subjects_dir, subject, "surf", hemi + ".geocirc_perimeter_vcglib_" + surface_name + "_circscale" + std::to_string(circ_scale) + ".curv"});
-                const std::string mgd_filename = fs::util::fullpath({subjects_dir, subject, "surf", hemi + ".mean_geodist_vcglib_" + surface_name + ".curv"});
+            std::string cortex_outfilepart = use_cortex_label ? "cortex" : "wholebrain";
+                const std::string rad_filename = fs::util::fullpath({subjects_dir, subject, "surf", hemi + ".geocirc_radius_vcglib_" + surface_name + "_" + cortex_outfilepart + "_circscale" + std::to_string(circ_scale) + ".curv"});
+                const std::string per_filename = fs::util::fullpath({subjects_dir, subject, "surf", hemi + ".geocirc_perimeter_vcglib_" + surface_name + "_" + cortex_outfilepart + "_circscale" + std::to_string(circ_scale) + ".curv"});
+                const std::string mgd_filename = fs::util::fullpath({subjects_dir, subject, "surf", hemi + ".mean_geodist_vcglib_" + surface_name + "_" + cortex_outfilepart + ".curv"});
 
                 if(keep_existing_files) {
                     if(circle_stats_do_meandists_this_hemi) {
@@ -275,7 +294,7 @@ int main(int argc, char** argv) {
                     std::cout << "     o Geodesic mean distance results for hemi " << hemi << " written to file '" << mgd_filename << "'.\n";
                 }
             } else {
-                const std::string mean_geodist_outfile = fs::util::fullpath({subjects_dir, subject, "surf", hemi + ".mean_geodist_vcglib_" + surface_name + ".curv"});
+                const std::string mean_geodist_outfile = fs::util::fullpath({subjects_dir, subject, "surf", hemi + ".mean_geodist_vcglib_" + surface_name + "_" + cortex_outfilepart + ".curv"});
                 if(keep_existing_files) {
                     if(file_exists(mean_geodist_outfile)) {
                         std::cout << "     o Skipping computation for hemi " << hemi << ", output file exists.\n";
