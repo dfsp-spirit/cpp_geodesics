@@ -152,6 +152,7 @@ int main(int argc, char** argv) {
             // Create a VCGLIB mesh from the libfs Mesh.
             MyMesh m;
             vcgmesh_from_fs_surface(&m, surface);
+            MyMesh m_cortex;
 
             std::vector<bool> is_vertex_cortical = std::vector<bool>(surface.num_vertices(), true); // We assume all vertices are cortical by default.
 
@@ -180,17 +181,20 @@ int main(int argc, char** argv) {
                 // WARNING: This will get lost during conversion back to libfs Mesh (for OpenMP parallelization), as we do not support selections in libfs.
                 // Therefore, we pass the is_vertex_cortical vector to the geodesic_circles() function below, which will use it to ignore medial wall vertices.
                 //
-                for (size_t i=0; i<surface.num_vertices(); i++) {
-                    if(is_vertex_cortical[i]) {
-                        m.vert[i].SetS();
-                    }
-                }
+                //for (size_t i=0; i<surface.num_vertices(); i++) {
+                //    if(is_vertex_cortical[i]) {
+                //        m.vert[i].SetS();
+                //    }
+                //}
 
-                // TODO: the vertices in m are selected, but we need to select the proper faces and edges
-                //MyMesh submesh;
-                //vcg_select_consistent_by_vertices(&m, is_vertex_cortical);
-                //bool copy_only_selected = true;
-                //vcg::tri::Append<MyMesh, MyMesh>::Mesh(*submesh, *m, copy_only_selected);
+                auto res_pair = surface.submesh_vertex(label.vertex);
+
+                vcgmesh_from_fs_surface(&m_cortex, res_pair.second);
+
+                std::cout << "Created VCG mesh with " << m.VN() << " vertices and " << m.FN() << " faces from cortex label.\n";
+                // TODO: we need to change the output per-vertex data using the mapping information
+                // in res_pair.first. This is currently not done, and the output data will be wrong
+                // and have the wrong size.
             }
 
             // Compute the geodesic mean distances and write result file.
@@ -222,12 +226,13 @@ int main(int argc, char** argv) {
                     }
                 }
 
-                // TODO: we could support ignoring the medial wall by reading ?h.cortex.label and
-                //  passing it to 'geodesic_circles()' below. That function needs to pass it on further until
-                //  we call VCGLIB's PerVertexDijkstraCompute() function. We could select vertices in the VCG mesh (using vertex.setS(), see http://vcglib.net/flags.html)
-                //  prior to that call, and use the parameter 'avoid_selected' of PerVertexDijkstraCompute to ignore the selected medial wall verts.
                 std::vector<int32_t> qv_cs; // The query vertices (empty vector means to use all of the mesh).
-                std::vector<std::vector<float>> circle_stats = geodesic_circles(m, qv_cs, (float)circ_scale, circle_stats_do_meandists_this_hemi, is_vertex_cortical);
+                std::vector<std::vector<float>> circle_stats;
+                if  (use_cortex_label) {
+                    circle_stats = geodesic_circles(m_cortex, qv_cs, (float)circ_scale, circle_stats_do_meandists_this_hemi);
+                } else {
+                    circle_stats = geodesic_circles(m, qv_cs, (float)circ_scale, circle_stats_do_meandists_this_hemi);
+                }
                 const std::vector<float> radii = circle_stats[0];
                 const std::vector<float> perimeters = circle_stats[1];
                 fs::write_curv(rad_filename, radii);

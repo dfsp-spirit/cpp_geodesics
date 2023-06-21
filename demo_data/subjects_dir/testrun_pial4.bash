@@ -55,10 +55,22 @@ fi
 echo "${APPTAG} Running geodcircles on ${surface} surface with ico_order=${ico_order}..."
 echo "${APPTAG} Using cortex label file ${cortex_label_file}."
 
-../../geodcircles subjects.txt . ${surface} $do_circle_stats $keep_existing $circ_scale ${cortex_label_file}
-../../export_brainmesh subject1/surf/lh.${surface} subject1/surf/lh.geocirc_perimeter_vcglib_${surface}_circscale2.curv lh.${surface}_perimeter.ply
-../../export_brainmesh subject1/surf/lh.${surface} subject1/surf/lh.geocirc_radius_vcglib_${surface}_circscale2.curv lh.${surface}_radius.ply
-../../export_brainmesh subject1/surf/lh.${surface} subject1/surf/lh.mean_geodist_vcglib_${surface}.curv lh.${surface}_meandist.ply
+outfile_perim=subject1/surf/lh.geocirc_perimeter_vcglib_${surface}_circscale2.curv
+outfile_radius=subject1/surf/lh.geocirc_radius_vcglib_${surface}_circscale2.curv
+outfile_meandist=subject1/surf/lh.mean_geodist_vcglib_${surface}.curv
 
-echo "$APPTAG Done. You can view the results in MeshLab or other tools, e.g.: meshlab lh.${surface}_meandist.ply"
+if [ -f "${outfile_perim}" ]; then
+    rm "${outfile_perim}"
+fi
+if [ -f "${outfile_radius}" ]; then
+    rm "${outfile_radius}"
+fi
+if [ -f "${outfile_meandist}" ]; then
+    rm "${outfile_meandist}"
+fi
+
+../../geodcircles subjects.txt . ${surface} $do_circle_stats $keep_existing $circ_scale ${cortex_label_file}
+../../export_brainmesh subject1/surf/lh.${surface} "${outfile_perim}" lh.${surface}_perimeter.ply
+../../export_brainmesh subject1/surf/lh.${surface} "${outfile_radius}" lh.${surface}_radius.ply
+../../export_brainmesh subject1/surf/lh.${surface} "${outfile_meandist}" lh.${surface}_meandist.ply && echo "$APPTAG Done. You can view the results in MeshLab or other tools, e.g.: meshlab lh.${surface}_meandist.ply"
 
