@@ -29,11 +29,26 @@
 
 // Compute pseudo-geodesic distance from query vertices 'verts' to all others (or to those
 // within a maximal distance of maxdist_ if it is > 0). Often 'verts' only contains a single source vertex.
-std::vector<float> geodist(MyMesh& m, std::vector<int> verts, float maxdist, bool avoid_selection=false) {
+std::vector<float> geodist(MyMesh& m, std::vector<int> source_verts, float maxdist, bool avoid_selection=false) {
 
-    int n = verts.size();
+    int num_source_verts = source_verts.size();
     VertexIterator vi;
     FaceIterator fi;
+
+    #ifdef GEODCIRCLES_DEBUG
+    if (avoid_selection) {
+      size_t num_selected = 0;
+      for (int i=0; i < m.vn; i++) {
+          vi = m.vert.begin()+i;
+          if (vi->IsS()) {
+            num_selected++;
+          }
+      }
+      std::cout << "[DEBUG] geodist: There are " << num_selected << " vertices selected of " << m.vn << " in the mesh.\n";
+    }
+    #endif
+
+
 
     // Setup mesh
     m.vert.EnableVFAdjacency();
@@ -44,11 +59,11 @@ std::vector<float> geodist(MyMesh& m, std::vector<int> verts, float maxdist, boo
 
     // Prepare seed vector
     size_t num_ignored = 0;
-    std::vector<MyVertex*> seedVec(verts.size());
+    std::vector<MyVertex*> seedVec(source_verts.size());
     if (avoid_selection) {  // Only use vertices that are not selected.
       seedVec.resize(0);
-      for (int i=0; i < n; i++) {
-        vi = m.vert.begin()+verts[i];
+      for (int i=0; i < num_source_verts; i++) {
+        vi = m.vert.begin()+source_verts[i];
         if (!vi->IsS()) {
           seedVec.push_back(&*vi);
         } else {
@@ -56,12 +71,14 @@ std::vector<float> geodist(MyMesh& m, std::vector<int> verts, float maxdist, boo
         }
       }
     } else {  // Just use all vertices as seeds.
-      for (int i=0; i < n; i++) {
-        vi = m.vert.begin()+verts[i];
+      for (int i=0; i < num_source_verts; i++) {
+        vi = m.vert.begin()+source_verts[i];
         seedVec[i] = &*vi;
       }
     }
-    //std::cout << "Ignored " << num_ignored << " vertices.\n";
+    #ifdef GEODCIRCLES_DEBUG
+    std::cout << "[DEBUG] geodist: Ignoring " << num_ignored << " selected vertices, " << seedVec.size() << " left.\n";
+    #endif
 
     // Compute pseudo-geodesic distance by summing dists along shortest path in graph.
     tri::EuclideanDistance<MyMesh> ed;
@@ -69,22 +86,17 @@ std::vector<float> geodist(MyMesh& m, std::vector<int> verts, float maxdist, boo
       maxdist = std::numeric_limits<ScalarType>::max();
     }
 
+    std::vector<float> geodists(m.vn, 0.0);
+    if(seedVec.size() == 0) {
+      return geodists;  // No seeds, no geodists. This happens when the current vertex is part of the medial wall.
+    }
+
     tri::Geodesic<MyMesh>::PerVertexDijkstraCompute(m, seedVec, ed, maxdist, NULL, NULL, NULL, avoid_selection);
 
-    std::vector<float> geodists(m.vn);
     vi=m.vert.begin();
     for (int i=0; i < m.vn; i++) {
       geodists[i] = vi->Q();
       ++vi;
-    }
-    // set the distances for the ignored vertices to zero, if any.
-    if (avoid_selection) {  // Only use vertices that are not selected.
-      for (int i=0; i < n; i++) {
-        vi = m.vert.begin()+verts[i];
-        if (vi->IsS()) {
-          geodists[i] = 0.0;
-        }
-      }
     }
     return geodists;
 }
@@ -382,7 +394,7 @@ std::vector<std::vector<double>> _compute_geodesic_circle_stats(MyMesh& m, std::
         assert(geodist[face_verts[1]] < (max_possible_float - 0.01));
         assert(geodist[face_verts[2]] < (max_possible_float - 0.01));
 
-        // The following 3 vectors should be a matrix.
+        // The following 3 vectors represent 1 matrix together.
         std::vector<float> coords_v0 = surf.vertex_coords(face_verts[0]);
         std::vector<float> coords_v1 = surf.vertex_coords(face_verts[1]);
         std::vector<float> coords_v2 = surf.vertex_coords(face_verts[2]);
@@ -463,8 +475,8 @@ std::vector<std::vector<float>> geodesic_circles(MyMesh& m, std::vector<int> que
   fs_surface_from_vcgmesh(&surf, m);
 
   // Set cortical flag using vcglib selection. If vector was passed as empty, set all to true.
-  bool avoid_selection = true;
-  if(is_vertex_cortical.size() != m.vn) {
+  bool avoid_selection = true;  // Whether selection is present, and selected vertices should be ignored. Typically, selected vertices are from medial wall.
+  if(is_vertex_cortical.size() == 0) {
     avoid_selection = false;
     is_vertex_cortical.resize(m.vn);
     for(int i=0; i<m.vn; i++) {
@@ -473,19 +485,39 @@ std::vector<std::vector<float>> geodesic_circles(MyMesh& m, std::vector<int> que
   }
 
   #ifdef GEODCIRCLES_DEBUG
-  std::cout << "geodesic_circles: Using " << std::count(is_vertex_cortical.begin(), is_vertex_cortical.end(), true) << " cortical vertices (of " << is_vertex_cortical.size() << ").\n";
+  if (avoid_selection) {
+    std::cout << "[DEBUG] geodesic_circles: Using selection from label file.";
+  } else {
+    std::cout << "[DEBUG] geodesic_circles: Not using selection from label file.";
+  }
+  std::cout << " There are " << std::count(is_vertex_cortical.begin(), is_vertex_cortical.end(), true) << " cortical vertices (of " << is_vertex_cortical.size() << ").\n";
   #endif
 
   # pragma omp parallel for shared(surf, radius, perimeter, meandist)
   for(size_t i=0; i<nqv; i++) {
     MyMesh mt; // per thread, recreated from FreeSurfer mesh
     vcgmesh_from_fs_surface(&mt, surf);
-    // Set cortical flag using vcglib selection.
-    for (size_t i=0; i<m.vn; i++) {
+
+    // Set cortical flag using vcglib selection. We need to do this here, in the mesh for the current thread.
+    for (size_t i=0; i<mt.vn; i++) {
         if(!is_vertex_cortical[i]) {
-            m.vert[i].SetS(); // select non-cortical vertices to ignore them in geodist()
+            mt.vert[i].SetS(); // select non-cortical vertices to ignore them in geodist()
         }
     }
+
+    // Verify flag
+    #ifdef GEODCIRCLES_DEBUG
+    if (avoid_selection) {
+      size_t num_selected = 0;
+      for (int i=0; i < mt.vn; i++) {
+          if (mt.vert[i].IsS()) {
+            num_selected++;
+          }
+      }
+      std::cout << "[DEBUG] geodesic_circles: There are " << num_selected << " vertices selected of " << mt.vn << " in the mesh.\n";
+    }
+    #endif
+
     int qv = query_vertices[i];
     std::vector<int> query_vertex = { qv };
     std::vector<float> v_geodist = geodist(mt, query_vertex, max_dist, avoid_selection);
@@ -506,7 +538,7 @@ std::vector<std::vector<float>> geodesic_circles(MyMesh& m, std::vector<int> que
     }
 
     std::vector<double> sample_at_radii = linspace<double>(r_cycle-10.0, r_cycle+10.0, sampling);
-    std::vector<std::vector<double>> circle_stats = _compute_geodesic_circle_stats(m, v_geodist, sample_at_radii);
+    std::vector<std::vector<double>> circle_stats = _compute_geodesic_circle_stats(mt, v_geodist, sample_at_radii);
     std::vector<double> circle_areas = circle_stats[0];
     std::vector<double> circle_perimeters = circle_stats[1];
 

@@ -180,11 +180,17 @@ int main(int argc, char** argv) {
                 // WARNING: This will get lost during conversion back to libfs Mesh (for OpenMP parallelization), as we do not support selections in libfs.
                 // Therefore, we pass the is_vertex_cortical vector to the geodesic_circles() function below, which will use it to ignore medial wall vertices.
                 //
-                //for (size_t i=0; i<surface.num_vertices(); i++) {
-                //    if(is_vertex_cortical[i]) {
-                //        m.vert[i].SetS();
-                //    }
-                //}
+                for (size_t i=0; i<surface.num_vertices(); i++) {
+                    if(is_vertex_cortical[i]) {
+                        m.vert[i].SetS();
+                    }
+                }
+
+                // TODO: the vertices in m are selected, but we need to select the proper faces and edges
+                //MyMesh submesh;
+                //vcg_select_consistent_by_vertices(&m, is_vertex_cortical);
+                //bool copy_only_selected = true;
+                //vcg::tri::Append<MyMesh, MyMesh>::Mesh(*submesh, *m, copy_only_selected);
             }
 
             // Compute the geodesic mean distances and write result file.

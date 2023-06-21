@@ -8,11 +8,14 @@
 #include <vcg/space/point3.h>
 
 
-void vcgmesh_from_fs_surface(MyMesh* m, const fs::Mesh& fs_surface) {  
+/// @brief Create a VCGLIB MyMesh instance from an fs::Mesh
+/// @param m pointer to an empty MyMesh instance
+/// @param fs_surface the fs::Mesh instance to convert
+void vcgmesh_from_fs_surface(MyMesh* m, const fs::Mesh& fs_surface) {
   int nv = fs_surface.num_vertices();
   int nf = fs_surface.num_faces();
 
-  // Add vertices  
+  // Add vertices
   vcg::tri::Allocator<MyMesh>::AddVertices(*m, nv);
 
   //std::cout << " Creating MyMesh instance with " << nv << " vertices and " << nf << " faces.\n";
@@ -20,7 +23,7 @@ void vcgmesh_from_fs_surface(MyMesh* m, const fs::Mesh& fs_surface) {
   // Create vertex pointers, used later when creating faces.
   std::vector<MyMesh::VertexPointer> ivp;
   ivp.resize(nv);
-	
+
   // Set vertex coordinates.
   for (int i=0; i < nv; i++) {
     VertexIterator vi = m->vert.begin()+i;
@@ -68,4 +71,4 @@ void fs_surface_from_vcgmesh(fs::Mesh* surf, MyMesh& m) {
   surf->faces = faces;
 }
 
-  
+
