@@ -167,6 +167,8 @@ int main(int argc, char** argv) {
             // Load cortex label if given.
             std::pair<std::unordered_map<size_t, size_t>, fs::Mesh> res_pair;
             std::vector<size_t> submesh_to_orig_mapping = std::vector<size_t>();
+            std::vector<size_t> orig_to_submesh_mapping = std::vector<size_t>();
+            std::vector<size_t> used_mapping;
             fs::Label label;
             if(use_cortex_label) {
                 const std::string cortex_label_file = fs::util::fullpath({subjects_dir, subject, "label", hemi + "." + cortex_label});
@@ -203,6 +205,15 @@ int main(int argc, char** argv) {
                 for (auto &s : res_pair.first) {
                     submesh_to_orig_mapping.push_back(s.second);
                 }
+
+                std::unordered_map<size_t, size_t> vertex_index_map_new2old;
+                for (auto const& pair: res_pair.first) {
+                    vertex_index_map_new2old[pair.second] = pair.first;
+                }
+                for (auto &s : vertex_index_map_new2old) {
+                    orig_to_submesh_mapping.push_back(s.second);
+                }
+                used_mapping = orig_to_submesh_mapping;
 
                 std::cout << "Created VCG mesh with " << m.VN() << " vertices and " << m.FN() << " faces from cortex label.\n";
                 // TODO: we need to change the output per-vertex data using the mapping information
@@ -243,8 +254,8 @@ int main(int argc, char** argv) {
                 std::vector<std::vector<float>> circle_stats;
                 if  (use_cortex_label) {
                     circle_stats = geodesic_circles(m_cortex, qv_cs, (float)circ_scale, circle_stats_do_meandists_this_hemi);
-                    circle_stats[0] = curv_data_for_orig_mesh(circle_stats[0], submesh_to_orig_mapping, surface.num_vertices());
-                    circle_stats[1] = curv_data_for_orig_mesh(circle_stats[1], submesh_to_orig_mapping, surface.num_vertices());
+                    circle_stats[0] = curv_data_for_orig_mesh(circle_stats[0], used_mapping, surface.num_vertices());
+                    circle_stats[1] = curv_data_for_orig_mesh(circle_stats[1], used_mapping, surface.num_vertices());
                 } else {
                     circle_stats = geodesic_circles(m, qv_cs, (float)circ_scale, circle_stats_do_meandists_this_hemi);
                 }
@@ -257,7 +268,8 @@ int main(int argc, char** argv) {
                 if(circle_stats_do_meandists_this_hemi) {
                     std::vector<float> mean_geodists_circ = circle_stats[2];
                     if  (use_cortex_label) {
-                        mean_geodists_circ = curv_data_for_orig_mesh(mean_geodists_circ, submesh_to_orig_mapping, surface.num_vertices());
+                        //mean_geodists_circ = curv_data_for_orig_mesh(mean_geodists_circ, submesh_to_orig_mapping, surface.num_vertices());
+                        mean_geodists_circ = curv_data_for_orig_mesh(mean_geodists_circ, used_mapping, surface.num_vertices());
                     }
                     fs::write_curv(mgd_filename, mean_geodists_circ);
                     std::cout << "     o Geodesic mean distance results for hemi " << hemi << " written to file '" << mgd_filename << "'.\n";
@@ -274,7 +286,7 @@ int main(int argc, char** argv) {
                 std::vector<float> mean_dists;
                 if  (use_cortex_label) {
                     mean_dists = mean_geodist_p(m_cortex);
-                    mean_dists = curv_data_for_orig_mesh(mean_dists, submesh_to_orig_mapping, surface.num_vertices());
+                    mean_dists = curv_data_for_orig_mesh(mean_dists, used_mapping, surface.num_vertices());
                 } else {
                     mean_dists = mean_geodist(m);
                 }
