@@ -91,13 +91,14 @@ int main(int argc, char** argv) {
     }
 
     const std::vector<std::string> subjects = fs::read_subjectsfile(subjects_file);
-    std::cout << "Found " << subjects.size() << " subjects listed in subjects file '" << subjects_file << "'.\n";
 
     if (subjects.size() < 1) {
         std::cerr << "Found no subjects in subjects file '" << subjects_file << "'. Exiting.\n";
         exit(1);
     }
 
+    std::cout << "=Settings=\n";
+    std::cout << "Using " << subjects.size() << " subjects listed in subjects file '" << subjects_file << "'.\n";
     std::cout << "Using subject directory '" << subjects_dir << "' and surface '" << surface_name << "'.\n";
     std::cout << (do_circle_stats? "Computing" : "Not computing")  << " geodesic circle stats" << (do_circle_stats? " with scale " + std::to_string(circ_scale) : "") << ".\n";
     std::cout << (keep_existing_files? "Keeping" : "Not keeping (recomputing data for)")  << " existing output files.\n";
@@ -113,6 +114,8 @@ int main(int argc, char** argv) {
     } else {
         std::cout << "Not using a cortex label file to ignore medial wall vertices, computing for all mesh vertices.\n";
     }
+
+    std::cout << "=Starting computation=\n";
 
     const std::vector<std::string> hemis = {"lh", "rh"};
     std::string surf_file, hemi, subject;
@@ -156,22 +159,31 @@ int main(int argc, char** argv) {
             fs::Label label;
             if(use_cortex_label) {
                 const std::string cortex_label_file = fs::util::fullpath({subjects_dir, subject, "label", hemi + "." + cortex_label});
-                is_vertex_cortical = label.vert_in_label(surface.num_vertices());
                 try {
                     fs::read_label(&label, cortex_label_file);
+                    is_vertex_cortical = label.vert_in_label(surface.num_vertices());
                 } catch(const std::exception& e) {
                     std::cerr << "   - Failed to load cortex label file '" << cortex_label_file << "' for subject " << subject << ", skipping hemi. Details: " << e.what();
                     failed_subjects.push_back(subject); // This may result in subjects ending up twice in the list, if both hemis fail. That is fine with us for now, and handled at the end when reporting.
                     num_skipped_hemis_so_far++;
                     continue;
                 }
+                if(label.vertex.size() > surface.num_vertices()) {
+                    std::cerr << "   - Cortex label file '" << cortex_label_file << "' for subject " << subject << " contains more vertices than the surface, skipping hemi.\n";
+                    std::cerr << "     * Hint: if you are using a downsampled surface, you also have to use a downsampled cortex label. See mri_label2label or the 'downsample_label.bash' script from this repo.\n";
+                    failed_subjects.push_back(subject); // This may result in subjects ending up twice in the list, if both hemis fail. That is fine with us for now, and handled at the end when reporting.
+                    num_skipped_hemis_so_far++;
+                    continue;
+                }
                 // Set the cortex label data as flags on the VCG mesh.
                 // WARNING: This will get lost during conversion back to libfs Mesh (for OpenMP parallelization), as we do not support selections in libfs.
-                for (size_t i=0; i<surface.num_vertices(); i++) {
-                    if(is_vertex_cortical[i]) {
-                        m.vert[i].SetS();
-                    }
-                }
+                // Therefore, we pass the is_vertex_cortical vector to the geodesic_circles() function below, which will use it to ignore medial wall vertices.
+                //
+                //for (size_t i=0; i<surface.num_vertices(); i++) {
+                //    if(is_vertex_cortical[i]) {
+                //        m.vert[i].SetS();
+                //    }
+                //}
             }
 
             // Compute the geodesic mean distances and write result file.
