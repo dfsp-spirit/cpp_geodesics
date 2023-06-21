@@ -32,4 +32,5 @@ fi
 ../../export_brainmesh subject1/surf/lh.${surface} subject1/surf/lh.geocirc_radius_vcglib_${surface}_circscale2.curv lh.${surface}_radius.ply
 ../../export_brainmesh subject1/surf/lh.${surface} subject1/surf/lh.mean_geodist_vcglib_${surface}.curv lh.${surface}_meandist.ply
 
+echo "$APPTAG Done. You can view the results in MeshLab or other tools, e.g.: meshlab lh.${surface}_meandist.ply"
 
