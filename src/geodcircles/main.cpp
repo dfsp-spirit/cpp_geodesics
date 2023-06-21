@@ -78,7 +78,7 @@ int main(int argc, char** argv) {
             exit(1);
         }
     }
-    if(argc == 7) { // circ_scale
+    if(argc >= 7) { // circ_scale
         circ_scale = std::atoi(argv[6]);
     }
     if(argc == 8) { // cortex_label
