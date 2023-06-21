@@ -26,7 +26,7 @@ fi
 
 if [ -n "$1" ]; then
     surface=$1
-    if [ "${surface}" == "pial" -o "${surface}" == "pialsurface4" -o "${surface}" == "pialsurface5" -o "${surface}" == "pialsurface6"]; then
+    if [ "${surface}" == "pial" -o "${surface}" == "pialsurface4" -o "${surface}" == "pialsurface5" -o "${surface}" == "pialsurface6" ]; then
         echo "${APPTAG} Using surface ${surface} from command line."
     else
         echo "${APPTAG} ERROR: Parameter 'surface' must be 'pialsurface4', 'pialsurface5', 'pialsurface6', or 'pial'."
