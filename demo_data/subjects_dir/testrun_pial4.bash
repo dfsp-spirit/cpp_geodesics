@@ -13,12 +13,18 @@
 
 APPTAG="[TESTRUN]"
 
+if [ ! -f subjects.txt ]; then
+    echo "${APPTAG} ERROR: File subjects.txt not found. Please run this script from the directory it is stored in."
+    exit 1
+fi
+
+
 if [ -n "$1" ]; then
     surface=$1
-    if [ "${surface}" == "pialsurface4" -o "${surface}" == "pialsurface5" -o "${surface}" == "pialsurface6"]; then
+    if [ "${surface}" == "pial" -o "${surface}" == "pialsurface4" -o "${surface}" == "pialsurface5" -o "${surface}" == "pialsurface6"]; then
         echo "${APPTAG} Using surface ${surface} from command line."
     else
-        echo "${APPTAG} ERROR: Parameter 'surface' must be 'pialsurface4', 'pialsurface5', or 'pialsurface6'."
+        echo "${APPTAG} ERROR: Parameter 'surface' must be 'pialsurface4', 'pialsurface5', 'pialsurface6', or 'pial'."
         echo "${APPTAG} USAGE: $0 [surface]"
         exit 1
     fi
@@ -27,7 +33,24 @@ else
     echo "${APPTAG} Using surface ${surface}."
 fi
 
-../../geodcircles subjects.txt . ${surface} 2 1 2
+if [ "${surface}" == "pialsurface4" ]; then
+    ico_order=4
+    cortex_label_file="cortex${ico_order}.label"
+elif [ "${surface}" == "pialsurface5" ]; then
+    ico_order=5
+    cortex_label_file="cortex${ico_order}.label"
+elif [ "${surface}" == "pialsurface6" ]; then
+    ico_order=6
+    cortex_label_file="cortex${ico_order}.label"
+elif [ "${surface}" == "pial" ]; then
+    ico_order=7
+    cortex_label_file="cortex.label"
+fi
+
+echo "${APPTAG} Running geodcircles on ${surface} surface with ico_order=${ico_order}..."
+echo "${APPTAG} Using cortex label file ${cortex_label_file}."
+
+../../geodcircles subjects.txt . ${surface} 2 1 2 ${cortex_label_file}
 ../../export_brainmesh subject1/surf/lh.${surface} subject1/surf/lh.geocirc_perimeter_vcglib_${surface}_circscale2.curv lh.${surface}_perimeter.ply
 ../../export_brainmesh subject1/surf/lh.${surface} subject1/surf/lh.geocirc_radius_vcglib_${surface}_circscale2.curv lh.${surface}_radius.ply
 ../../export_brainmesh subject1/surf/lh.${surface} subject1/surf/lh.mean_geodist_vcglib_${surface}.curv lh.${surface}_meandist.ply
