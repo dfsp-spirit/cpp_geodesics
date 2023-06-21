@@ -175,6 +175,7 @@ int main(int argc, char** argv) {
                     num_skipped_hemis_so_far++;
                     continue;
                 }
+                std::cout << "   - Loaded cortex label file '" << cortex_label_file << "', cortex spans " << label.vertex.size() << " of " << surface.num_vertices() << " vertices (" << int(label.vertex.size()/(float)surface.num_vertices()*100.0) << " percent).\n";
                 // Set the cortex label data as flags on the VCG mesh.
                 // WARNING: This will get lost during conversion back to libfs Mesh (for OpenMP parallelization), as we do not support selections in libfs.
                 // Therefore, we pass the is_vertex_cortical vector to the geodesic_circles() function below, which will use it to ignore medial wall vertices.

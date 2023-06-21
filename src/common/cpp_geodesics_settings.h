@@ -1,0 +1,3 @@
+
+
+#define GEODCIRCLES_DEBUG 1
