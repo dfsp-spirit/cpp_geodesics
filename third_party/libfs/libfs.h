@@ -881,7 +881,8 @@ namespace fs {
 
     /// @brief Compute a new mesh that is a submesh of this mesh, based on a subset of the vertices of this mesh.
     /// @param old_vertex_indices vector of vertex indices of this mesh, which should be included in the submesh.
-    /// @return a pair of the vertex index map (old to new) and the submesh.
+    /// @param mapdir_fulltosubmesh whether to return a map from the old (full mesh) to the new (submesh)  vertex indices (`true`, the default), or the other way around (`false`) as the first element of the returned pair.
+    /// @return a pair of the vertex index map (direction 'fullmesh to submesh' by default, but see 'mapdir_fulltosubmesh' parameter) and the submesh.
     ///
     /// #### Examples
     ///
@@ -890,22 +891,18 @@ namespace fs {
     /// fs::read_surf(&surface, "examples/read_surf/lh.white");
     /// fs::Label label;
     /// fs::read_label(&label, "examples/read_label/lh.cortex.label");
-    /// std::pair <std::unordered_map<size_t, size_t>, fs::Mesh> result = surface.submesh_vertex(label.vertex);
+    /// std::pair <std::unordered_map<int32_t, int32_t>, fs::Mesh> result = surface.submesh_vertex(label.vertex);
     /// fs::Mesh patch = result.second;
-    /// // Compute new to old vertex mapping from returned old to new mapping:
-    /// std::unordered_map<size_t, size_t> vertex_index_map_new2old;
-    /// for (auto const& pair: result.first) {
-    ///  vertex_index_map_new2old[pair.second] = pair.first;
-    /// }
+    /// auto vertexindexmap_full2submesh = result.first; // or '<std::unordered_map<int32_t, int32_t>' instead of 'auto'.
     /// @endcode
-    std::pair <std::unordered_map<size_t, size_t>, fs::Mesh> submesh_vertex(const std::vector<int> &old_vertex_indices) const {
+    std::pair <std::unordered_map<int32_t, int32_t>, fs::Mesh> submesh_vertex(const std::vector<int> &old_vertex_indices, const bool mapdir_fulltosubmesh = false) const {
       fs::Mesh submesh;
       std::vector<float> new_vertices;
       std::vector<int> new_faces;
-      std::unordered_map<size_t, size_t> vertex_index_map_old2new;
-      size_t new_vertex_idx = 0;
+      std::unordered_map<int32_t, int32_t> vertex_index_map_full2submesh;
+      int32_t new_vertex_idx = 0;
       for(size_t i = 0; i < old_vertex_indices.size(); i++) {
-        vertex_index_map_old2new[old_vertex_indices[i]] = new_vertex_idx;
+        vertex_index_map_full2submesh[old_vertex_indices[i]] = new_vertex_idx;
         new_vertices.push_back(this->vertices[old_vertex_indices[i]*3]);
         new_vertices.push_back(this->vertices[old_vertex_indices[i]*3+1]);
         new_vertices.push_back(this->vertices[old_vertex_indices[i]*3+2]);
@@ -918,23 +915,49 @@ namespace fs {
         face_v0 = this->faces[i*3];
         face_v1 = this->faces[i*3+1];
         face_v2 = this->faces[i*3+2];
-        if((vertex_index_map_old2new.find(face_v0) != vertex_index_map_old2new.end()) && (vertex_index_map_old2new.find(face_v1) != vertex_index_map_old2new.end()) && (vertex_index_map_old2new.find(face_v2) != vertex_index_map_old2new.end())) {
-          new_faces.push_back(vertex_index_map_old2new[face_v0]);
-          new_faces.push_back(vertex_index_map_old2new[face_v1]);
-          new_faces.push_back(vertex_index_map_old2new[face_v2]);
+        if((vertex_index_map_full2submesh.find(face_v0) != vertex_index_map_full2submesh.end()) && (vertex_index_map_full2submesh.find(face_v1) != vertex_index_map_full2submesh.end()) && (vertex_index_map_full2submesh.find(face_v2) != vertex_index_map_full2submesh.end())) {
+          new_faces.push_back(vertex_index_map_full2submesh[face_v0]);
+          new_faces.push_back(vertex_index_map_full2submesh[face_v1]);
+          new_faces.push_back(vertex_index_map_full2submesh[face_v2]);
         }
       }
       submesh.vertices = new_vertices;
       submesh.faces = new_faces;
 
-      // How to compute the new2old (reverse) vertex index map:
-      //std::unordered_map<size_t, size_t> vertex_index_map_new2old;
-      //for (auto const& pair: vertex_index_map_old2new) {
-      //  vertex_index_map_new2old[pair.second] = pair.first;
-      //}
+      std::pair <std::unordered_map<int32_t, int32_t>, fs::Mesh> result;
+      if(! mapdir_fulltosubmesh) {  // Compute the new2old (reverse) vertex index map:
+        std::unordered_map<int32_t, int32_t> vertex_index_map_submesh2full;
+        for (auto const& pair: vertex_index_map_full2submesh) {
+          vertex_index_map_submesh2full[pair.second] = pair.first;
+        }
+        result = std::pair <std::unordered_map<int32_t, int32_t>, fs::Mesh>(vertex_index_map_submesh2full, submesh);
+      } else {
+        result = std::pair <std::unordered_map<int32_t, int32_t>, fs::Mesh>(vertex_index_map_full2submesh, submesh);
+      }
 
-      std::pair <std::unordered_map<size_t, size_t>, fs::Mesh> result (vertex_index_map_old2new, submesh);
       return result;
+    }
+
+    /// @brief Given per-vertex data for a submesh, add NAN values inbetween to restore the original mesh size.
+    /// @param data_submesh vector of per-vertex data values, one value per mesh vertex of the submesh.
+    /// @param submesh_to_orig_mapping map<int, int>, mapping vertex indices of the submesh to vertex indices of the original, full mesh.
+    /// @param orig_mesh_num_vertices number of vertices of the original, full mesh.
+    /// @see `fs::Mesh::submesh_vertex` for how to get the `submesh_to_orig_mapping` parameter.
+    /// @return vector of per-vertex data values, one value per mesh vertex of the original mesh. Values for vertices that are not part of the submesh are set to NAN.
+    static std::vector<float> curv_data_for_orig_mesh(const std::vector<float> data_submesh, const std::unordered_map<int32_t, int32_t> submesh_to_orig_mapping, const int32_t orig_mesh_num_vertices) {
+
+      if(submesh_to_orig_mapping.size() != data_submesh.size()) {
+        throw std::domain_error("The number of vertices of the submesh and the number of values in the submesh_to_orig_mapping do not match: got " + std::to_string(data_submesh.size()) + " and " + std::to_string(submesh_to_orig_mapping.size()) + ".");
+      }
+
+      std::vector<float> data_orig_mesh(orig_mesh_num_vertices, std::numeric_limits<float>::quiet_NaN());
+      for(size_t i=0; i<data_submesh.size(); i++) {
+          auto got = submesh_to_orig_mapping.find(i);
+          if (got != submesh_to_orig_mapping.end()) {
+            data_orig_mesh[got->second] = data_submesh[i];
+          }
+      }
+      return(data_orig_mesh);
     }
 
 
@@ -1416,7 +1439,7 @@ namespace fs {
       plys << "property float x\nproperty float y\nproperty float z\n";
       if(use_vertex_colors) {
         if(col.size() != this->vertices.size()) {
-          throw std::invalid_argument("Number of vertex coordinates and vertex colors must match when writing PLY file.");
+          throw std::invalid_argument("Number of vertex coordinates and vertex colors must match when writing PLY file, but got " + std::to_string(this->vertices.size()) + " and " + std::to_string(col.size()) + ".");
         }
         plys << "property uchar red\nproperty uchar green\nproperty uchar blue\n";
       }
@@ -1493,7 +1516,7 @@ namespace fs {
         fs::util::log("Writing OFF representation of mesh with vertex colors.", "INFO");
         #endif
         if(col.size() != this->vertices.size()) {
-          throw std::invalid_argument("Number of vertex coordinates and vertex colors must match when writing OFF file.");
+          throw std::invalid_argument("Number of vertex coordinates and vertex colors must match when writing OFF file but got " + std::to_string(this->vertices.size()) + " and " + std::to_string(col.size()) + ".");
         }
         offs << "COFF\n";
       } else {
