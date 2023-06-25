@@ -7,6 +7,7 @@
 #include "mesh_area.h"
 #include "mesh_edges.h"
 #include "vec_math.h"
+#include "cpp_geodesics_settings.h"
 
 #include <vcg/complex/complex.h>
 #include <vcg/complex/append.h>
@@ -28,9 +29,9 @@
 
 // Compute pseudo-geodesic distance from query vertices 'verts' to all others (or to those
 // within a maximal distance of maxdist_ if it is > 0). Often 'verts' only contains a single source vertex.
-std::vector<float> geodist(MyMesh& m, std::vector<int> verts, float maxdist) {
+std::vector<float> geodist(MyMesh& m, std::vector<int> source_verts, float maxdist) {
 
-    int n = verts.size();
+    int num_source_verts = source_verts.size();
     VertexIterator vi;
     FaceIterator fi;
 
@@ -42,21 +43,25 @@ std::vector<float> geodist(MyMesh& m, std::vector<int> verts, float maxdist) {
     tri::UpdateTopology<MyMesh>::VertexFace(m);
 
     // Prepare seed vector
-    std::vector<MyVertex*> seedVec(verts.size());
-    for (int i=0; i < n; i++) {
-      vi = m.vert.begin()+verts[i];
+    std::vector<MyVertex*> seedVec(source_verts.size());
+    for (int i=0; i < num_source_verts; i++) {
+      vi = m.vert.begin()+source_verts[i];
       seedVec[i] = &*vi;
     }
 
     // Compute pseudo-geodesic distance by summing dists along shortest path in graph.
     tri::EuclideanDistance<MyMesh> ed;
-    if(maxdist > 0.0) {
-      tri::Geodesic<MyMesh>::PerVertexDijkstraCompute(m,seedVec,ed,maxdist);
-    } else {
-      tri::Geodesic<MyMesh>::PerVertexDijkstraCompute(m,seedVec,ed);
+    if(maxdist < 0.0) {
+      maxdist = std::numeric_limits<ScalarType>::max();
     }
 
-    std::vector<float> geodists(m.vn);
+    std::vector<float> geodists(m.vn, 0.0);
+    if(seedVec.size() == 0) {
+      return geodists;  // No seeds, no geodists. This happens when the current vertex is part of the medial wall.
+    }
+
+    tri::Geodesic<MyMesh>::PerVertexDijkstraCompute(m, seedVec, ed, maxdist, NULL, NULL, NULL, false);
+
     vi=m.vert.begin();
     for (int i=0; i < m.vn; i++) {
       geodists[i] = vi->Q();
@@ -358,7 +363,7 @@ std::vector<std::vector<double>> _compute_geodesic_circle_stats(MyMesh& m, std::
         assert(geodist[face_verts[1]] < (max_possible_float - 0.01));
         assert(geodist[face_verts[2]] < (max_possible_float - 0.01));
 
-        // The following 3 vectors should be a matrix.
+        // The following 3 vectors represent 1 matrix together.
         std::vector<float> coords_v0 = surf.vertex_coords(face_verts[0]);
         std::vector<float> coords_v1 = surf.vertex_coords(face_verts[1]);
         std::vector<float> coords_v2 = surf.vertex_coords(face_verts[2]);
@@ -438,10 +443,20 @@ std::vector<std::vector<float>> geodesic_circles(MyMesh& m, std::vector<int> que
   fs::Mesh surf;  // Create FreeSurfer mesh that is copyable for OpenMP.
   fs_surface_from_vcgmesh(&surf, m);
 
+
   # pragma omp parallel for shared(surf, radius, perimeter, meandist)
   for(size_t i=0; i<nqv; i++) {
     MyMesh mt; // per thread, recreated from FreeSurfer mesh
     vcgmesh_from_fs_surface(&mt, surf);
+
+    // Set cortical flag using vcglib selection. We need to do this here, in the mesh for the current thread.
+    //for (size_t i=0; i<mt.vn; i++) {
+    //    if(!is_vertex_cortical[i]) {
+    //        mt.vert[i].SetS(); // select non-cortical vertices to ignore them in geodist()
+    //    }
+    //}
+
+
     int qv = query_vertices[i];
     std::vector<int> query_vertex = { qv };
     std::vector<float> v_geodist = geodist(mt, query_vertex, max_dist);
@@ -462,7 +477,7 @@ std::vector<std::vector<float>> geodesic_circles(MyMesh& m, std::vector<int> que
     }
 
     std::vector<double> sample_at_radii = linspace<double>(r_cycle-10.0, r_cycle+10.0, sampling);
-    std::vector<std::vector<double>> circle_stats = _compute_geodesic_circle_stats(m, v_geodist, sample_at_radii);
+    std::vector<std::vector<double>> circle_stats = _compute_geodesic_circle_stats(mt, v_geodist, sample_at_radii);
     std::vector<double> circle_areas = circle_stats[0];
     std::vector<double> circle_perimeters = circle_stats[1];
 

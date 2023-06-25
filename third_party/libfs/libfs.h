@@ -8,6 +8,14 @@
 #include <cassert>
 #include <sstream>
 #include <stdexcept>
+#include <map>
+#include <unordered_set>
+#include <unordered_map>
+#include <cmath>
+#include <algorithm>
+#include <chrono>
+
+#define LIBFS_VERSION "0.3.2"
 
 /// @file
 ///
@@ -44,10 +52,9 @@
  * You can define the output produced by libfs from your application. To do so,
  * `#define` _one_ of the following debug levels in your application, *before* including 'libfs.h':
  *
- *  - `LIBFS_DBG_CRITICAL`     // print only crtical errors that will raise an expection and most likely cause application to stop (unless caught).
+ *  - `LIBFS_DBG_CRITICAL`     // print only critical errors that will raise an expection and most likely cause application to stop (unless caught).
  *  - `LIBFS_DBG_ERROR`        // prints errors (and more severe things).
  *  - `LIBFS_DBG_WARNING`      // the default, prints warnings (and more severe things).
- *  - `LIBFS_DBG_IMPORTANT`    // prints important messages that may indicate atypical behaviour.
  *  - `LIBFS_DBG_INFO`         // prints info messages, like what is currently being done.
  *  - `LIBFS_DBG_VERBOSE`      // prints info messages inside loops, may considerable slow down apps and litter stdout.
  *  - `LIBFS_DBG_EXCESSIVE`    // prints info messages in nested loops, will considerable slow down apps and quickly litter stdout.
@@ -58,7 +65,7 @@
  *   - The debug levels are ordered in the list above, and defining a single one will automatically enable
  * all levels of higher importance (e.g., defining `LIBFS_DBG_WARNING` also enables `LIBFS_DBG_ERROR` and `LIBFS_DBG_CRITICAL`).
  *   - If you define nothing at all, libfs defaults to `LIBFS_DBG_WARNING`.
- *   - If you do not want any ouput from libfs, define `LIBFS_DBG_NONE`. This is not recommended though, as it completely disabled
+ *   - If you do not want any ouput from libfs, define `LIBFS_DBG_NONE`. This is not recommended though, as it completely disables
  *     all output, including critical error messages. This means that your application may terminate without any message,
  *     and is only advisable if you are very sure that you catch all possible exceptions and then produce an error message
  *     for users in your application code.
@@ -106,10 +113,6 @@
 #endif
 
 #ifdef LIBFS_DBG_INFO
-#define LIBFS_DBG_IMPORTANT
-#endif
-
-#ifdef LIBFS_DBG_IMPORTANT
 #define LIBFS_DBG_WARNING
 #endif
 
@@ -126,6 +129,53 @@
 namespace fs {
 
   namespace util {
+
+    /// @brief Get current time as string, e.g. for log messages.
+    /// @param t the timepoint to format as a string, typically `std::system_clock::now()`.
+    /// @return the formatted time string.
+    /// #### Examples
+    ///
+    /// @code
+    /// std::string time_rep = fs::util::time_tag(std::chrono::system_clock::now());
+    /// @endcode
+    std::string time_tag(std::chrono::system_clock::time_point t) {
+      auto as_time_t = std::chrono::system_clock::to_time_t(t);
+      struct tm tm;
+      char time_buffer[64];
+      //if (::gmtime_r(&as_time_t, &tm)) {
+      if (::localtime_r(&as_time_t, &tm)) {
+        if (std::strftime(time_buffer, sizeof(time_buffer), "%F %T", &tm)) {
+          return std::string{time_buffer};
+        }
+      }
+      throw std::runtime_error("Failed to get current date as string");
+    }
+
+    /// Logging threshold for critical messages.
+    const std::string LOGTAG_CRITICAL = "CRITICAL";
+
+    /// Logging threshold for error messages.
+    const std::string LOGTAG_ERROR = "ERROR";
+
+    /// Logging threshold for warning messages.
+    const std::string LOGTAG_WARNING = "WARNING";
+
+    /// Logging threshold for warning messages.
+    const std::string LOGTAG_INFO = "INFO";
+
+    /// Logging threshold for warning messages.
+    const std::string LOGTAG_VERBOSE = "VERBOSE";
+
+    /// Logging threshold for warning messages.
+    const std::string LOGTAG_EXCESSIVE = "EXCESSIVE";
+
+    /// @brief Log a message, goes to stdout.
+    /// @param message the message to be logged.
+    /// @param loglevel the log level, one of `fs::util::LOGTAG_*`.
+    inline void log(std::string const & message, std::string const loglevel = "INFO") {
+      std::cout << LIBFS_APPTAG << "[" << loglevel << "] [" << fs::util::time_tag(std::chrono::system_clock::now()) << "] " << message << "\n";
+    }
+
     /// @brief Check whether a string ends with the given suffix.
     /// @private
     ///
@@ -156,8 +206,63 @@ namespace fs {
       return false;
     }
 
+
+    /// @brief Turn 1D vector into 2D vector.
+    /// @param values the input 1D vector.
+    /// @param num_cols number of columns for the returned 2D vector.
+    /// @return 2D vector with `num_cols` columns.
+    /// @private
+    ///
+    /// #### Examples
+    ///
+    /// @code
+    /// std::vector<float> input = { 1.0, 2.0, 3.0, 4.0, 5.0, 6.0 };
+    /// std::vector<std::vector<float>> res = fs::util::v2d(input, 2);
+    /// @endcode
+    template <typename T>
+    std::vector<std::vector <T>> v2d(std::vector<T> values, size_t num_cols) {
+      std::vector<std::vector <T>> result;
+      for (std::size_t i = 0; i < values.size(); ++i) {
+          if (i % num_cols == 0) {
+            result.resize(result.size() + 1);
+          }
+          result[i / num_cols].push_back(values[i]);
+      }
+      return result;
+    }
+
+    /// @brief Flatten 2D vector.
+    /// @param values the input 2D vector.
+    /// @return 1D vector.
+    ///
+    /// #### Examples
+    ///
+    /// @code
+    /// std::vector<float> input = { 1.0, 2.0, 3.0, 4.0, 5.0, 6.0 };
+    /// std::vector<std::vector<float>> res = fs::util::v2d(input, 2);
+    /// @endcode
+    template <typename T>
+    std::vector<T> vflatten(std::vector<std::vector <T>> values) {
+      size_t total_size = 0;
+      for (std::size_t i = 0; i < values.size(); i++) {
+        total_size += values[i].size();
+      }
+
+      std::vector <T> result = std::vector<T>(total_size);
+      size_t cur_idx = 0;
+      for (std::size_t i = 0; i < values.size(); i++) {
+        for (std::size_t j = 0; j < values[i].size(); j++) {
+          result[cur_idx] = values[i][j];
+          cur_idx++;
+        }
+      }
+      return result;
+    }
+
     /// @brief Check whether a string starts with the given prefix.
     /// @private
+    /// @note This is a private function, users should call the overloaded version that accepts
+    ///       a vector of prefixes instead.
     ///
     /// #### Examples
     ///
@@ -170,7 +275,9 @@ namespace fs {
     }
 
     /// @brief Check whether a string starts with one of the given prefixes.
-    /// @private
+    /// @param value the string for which to check whether it starts with any of the prefixes
+    /// @param prefixes the prefixes to consider
+    /// @returns whether the string starts with one of the prefixes.
     ///
     /// #### Examples
     ///
@@ -188,15 +295,23 @@ namespace fs {
 
     /// @brief Check whether a file exists (can be read) at given path.
     /// @details You should not rely on this as a pre-check when considering to open a file due
-    ///          to race conditions, just try-catch open in that case.
+    ///          to race conditions, just try-catch open in that case. This is intended to check
+    ///          whether a certain software run succeeded, by checking whether the key expected
+    ///          output files exist.
+    /// @param name the filename that should be checked.
+    /// #### Examples
+    ///
+    /// @code
+    /// bool exists = fs::util::file_exists("./study1/subject1/label/lh.aparc.annot");
+    /// @endcode
     inline bool file_exists(const std::string& name) {
-    if (FILE *file = fopen(name.c_str(), "r")) {
-        fclose(file);
-        return true;
-    } else {
-        return false;
+      if (FILE *file = fopen(name.c_str(), "r")) {
+          fclose(file);
+          return true;
+      } else {
+          return false;
+      }
     }
-}
 
 
     /// @brief Construct a UNIX file system path from the given path_components.
@@ -267,7 +382,8 @@ namespace fs {
           throw std::runtime_error("Unable to open file '" + filename + "' for writing.\n");
       }
     }
-  }
+
+  }  // End namespace util.
 
 
   // MRI data types, used by the MGH functions.
@@ -315,6 +431,11 @@ namespace fs {
     /// Construct a Mesh from the given vertices and faces.
     Mesh(std::vector<float> cvertices, std::vector<int32_t> cfaces) {
       vertices = cvertices; faces = cfaces;
+    }
+
+    // Construct from 2D vectors (Nx3).
+    Mesh(std::vector<std::vector<float>> cvertices, std::vector<std::vector<int32_t>> cfaces) {
+      vertices = util::vflatten(cvertices); faces = util::vflatten(cfaces);
     }
 
     /// Construct an empty Mesh.
@@ -469,6 +590,278 @@ namespace fs {
       return(objs.str());
     }
 
+    /// @brief Return adjacency matrix representation of this mesh.
+    /// @return boolean 2D matrix, where true means an edge between the respective vertex pair exists, and false mean it does not.
+    /// @see fs::Mesh::to_rep_adjlist gives you an adjacency list instead.
+    /// @note This requires a lot of memory for large meshes.
+    ///
+    /// #### Examples
+    ///
+    /// @code
+    /// fs::Mesh surface = fs::Mesh::construct_cube();
+    /// std::vector<std::vector<bool>> adjm = surface.as_adjmatrix();
+    /// @endcode
+    std::vector<std::vector<bool>> as_adjmatrix() const {
+      std::vector<std::vector<bool>> adjm = std::vector<std::vector<bool>>(this->num_vertices(), std::vector<bool>(this->num_vertices(), false));
+      for(size_t fidx=0; fidx<this->faces.size(); fidx+=3) { // faces: vertex indices
+        adjm[faces[fidx]][faces[fidx+1]] = true;
+        adjm[faces[fidx+1]][faces[fidx]] = true;
+        adjm[faces[fidx+1]][faces[fidx+2]] = true;
+        adjm[faces[fidx+2]][faces[fidx+1]] = true;
+        adjm[faces[fidx+2]][faces[fidx]] = true;
+        adjm[faces[fidx]][faces[fidx+2]] = true;
+      }
+      return adjm;
+    }
+
+    /// @brief Hash function for 2-tuples of `<size_t, sizt_t>`, used to hash an edge of a graph or mesh.
+    struct _tupleHashFunction {
+      size_t operator()(const std::tuple<size_t , size_t>&x) const {
+        return std::get<0>(x) ^ std::get<1>(x);
+      }
+    };
+
+    /// @brief Datastructure for storing, and quickly querying the existence of, mesh edges.
+    /// @details This is an unordered set of 2-tuples, where each tuple represents an edge, given as a pair of vertex indices. Each edge occurs twice in the list, once as `make_tuple(i,j)` and once as `make_tuple(j,i)`. Use the API of `std::unordered_set` to interact with it.
+    typedef std::unordered_set<std::tuple<size_t, size_t>, _tupleHashFunction> edge_set;
+
+    /// @brief Return edge list representation of this mesh.
+    /// @note While this mesh or graph representation is typically known as an edge list, this function actually returns a set.
+    /// @return an `fs::Mesh::edge_set`, i.e., an unordered set of 2-tuples, where each tuple represents an edge, given as a pair of vertex indices. Each edge occurs twice in the list, once as `make_tuple(i,j)` and once as `make_tuple(j,i)`.
+    ///
+    /// #### Examples
+    ///
+    /// @code
+    /// fs::Mesh surface = fs::Mesh::construct_cube();
+    /// edge_set edges = surface.as_edgelist();
+    /// size_t num_undirected_edges = edg es.size() / 2;
+    /// @endcode
+    edge_set as_edgelist() const {
+      edge_set edges;
+      for(size_t fidx=0; fidx<this->faces.size(); fidx+=3) { // faces: vertex indices
+        edges.insert(std::make_tuple(faces[fidx], faces[fidx+1]));
+        edges.insert(std::make_tuple(faces[fidx+1], faces[fidx]));
+
+        edges.insert(std::make_tuple(faces[fidx+1], faces[fidx+2]));
+        edges.insert(std::make_tuple(faces[fidx+2], faces[fidx+1]));
+
+        edges.insert(std::make_tuple(faces[fidx], faces[fidx+2]));
+        edges.insert(std::make_tuple(faces[fidx+2], faces[fidx]));
+      }
+      return edges;
+    }
+
+    /// @brief Return adjacency list representation of this mesh.
+    /// @param via_matrix whether the computation should be done via an  step involving an adjacency matrix, or via an edge set. Leaving this at `true` temporarily requires a lot of memory for large meshes, but is faster.
+    /// @return vector of vectors, where the outer vector has size this->num_vertices. The inner vector at index N contains the M neighbors of vertex n, as vertex indices.
+    /// @see fs::Mesh::to_rep_adjmatrix gives you an adjacency matrix instead.
+    ///
+    /// #### Examples
+    ///
+    /// @code
+    /// fs::Mesh surface = fs::Mesh::construct_cube();
+    /// std::vector<std::vector<size_t>> adjl = surface.as_adjlist();
+    /// std::vector<std::vector<size_t>> adjl1 = surface.as_adjlist(true);
+    /// @endcode
+    std::vector<std::vector<size_t>> as_adjlist(const bool via_matrix=true) const {
+      if(! via_matrix) {
+        return(this->_as_adjlist_via_edgeset());
+      }
+      std::vector<std::vector<bool>> adjm = this->as_adjmatrix();
+      std::vector<std::vector<size_t>> adjl = std::vector<std::vector<size_t>>(this->num_vertices(), std::vector<size_t>());
+      size_t nv = adjm.size();
+      for (size_t i = 0; i < nv; i++) {
+          for (size_t j = i+1; j < nv; j++) {
+              if (adjm[i][j] == true) {
+                  adjl[i].push_back(j);
+                  adjl[j].push_back(i);
+              }
+          }
+      }
+      return adjl;
+    }
+
+    /// @brief Return adjacency list representation of this mesh via edge list.
+    /// @return vector of vectors, where the outer vector has size this->num_vertices. The inner vector at index N contains the M neighbors of vertex n, as vertex indices.
+    /// @see fs::Mesh::to_rep_adjmatrix gives you an adjacency matrix instead.
+    ///
+    /// #### Examples
+    ///
+    /// @code
+    /// fs::Mesh surface = fs::Mesh::construct_cube();
+    /// std::vector<std::vector<size_t>> adjl = surface.as_adjlist();
+    /// @endcode
+    std::vector<std::vector<size_t>> _as_adjlist_via_edgeset() const {
+      edge_set edges = this->as_edgelist();
+      std::vector<std::vector<size_t>> adjl = std::vector<std::vector<size_t>>(this->num_vertices(), std::vector<size_t>());
+      for (const std::tuple<size_t, size_t> &e: edges) {
+        adjl[std::get<0>(e)].push_back(std::get<1>(e));
+      }
+      return adjl;
+    }
+
+    /// @brief Smooth given per-vertex data using nearest neighbor smoothing.
+    /// @param pvd vector of per-vertex data values, one value per mesh vertex.
+    /// @param num_iter number of iterations of smoothing to perform.
+    /// @param via_matrix passed on to `this->as_asjlist()`, whether to construct the adjacency list of the mesh using an intermediate step involving an adjacency matrix, as opposed to using an edge set. The latter is slower but requires less memory.
+    /// @param with_nan whether you need support for NAN values in `pvd`. A bit slower if active. Ignored if `detectnan` is `true`.
+    /// @param detect_nan whether to auto-detect presence of NAN values, ignoring the setting of `with_nan`.
+    /// @return vector of smoothed per-vertex data values, same length as `pvd` param.
+    ///
+    /// #### Examples
+    ///
+    /// @code
+    /// fs::Mesh surface = fs::Mesh::construct_cube();
+    /// std::vector<float> pvd = {1.0, 1.1, 1.2, 1.3, 1.4, 1.5, 1.6, 1.7};
+    /// std::vector<float> pvd_smooth = surface.smooth_pvd_nn(pvd, 2);
+    /// @endcode
+    std::vector<float> smooth_pvd_nn(const std::vector<float> pvd, const size_t num_iter=1, const bool via_matrix=true, const bool with_nan=true, const bool detect_nan=true) const {
+
+      const std::vector<std::vector<size_t>> adjlist = this->as_adjlist(via_matrix);
+      return fs::Mesh::smooth_pvd_nn(adjlist, pvd, num_iter, with_nan, detect_nan);
+    }
+
+    /// @brief Smooth given per-vertex data using nearest neighbor smoothing based on adjacency list mesh represenation.
+    /// @param mesh_adj the mesh, given as an adjacency list. The outer vector has size num_vertices, and the inner vectors sizes are the number of neighbors of the respective vertex.
+    /// @param pvd vector of per-vertex data values, one value per mesh vertex. Must not include NAN values. See `smooth_pvd_nn_nan` if you need support for NAN values.
+    /// @param num_iter number of iterations of smoothing to perform.
+    /// @param with_nan whether you need support for NAN values in `pvd`. A bit slower if active. Ignored if `detectnan` is `true`.
+    /// @param detect_nan whether to auto-detect presence of NAN values, ignoring the setting of `with_nan`.
+    /// @return vector of smoothed per-vertex data values, same length as `pvd` param.
+    ///
+    /// #### Examples
+    ///
+    /// @code
+    /// fs::Mesh surface = fs::Mesh::construct_cube();
+    /// std::vector<std::vector<size_t>> mesh_adj = surface.as_adjlist();
+    /// std::vector<float> pvd = {1.0, 1.1, 1.2, 1.3, 1.4, 1.5, 1.6, 1.7};
+    /// std::vector<float> pvd_smooth = fs::Mesh::smooth_pvd_nn(mesh_adj, pvd, 2);
+    /// @endcode
+    static std::vector<float> smooth_pvd_nn(const std::vector<std::vector<size_t>> mesh_adj, const std::vector<float> pvd, const size_t num_iter=1, const bool with_nan=true, const bool detect_nan=true) {
+      assert(pvd.size() == mesh_adj.size());
+      bool final_with_nan = with_nan;
+      if (detect_nan) {
+        final_with_nan = false;
+        for(size_t i=0; i<pvd.size(); i++) {
+          if(std::isnan(pvd[i])) {
+            final_with_nan = true;
+            break;
+          }
+        }
+      }
+      if (final_with_nan) {
+        return fs::Mesh::_smooth_pvd_nn_nan(mesh_adj, pvd, num_iter);
+      }
+      std::vector<float> current_pvd_source;
+      std::vector<float> current_pvd_smoothed = std::vector<float>(pvd.size());
+
+      float val_sum;
+      size_t num_neigh;
+      for(size_t i = 0; i < num_iter; i++) {
+        if(i == 0) {
+          current_pvd_source = pvd;
+        } else {
+          current_pvd_source = current_pvd_smoothed;
+        }
+        for(size_t v_idx = 0; v_idx < mesh_adj.size(); v_idx++) {
+          num_neigh = mesh_adj[v_idx].size();
+          val_sum = current_pvd_source[v_idx] / (num_neigh+1);
+          for(size_t neigh_rel_idx = 0; neigh_rel_idx < num_neigh; neigh_rel_idx++) {
+            val_sum += current_pvd_source[mesh_adj[v_idx][neigh_rel_idx]] / (num_neigh+1);
+          }
+          current_pvd_smoothed[v_idx] = val_sum;
+        }
+      }
+      return current_pvd_smoothed;
+    }
+
+    /// @brief Smooth given per-vertex data including NAN values using nearest neighbor smoothing based on adjacency list mesh representation.
+    /// @private
+    /// @param mesh_adj the mesh, given as an adjacency list. The outer vector has size num_vertices, and the inner vectors sizes are the number of neighbors of the respective vertex.
+    /// @param pvd vector of per-vertex data values, one value per mesh vertex. Must not include NAN values. See `smooth_pvd_nn_nan` if you need support for NAN values.
+    /// @param num_iter number of iterations of smoothing to perform.
+    /// @return vector of smoothed per-vertex data values, same length as `pvd` param.
+    /// @note This function is private, users should call `fs::Mesh::smooth_pvd_nn` instead.
+    ///
+    /// #### Examples
+    ///
+    /// @code
+    /// fs::Mesh surface = fs::Mesh::construct_cube();
+    /// std::vector<std::vector<size_t>> mesh_adj = surface.as_adjlist();
+    /// std::vector<float> pvd = {1.0, 1.1, 1.2, NAN, 1.4, 1.5, 1.6, 1.7};
+    /// std::vector<float> pvd_smooth = fs::Mesh::smooth_pvd_nn(mesh_adj, pvd, 2);
+    /// @endcode
+    static std::vector<float> _smooth_pvd_nn_nan(const std::vector<std::vector<size_t>> mesh_adj, const std::vector<float> pvd, const size_t num_iter=1) {
+      std::vector<float> current_pvd_source;
+      std::vector<float> current_pvd_smoothed = std::vector<float>(pvd.size());
+
+      float val_sum;
+      size_t num_neigh;
+      size_t num_non_nan_values;
+      float neigh_val;
+      for(size_t i = 0; i < num_iter; i++) {
+
+        if(i == 0) {
+          current_pvd_source = pvd;
+        } else {
+          current_pvd_source = current_pvd_smoothed;
+        }
+
+        for(size_t v_idx = 0; v_idx < mesh_adj.size(); v_idx++) {
+          if(std::isnan(current_pvd_source[v_idx])) {
+            current_pvd_smoothed[v_idx] = NAN;
+            continue;
+          }
+          val_sum = current_pvd_source[v_idx];
+          num_non_nan_values = 1;  // If we get here, the source vertex value is not NAN.
+          num_neigh = mesh_adj[v_idx].size();
+          for(size_t neigh_rel_idx = 0; neigh_rel_idx < num_neigh; neigh_rel_idx++) {
+            neigh_val = current_pvd_source[mesh_adj[v_idx][neigh_rel_idx]];
+            if(std::isnan(neigh_val)) {
+              continue;
+            } else {
+              val_sum += neigh_val;
+              num_non_nan_values++;
+            }
+          }
+          current_pvd_smoothed[v_idx] = val_sum / (float)num_non_nan_values;
+        }
+      }
+      return current_pvd_smoothed;
+    }
+
+    /// @brief Extend mesh neighborhoods based on mesh adjacency representation.
+    /// @details This function is mainly extended to extend a source neighborhood representation (typically the mesh's `k=1` neighborhood, i.e., the adjacency list of the mesh) to a higher `k`. In a `k=3` neighborhood, the neighorhood around a source vertex includes all vertices in edge distance up to 3 from the source vertex (but not the source vertex itself).
+    /// @param mesh_adj The adjacency list representation of the underlying mesh, the outer vector must have size `N` for a mesh with `N` vertices.
+    /// @param extend_by the number of edges to hop to extend the neighborhoods.
+    /// @param mesh_adj_ext the starting neighborhoods to extend, same representation as `mesh_adj`. The outer vector must have size `N` or `0`. If passed as an empty vector, this will be ignored and a copy of the `mesh_adj` is used as the `start_neighborhoods`.
+    /// @return extended neighborhoods
+    static std::vector<std::vector<size_t>> extend_adj(const std::vector<std::vector<size_t>> mesh_adj, const size_t extend_by=1, std::vector<std::vector<size_t>> mesh_adj_ext=std::vector<std::vector<size_t>>()) {
+      size_t num_vertices = mesh_adj.size();
+      if(mesh_adj_ext.size() == 0) {
+        mesh_adj_ext = mesh_adj;
+      }
+      std::vector<size_t> neighborhood;
+      std::vector<size_t> ext_neighborhood;
+      for(size_t ext_idx = 0; ext_idx < extend_by; ext_idx++) {
+        for(size_t source_vert_idx = 0; source_vert_idx < num_vertices; source_vert_idx++) {
+          neighborhood = mesh_adj_ext[source_vert_idx]; // copy needed so we do not modify during iteration.
+          // Extension: add all neighbors in distance one for all vertices in the neighborhood.
+          for(size_t neigh_vert_rel_idx = 0; neigh_vert_rel_idx < neighborhood.size(); neigh_vert_rel_idx++) {
+            for(size_t canidate_rel_idx = 0; canidate_rel_idx < mesh_adj[neighborhood[neigh_vert_rel_idx]].size(); canidate_rel_idx++) {
+              if(mesh_adj[neighborhood[neigh_vert_rel_idx]][canidate_rel_idx] != source_vert_idx) {
+                mesh_adj_ext[source_vert_idx].push_back(mesh_adj[neighborhood[neigh_vert_rel_idx]][canidate_rel_idx]);
+              }
+            }
+          }
+          // We need to remove duplicates.
+          std::sort(mesh_adj_ext[source_vert_idx].begin(), mesh_adj_ext[source_vert_idx].end());
+          mesh_adj_ext[source_vert_idx].erase(std::unique(mesh_adj_ext[source_vert_idx].begin(), mesh_adj_ext[source_vert_idx].end()), mesh_adj_ext[source_vert_idx].end());
+        }
+      }
+      return mesh_adj_ext;
+    }
+
 
     /// @brief Export this mesh to a file in Wavefront OBJ format.
     /// @param filename path to the output file, will be overwritten if existing.
@@ -485,6 +878,88 @@ namespace fs {
     void to_obj_file(const std::string& filename) const {
       fs::util::str_to_file(filename, this->to_obj());
     }
+
+    /// @brief Compute a new mesh that is a submesh of this mesh, based on a subset of the vertices of this mesh.
+    /// @param old_vertex_indices vector of vertex indices of this mesh, which should be included in the submesh.
+    /// @param mapdir_fulltosubmesh whether to return a map from the old (full mesh) to the new (submesh)  vertex indices (`true`, the default), or the other way around (`false`) as the first element of the returned pair.
+    /// @return a pair of the vertex index map (direction 'fullmesh to submesh' by default, but see 'mapdir_fulltosubmesh' parameter) and the submesh.
+    ///
+    /// #### Examples
+    ///
+    /// @code
+    /// fs::Mesh surface;
+    /// fs::read_surf(&surface, "examples/read_surf/lh.white");
+    /// fs::Label label;
+    /// fs::read_label(&label, "examples/read_label/lh.cortex.label");
+    /// std::pair <std::unordered_map<int32_t, int32_t>, fs::Mesh> result = surface.submesh_vertex(label.vertex);
+    /// fs::Mesh patch = result.second;
+    /// auto vertexindexmap_full2submesh = result.first; // or '<std::unordered_map<int32_t, int32_t>' instead of 'auto'.
+    /// @endcode
+    std::pair <std::unordered_map<int32_t, int32_t>, fs::Mesh> submesh_vertex(const std::vector<int> &old_vertex_indices, const bool mapdir_fulltosubmesh = false) const {
+      fs::Mesh submesh;
+      std::vector<float> new_vertices;
+      std::vector<int> new_faces;
+      std::unordered_map<int32_t, int32_t> vertex_index_map_full2submesh;
+      int32_t new_vertex_idx = 0;
+      for(size_t i = 0; i < old_vertex_indices.size(); i++) {
+        vertex_index_map_full2submesh[old_vertex_indices[i]] = new_vertex_idx;
+        new_vertices.push_back(this->vertices[old_vertex_indices[i]*3]);
+        new_vertices.push_back(this->vertices[old_vertex_indices[i]*3+1]);
+        new_vertices.push_back(this->vertices[old_vertex_indices[i]*3+2]);
+        new_vertex_idx++;
+      }
+      int face_v0;
+      int face_v1;
+      int face_v2;
+      for(size_t i = 0; i < this->num_faces(); i++) {
+        face_v0 = this->faces[i*3];
+        face_v1 = this->faces[i*3+1];
+        face_v2 = this->faces[i*3+2];
+        if((vertex_index_map_full2submesh.find(face_v0) != vertex_index_map_full2submesh.end()) && (vertex_index_map_full2submesh.find(face_v1) != vertex_index_map_full2submesh.end()) && (vertex_index_map_full2submesh.find(face_v2) != vertex_index_map_full2submesh.end())) {
+          new_faces.push_back(vertex_index_map_full2submesh[face_v0]);
+          new_faces.push_back(vertex_index_map_full2submesh[face_v1]);
+          new_faces.push_back(vertex_index_map_full2submesh[face_v2]);
+        }
+      }
+      submesh.vertices = new_vertices;
+      submesh.faces = new_faces;
+
+      std::pair <std::unordered_map<int32_t, int32_t>, fs::Mesh> result;
+      if(! mapdir_fulltosubmesh) {  // Compute the new2old (reverse) vertex index map:
+        std::unordered_map<int32_t, int32_t> vertex_index_map_submesh2full;
+        for (auto const& pair: vertex_index_map_full2submesh) {
+          vertex_index_map_submesh2full[pair.second] = pair.first;
+        }
+        result = std::pair <std::unordered_map<int32_t, int32_t>, fs::Mesh>(vertex_index_map_submesh2full, submesh);
+      } else {
+        result = std::pair <std::unordered_map<int32_t, int32_t>, fs::Mesh>(vertex_index_map_full2submesh, submesh);
+      }
+
+      return result;
+    }
+
+    /// @brief Given per-vertex data for a submesh, add NAN values inbetween to restore the original mesh size.
+    /// @param data_submesh vector of per-vertex data values, one value per mesh vertex of the submesh.
+    /// @param submesh_to_orig_mapping map<int, int>, mapping vertex indices of the submesh to vertex indices of the original, full mesh.
+    /// @param orig_mesh_num_vertices number of vertices of the original, full mesh.
+    /// @see `fs::Mesh::submesh_vertex` for how to get the `submesh_to_orig_mapping` parameter.
+    /// @return vector of per-vertex data values, one value per mesh vertex of the original mesh. Values for vertices that are not part of the submesh are set to NAN.
+    static std::vector<float> curv_data_for_orig_mesh(const std::vector<float> data_submesh, const std::unordered_map<int32_t, int32_t> submesh_to_orig_mapping, const int32_t orig_mesh_num_vertices) {
+
+      if(submesh_to_orig_mapping.size() != data_submesh.size()) {
+        throw std::domain_error("The number of vertices of the submesh and the number of values in the submesh_to_orig_mapping do not match: got " + std::to_string(data_submesh.size()) + " and " + std::to_string(submesh_to_orig_mapping.size()) + ".");
+      }
+
+      std::vector<float> data_orig_mesh(orig_mesh_num_vertices, std::numeric_limits<float>::quiet_NaN());
+      for(size_t i=0; i<data_submesh.size(); i++) {
+          auto got = submesh_to_orig_mapping.find(i);
+          if (got != submesh_to_orig_mapping.end()) {
+            data_orig_mesh[got->second] = data_submesh[i];
+          }
+      }
+      return(data_orig_mesh);
+    }
+
 
 
     /// @brief Read a brainmesh from a Wavefront object format stream.
@@ -587,6 +1062,9 @@ namespace fs {
     /// fs::Mesh::from_obj(&surface, "mesh.obj");
     /// @endcode
     static void from_obj(Mesh* mesh, const std::string& filename) {
+      #ifdef LIBFS_DBG_INFO
+      std::cout << LIBFS_APPTAG << "Reading brain mesh from Wavefront object format file " << filename << ".\n";
+      #endif
       std::ifstream input(filename);
       if(input.is_open()) {
         Mesh::from_obj(mesh, &input);
@@ -694,6 +1172,9 @@ namespace fs {
     /// fs::Mesh::from_off(&surface, "mesh.off");
     /// @endcode
     static void from_off(Mesh* mesh, const std::string& filename) {
+      #ifdef LIBFS_DBG_INFO
+      std::cout << LIBFS_APPTAG << "Reading brain mesh from OFF format file " << filename << ".\n";
+      #endif
       std::ifstream input(filename);
       if(input.is_open()) {
         Mesh::from_off(mesh, &input);
@@ -802,6 +1283,9 @@ namespace fs {
     /// fs::Mesh::from_ply(&surface, "mesh.ply");
     /// @endcode
     static void from_ply(Mesh* mesh, const std::string& filename) {
+      #ifdef LIBFS_DBG_INFO
+      std::cout << LIBFS_APPTAG << "Reading brain mesh from PLY format file " << filename << ".\n";
+      #endif
       std::ifstream input(filename);
       if(input.is_open()) {
         Mesh::from_ply(mesh, &input);
@@ -839,7 +1323,7 @@ namespace fs {
     }
 
     /// @brief Retrieve a vertex index of a face, treating the faces vector as an nx3 matrix.
-    /// @param i the row index, valid values are 0..num_faces.
+    /// @param i the row index, valid values are 0..num_faces-1.
     /// @param j the column index, valid values are 0..2 (for the 3 vertices of a face).
     /// @throws std::range_error on invalid index
     /// @return vertex index of vertex `j` of face `i`
@@ -955,13 +1439,17 @@ namespace fs {
       plys << "property float x\nproperty float y\nproperty float z\n";
       if(use_vertex_colors) {
         if(col.size() != this->vertices.size()) {
-          throw std::invalid_argument("Number of vertex coordinates and vertex colors must match when writing PLY file.");
+          throw std::invalid_argument("Number of vertex coordinates and vertex colors must match when writing PLY file, but got " + std::to_string(this->vertices.size()) + " and " + std::to_string(col.size()) + ".");
         }
         plys << "property uchar red\nproperty uchar green\nproperty uchar blue\n";
       }
       plys << "element face " << this->num_faces() << "\n";
       plys << "property list uchar int vertex_index\n";
       plys << "end_header\n";
+
+      #ifdef LIBFS_DBG_DEBUG
+      fs::util::log("Writing " + std::to_string(this->vertices.size()/3) + " PLY format vertices.", "INFO");
+      #endif
 
       for(size_t vidx=0; vidx<this->vertices.size();vidx+=3) {  // vertex coords
         plys << vertices[vidx] << " " << vertices[vidx+1] << " " << vertices[vidx+2];
@@ -970,6 +1458,10 @@ namespace fs {
         }
         plys << "\n";
       }
+
+      #ifdef LIBFS_DBG_DEBUG
+      fs::util::log("Writing " + std::to_string(this->faces.size()/3) + " PLY format faces.", "INFO");
+      #endif
 
       const int num_vertices_per_face = 3;
       for(size_t fidx=0; fidx<this->faces.size();fidx+=3) { // faces: vertex indices, 0-based
@@ -988,6 +1480,9 @@ namespace fs {
     /// surface.to_ply_file("mesh.ply");
     /// @endcode
     void to_ply_file(const std::string& filename) const {
+      #ifdef LIBFS_DBG_INFO
+      fs::util::log("Writing mesh to PLY file '" + filename + "'.", "INFO");
+      #endif
       fs::util::str_to_file(filename, this->to_ply());
     }
 
@@ -1017,11 +1512,17 @@ namespace fs {
       bool use_vertex_colors = col.size() != 0;
       std::stringstream offs;
       if(use_vertex_colors) {
+        #ifdef LIBFS_DBG_INFO
+        fs::util::log("Writing OFF representation of mesh with vertex colors.", "INFO");
+        #endif
         if(col.size() != this->vertices.size()) {
-          throw std::invalid_argument("Number of vertex coordinates and vertex colors must match when writing OFF file.");
+          throw std::invalid_argument("Number of vertex coordinates and vertex colors must match when writing OFF file but got " + std::to_string(this->vertices.size()) + " and " + std::to_string(col.size()) + ".");
         }
         offs << "COFF\n";
       } else {
+        #ifdef LIBFS_DBG_INFO
+        fs::util::log("Writing OFF representation of mesh without vertex colors.", "INFO");
+        #endif
         offs << "OFF\n";
       }
       offs << this->num_vertices() << " " << this->num_faces() << " 0\n";
@@ -2104,12 +2605,42 @@ namespace fs {
   }
 
   /// Models a FreeSurfer label.
+  /// Can be a surface or volume label.
+  /// A label contains entries for a subset of the vertices of a mesh (or the voxels of a volume).
+  /// For a surface label, the 'vertex' field contains a vertex index, the coord_* fields may contain the vertex coordinates, and the value field may contain some per-vertex descriptor or analysis result, like a p-value.
+  /// For a volume label, the 'vertex' field contains a running number, the coord_* fields contain (as floats) the voxel R,A,S indices, and the value field may contain some per-voxel descriptor or analysis result, like a p-value.
+  /// Note: The variable names herre assume this is a surface label, do not let that confuse you when working with volume labels.
   struct Label {
+
+    /// @brief Default constructor for a label.
+    Label() {}
+
+    /// Construct a Label from the given vertices / voxel numbers and values.
+    Label(std::vector<int> vertices, std::vector<float> values) {
+      assert(vertices.size() == values.size());
+      vertex = vertices;
+      value = values;
+      coord_x = std::vector<float>(vertices.size(), 0.0f);
+      coord_y = std::vector<float>(vertices.size(), 0.0f);
+      coord_z = std::vector<float>(vertices.size(), 0.0f);
+    }
+
+    /// Construct a Label from the given vertices / voxel numbers.
+    Label(std::vector<int> vertices) {
+      vertex = vertices;
+      value = std::vector<float>(vertices.size(), 0.0f);
+      coord_x = std::vector<float>(vertices.size(), 0.0f);
+      coord_y = std::vector<float>(vertices.size(), 0.0f);
+      coord_z = std::vector<float>(vertices.size(), 0.0f);
+    }
+
+
+
     std::vector<int> vertex;  ///< vertex indices for the data in this label if it is a surface label. These are indices into the vertices of a surface mesh to which this label belongs.
     std::vector<float> coord_x;  ///< x coordinates of the vertices in case of a surface label, or voxels coordinates for a volume label.
     std::vector<float> coord_y;  ///< y coordinates of the vertices in case of a surface label, or voxels coordinates for a volume label.
     std::vector<float> coord_z;  ///< z coordinates of the vertices in case of a surface label, or voxels coordinates for a volume label.
-    std::vector<float> value;  ///< the value of the label, can represent continuous data like a p-value, or sometimes simply 1.0 or 0.0 to mark a certain area.
+    std::vector<float> value;  ///< the value of the label, can represent continuous data like a p-value, or sometimes simply 1.0 or 0.0 (interpreted as int/bool) to mark vertices inside/outside of a certain area.
 
     /// Compute for each vertex of the surface whether it is inside the label.
     std::vector<bool> vert_in_label(size_t surface_num_verts) const {
