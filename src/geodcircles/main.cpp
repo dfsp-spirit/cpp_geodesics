@@ -32,7 +32,7 @@ int main(int argc, char** argv) {
         std::cout << "  <subjects_dir>  : directory containing the FreeSurfer recon-all output for the subjects. Defaults to current working directory.\n";
         std::cout << "  <surface>       : the surface file to load from the surf/ subdir of each subject, without hemi part. Defaults to 'pial'.\n";
         std::cout << "  <do_circle_stat>: flag whether to compute geodesic circle stats as well, must be 0 (off), 1 (on) or 2 (on with mean dists). Defaults to 2.\n";
-        std::cout << "  <keep_existing> : flag whether to keep existing output files, must be 0 (off: recompute and overwrite files), or 1 (keep existing files, skip computation if exists). Defaults to 1.\n";
+        std::cout << "  <keep_existing> : flag whether to keep existing output files, must be 'no' (off: recompute and overwrite files. aliases: '0' and 'false' are also supported), or 'yes' (keep existing files, skip computation if exists. aliases '1' and 'true' are also supported). Defaults to 1.\n";
         std::cout << "  <circ_scale>    : int, the fraction of the total surface that the circles for the geodesic circle stats should have (in percent). Ignored if do_circle_stats is 0. Defaults to 5.\n";
         std::cout << "  <cortex_label>  : str, optional file name of a cortex label file, without the hemi prefix to load from the label/ subdir of each subject. If given, load label and ignore non-label vertices, typically the medial wall, during all computations. Defaults to the empty string, i.e., no cortex label file. E.g., 'cortex.label'. Can be set to 'none' to turn off.\n";
         std::cout << "  <hemi>          : str, which hemispheres to compute. One of 'lh', 'rh' or 'both'. Defaults to 'both'.\n";
@@ -73,12 +73,12 @@ int main(int argc, char** argv) {
         }
     }
     if(argc >= 6) { // whether to keep existing files / skip computation for those that are already done.
-        if (std::string(argv[5]) == "0") {
+        if (std::string(argv[5]) == "0" || std::string(argv[5]) == "no" || std::string(argv[5]) == "false") {
             keep_existing_files = false;
-        } else if (std::string(argv[5]) == "1") {
+        } else if (std::string(argv[5]) == "1" || std::string(argv[5]) == "yes" || std::string(argv[5]) == "true") {
             keep_existing_files = true;
         } else {
-            std::cerr << "Invalid value for parameter 'keep_existing'. Must be '0' or '1'.\n";
+            std::cerr << "Invalid value for parameter 'keep_existing'. Must be 'no' or 'yes'.\n";
             exit(1);
         }
     }

@@ -28,13 +28,14 @@ Usage: ./geodcircles <subjects_file> [<subjects_dir> [<surface> [<do_circle_stat
   <subjects_dir>  : directory containing the FreeSurfer recon-all output for the subjects. Defaults to current working directory.
   <surface>       : the surface file to load from the surf/ subdir of each subject, without hemi part. Defaults to 'pial'.
   <do_circle_stat>: flag whether to compute geodesic circle stats as well, must be 0 (off), 1 (on) or 2 (on with mean dists). Defaults to 2.
-  <keep_existing> : flag whether to keep existing output files, must be 0 (off: recompute and overwrite files), or 1 (keep existing files, skip computation if exists). Defaults to 1.
+  <keep_existing> : flag whether to keep existing output files, must be 'no' (off: recompute and overwrite files. aliases: '0' and 'false' are also supported), or 'yes' (keep existing files, skip computation if exists. aliases '1' and 'true' are also supported). Defaults to 1.
   <circ_scale>    : int, the fraction of the total surface that the circles for the geodesic circle stats should have (in percent). Ignored if do_circle_stats is 0. Defaults to 5.
   <cortex_label>  : str, optional file name of a cortex label file, without the hemi prefix to load from the label/ subdir of each subject. If given, load label and ignore non-label vertices, typically the medial wall, during all computations. Defaults to the empty string, i.e., no cortex label file. E.g., 'cortex.label'. Can be set to 'none' to turn off.
   <hemi>          : str, which hemispheres to compute. One of 'lh', 'rh' or 'both'. Defaults to 'both'.
 NOTES:
  * Sorry for the current command line parsing state: you will have to supply all arguments if you want to change the last one.
  * We recommend to run this on simplified meshes to save computation time, e.g., by scaling the vertex count to that of fsaverage6. If you do that and use the cortex_label parameter, you will of course also need scaled cortex labels.
+ * The output files will be written to the surf/ subdir of each subject.
 ```
 
 ### Some example command lines
@@ -64,7 +65,7 @@ Again, we want to run geodcircles in the current working directory, and use the 
 
 ```shell
 cd ~/data/study1/freesurfer_output/       # or whereever your data is
-~/cpp_geodesics/geodcircles subjects.txt . pialsurface6 2 1 5 cortex6.label
+~/cpp_geodesics/geodcircles subjects.txt . pialsurface6 2 yes 5 cortex6.label
 ```
 
 Note that we specified a dot ('`.`') as the working directory, as we want to use the current directory. You could also give the full path `~/cpp_geodesics/geodcircles`, of course, but why type more than needed? In detail, we used the following options:
@@ -73,7 +74,7 @@ Note that we specified a dot ('`.`') as the working directory, as we want to use
 * `subjects_dir`=`.`
 * `surface`=`pialsurface6`
 * `do_circle_stat`=`2` (on with mean dists, see help text above)
-* `keep_existing`=`1`  (if output file exists, skip mesh and keep existing results in file)
+* `keep_existing`=`yes`  (if output file exists, skip mesh and keep existing results in file)
 * `circ_scale`=`5`     (use 5 percent of area for circles)
 * `cortex_label`=`cortex6.label`   (restrict vertices of mesh to those listed in the label file, delete all others for the computation. The results in the written surface overlay files will have NAN values for deleted vertices.)
 
