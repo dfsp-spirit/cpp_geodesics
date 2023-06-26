@@ -34,11 +34,11 @@ int main(int argc, char** argv) {
         std::cout << "  <do_circle_stat>: flag whether to compute geodesic circle stats as well, must be 0 (off), 1 (on) or 2 (on with mean dists). Defaults to 2.\n";
         std::cout << "  <keep_existing> : flag whether to keep existing output files, must be 0 (off: recompute and overwrite files), or 1 (keep existing files, skip computation if exists). Defaults to 1.\n";
         std::cout << "  <circ_scale>    : int, the fraction of the total surface that the circles for the geodesic circle stats should have (in percent). Ignored if do_circle_stats is 0. Defaults to 5.\n";
-        std::cout << "  <cortex_label>  : str, optional file name of a cortex label file. If given, load label and ignore non-cortical vertices, typically the medial wall, during all computations. Defaults to the empty string, i.e., no cortex label file. E.g., 'cortex.label'. Can be set to 'none' to turn off.\n";
+        std::cout << "  <cortex_label>  : str, optional file name of a cortex label file, without the hemi prefix to load from the label/ subdir of each subject. If given, load label and ignore non-label vertices, typically the medial wall, during all computations. Defaults to the empty string, i.e., no cortex label file. E.g., 'cortex.label'. Can be set to 'none' to turn off.\n";
         std::cout << "  <hemi>          : str, which hemispheres to compute. One of 'lh', 'rh' or 'both'. Defaults to 'both'.\n";
         std::cout << "NOTES:\n";
         std::cout << " * Sorry for the current command line parsing state: you will have to supply all arguments if you want to change the last one.\n";
-        std::cout << " * We recommend to run this on simplified meshes to save computation time, e.g., by scaling the vertex count to that of fsaverage6.\n";
+        std::cout << " * We recommend to run this on simplified meshes to save computation time, e.g., by scaling the vertex count to that of fsaverage6. If you do that and use the cortex_label parameter, you will of course also need scaled cortex labels.\n";
         exit(1);
     }
     std::string subjects_file = std::string(argv[1]);
