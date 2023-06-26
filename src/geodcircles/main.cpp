@@ -68,7 +68,7 @@ int main(int argc, char** argv) {
             do_circle_stats = false;
             circle_stats_do_meandists = false;
         }  else {
-            std::cerr << "Invalid value for parameter 'do_circle_stats' Must be '0', '1' or '2'.\n";
+            std::cerr << "Invalid value for parameter 'do_circle_stats' Must be '0', '1' or '2' (or one of the aliases for those).\n";
             exit(1);
         }
     }
@@ -78,7 +78,7 @@ int main(int argc, char** argv) {
         } else if (std::string(argv[5]) == "1" || std::string(argv[5]) == "yes" || std::string(argv[5]) == "true") {
             keep_existing_files = true;
         } else {
-            std::cerr << "Invalid value for parameter 'keep_existing'. Must be 'no' or 'yes'.\n";
+            std::cerr << "Invalid value for parameter 'keep_existing'. Must be 'no' or 'yes' (or one of the aliases for those).\n";
             exit(1);
         }
     }
