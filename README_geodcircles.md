@@ -38,9 +38,11 @@ NOTES:
  * The output files will be written to the surf/ subdir of each subject.
 ```
 
+You can see the default values for all command line arguments at the end of the respective help text.
+
 ### Some example command lines
 
-In the following examples, we change to your SUBJECTS_DIR with the recon_all output and run geodcircles in there. We assume that you:
+In the following examples, we change to your `SUBJECTS_DIR` with the `recon_all` output and run `geodcircles` in there. We assume that you:
 
 * have cloned the cpp_geodesics repository to `~/cpp_geodesics` and built the applications. See the [README.md  file in this repo](./README.md) if you have not done that yet.
 * that you have a text file with one subject identifier per line, named `subjects.txt`, in there. People who use FreeSurfer will know these files, and most likely already have one for their study.
@@ -48,20 +50,20 @@ In the following examples, we change to your SUBJECTS_DIR with the recon_all out
 
 #### Example 1
 
-In this example, we want to run geodcircles with default settings in the current working directory, and use the mentioned `subjects.txt` file you provide:
+In this example, we want to run `geodcircles` with default settings in the current working directory, and use the mentioned `subjects.txt` file you provide:
 
 ```shell
 cd ~/data/study1/freesurfer_output/       # or whereever your data is
 ~/cpp_geodesics/geodcircles subjects.txt
 ```
 
-This will run on the full resolution meshes, and may take quite a while. On a single core machine, this will take several hours per mesh (hemisphere).
+This will run on the full resolution meshes, and may take quite a while. On a single core machine, this will take several hours per mesh (hemisphere). It will not use any cortex labels, so the computations will run on the full mesh, including the medial wall.
 
 #### Example 2
 
 In this example, we assume that you have created down-sampled meshes, as dicussed above in section `Required input files and downsampling FreeSurfer meshes`. We assume that for each subject, the ICO6-downsampled meshes are stored in the files `<subject>/surf/lh.pialsurface6` and `<subject>/surf/rh.pialsurface6`. We also assume that you want to exclude the medial wall during computations, and that you therefore also created down-sampled cortex labels for each subject, which are stored in the files `<subject>/label/lh.cortex6.label` and `<subject>/label/rh.cortex6.label`.
 
-Again, we want to run geodcircles in the current working directory, and use the mentioned `subjects.txt` file you provide:
+Again, we want to run `geodcircles` in the current working directory, and use the mentioned `subjects.txt` file you provide:
 
 ```shell
 cd ~/data/study1/freesurfer_output/       # or whereever your data is
