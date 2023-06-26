@@ -31,7 +31,7 @@ int main(int argc, char** argv) {
         std::cout << "  <subjects_file> : text file containing one subject identifier per line.\n";
         std::cout << "  <subjects_dir>  : directory containing the FreeSurfer recon-all output for the subjects. Defaults to current working directory.\n";
         std::cout << "  <surface>       : the surface file to load from the surf/ subdir of each subject, without hemi part. Defaults to 'pial'.\n";
-        std::cout << "  <do_circle_stat>: flag whether to compute geodesic circle stats as well, must be 0 (off), 1 (on) or 2 (on with mean dists). Defaults to 2.\n";
+        std::cout << "  <do_circle_stat>: flag whether to compute geodesic circle stats as well, must be 0 (off), 1 (on) or 2 (on with mean dists). Defaults to 2. Valid aliases for 0 are 'false' and 'no'. Valid aliases for 1 are 'true' and 'yes'. Valid aliases for 2 are 'yes_with_meandists' and 'true_with_meandists'.\n";
         std::cout << "  <keep_existing> : flag whether to keep existing output files, must be 'no' (off: recompute and overwrite files. aliases: '0' and 'false' are also supported), or 'yes' (keep existing files, skip computation if exists. aliases '1' and 'true' are also supported). Defaults to 1.\n";
         std::cout << "  <circ_scale>    : int, the fraction of the total surface that the circles for the geodesic circle stats should have (in percent). Ignored if do_circle_stats is 0. Defaults to 5.\n";
         std::cout << "  <cortex_label>  : str, optional file name of a cortex label file, without the hemi prefix to load from the label/ subdir of each subject. If given, load label and ignore non-label vertices, typically the medial wall, during all computations. Defaults to the empty string, i.e., no cortex label file. E.g., 'cortex.label'. Can be set to 'none' to turn off.\n";
@@ -58,13 +58,13 @@ int main(int argc, char** argv) {
         surface_name = std::string(argv[3]);
     }
     if(argc >= 5) {
-        if (std::string(argv[4]) == "1") {
+        if (std::string(argv[4]) == "1" || std::string(argv[4]) == "yes" || std::string(argv[4]) == "true") {
             do_circle_stats = true;
             circle_stats_do_meandists = false;
-        } else if (std::string(argv[4]) == "2") {
+        } else if (std::string(argv[4]) == "2" || std::string(argv[4]) == "yes_with_meandists" || std::string(argv[4]) == "true_with_meandists") {
             do_circle_stats = true;
             circle_stats_do_meandists = true;
-        } else if((std::string(argv[4]) == "0")) {
+        } else if(std::string(argv[4]) == "0" || std::string(argv[4]) == "no" || std::string(argv[4]) == "false") {
             do_circle_stats = false;
             circle_stats_do_meandists = false;
         }  else {
