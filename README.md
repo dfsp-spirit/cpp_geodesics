@@ -27,6 +27,7 @@ The following apps are included:
       - Ecker, C., Ronan, L., Feng, Y., Daly, E., Murphy, C., Ginestet, C. E., ... & MRC AIMS Consortium. (2013). *Intrinsic gray-matter connectivity of the brain in adults with autism spectrum disorder.* Proceedings of the National Academy of Sciences, 110(32), 13222-13227. [doi.org/10.1073/pnas.1221880110 ](https://doi.org/10.1073/pnas.1221880110)
     *  The *Ecker 2013* paper applied the descriptors to an ASD dataset and used the implementation from the Fastmarching toolbox for Matlab by Gabriel Peyre. The `geodcircles` app in this repository is a C++ implementation using [OpenMP](https://www.openmp.org/) that is an order of magnitude faster on a single CPU core and scales well on multi-core systems. See below for descriptor visualizations.
 
+See [./README_geodcircles.md](./README_geodcircles.md) for details on using the `geodcircles` application.
 
 Utility apps, used by me for debugging and to generate training data for machine learning algorithms that operate on meshes (maybe useful to others for other purposes?):
 
