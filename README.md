@@ -2,6 +2,10 @@
 Fast computation of geodesic distances and related mesh descriptors on (brain surface) meshes in C++ and OpenMP.
 
 
+
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.8090921.svg)](https://doi.org/10.5281/zenodo.8090921)
+
+
 ## About
 
 This repo contains fast C++ applications to compute geodesic distances and related mesh descriptors on triangular meshes. We use them to compute distances on the human cortex in computational neuroimaging, but they work with any connected trimesh. Geodesics computation is computationally expensive and the focus of these applications is mostly on speed.
