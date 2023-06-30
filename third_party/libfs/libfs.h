@@ -881,7 +881,7 @@ namespace fs {
 
     /// @brief Compute a new mesh that is a submesh of this mesh, based on a subset of the vertices of this mesh.
     /// @param old_vertex_indices vector of vertex indices of this mesh, which should be included in the submesh.
-    /// @param mapdir_fulltosubmesh whether to return a map from the old (full mesh) to the new (submesh)  vertex indices (`true`, the default), or the other way around (`false`) as the first element of the returned pair.
+    /// @param mapdir_fulltosubmesh whether to return a map from the old (full mesh) to the new (submesh)  vertex indices (`true`), or the other way around (`false`, the default) as the first element of the returned pair.
     /// @return a pair of the vertex index map (direction 'fullmesh to submesh' by default, but see 'mapdir_fulltosubmesh' parameter) and the submesh.
     ///
     /// #### Examples
@@ -893,7 +893,7 @@ namespace fs {
     /// fs::read_label(&label, "examples/read_label/lh.cortex.label");
     /// std::pair <std::unordered_map<int32_t, int32_t>, fs::Mesh> result = surface.submesh_vertex(label.vertex);
     /// fs::Mesh patch = result.second;
-    /// auto vertexindexmap_full2submesh = result.first; // or '<std::unordered_map<int32_t, int32_t>' instead of 'auto'.
+    /// auto vertexindexmap_submesh2full = result.first; // or '<std::unordered_map<int32_t, int32_t>' instead of 'auto'.
     /// @endcode
     std::pair <std::unordered_map<int32_t, int32_t>, fs::Mesh> submesh_vertex(const std::vector<int> &old_vertex_indices, const bool mapdir_fulltosubmesh = false) const {
       fs::Mesh submesh;
@@ -944,13 +944,13 @@ namespace fs {
     /// @param orig_mesh_num_vertices number of vertices of the original, full mesh.
     /// @see `fs::Mesh::submesh_vertex` for how to get the `submesh_to_orig_mapping` parameter.
     /// @return vector of per-vertex data values, one value per mesh vertex of the original mesh. Values for vertices that are not part of the submesh are set to NAN.
-    static std::vector<float> curv_data_for_orig_mesh(const std::vector<float> data_submesh, const std::unordered_map<int32_t, int32_t> submesh_to_orig_mapping, const int32_t orig_mesh_num_vertices) {
+    static std::vector<float> curv_data_for_orig_mesh(const std::vector<float> data_submesh, const std::unordered_map<int32_t, int32_t> submesh_to_orig_mapping, const int32_t orig_mesh_num_vertices, const float fill_value=std::numeric_limits<float>::quiet_NaN()) {
 
       if(submesh_to_orig_mapping.size() != data_submesh.size()) {
         throw std::domain_error("The number of vertices of the submesh and the number of values in the submesh_to_orig_mapping do not match: got " + std::to_string(data_submesh.size()) + " and " + std::to_string(submesh_to_orig_mapping.size()) + ".");
       }
 
-      std::vector<float> data_orig_mesh(orig_mesh_num_vertices, std::numeric_limits<float>::quiet_NaN());
+      std::vector<float> data_orig_mesh(orig_mesh_num_vertices, fill_value);
       for(size_t i=0; i<data_submesh.size(); i++) {
           auto got = submesh_to_orig_mapping.find(i);
           if (got != submesh_to_orig_mapping.end()) {
