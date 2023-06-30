@@ -51,6 +51,7 @@ int main(int argc, char** argv) {
     std::string cortex_label = "";
     int circ_scale = 5; // The fraction of the total surface that the circles for the geodesic circle stats should have (in percent).
     string arg_hemi = "both";
+    float fill_value = 0.0f; // The default per-vertex data value used when mapping data from cortex-only submesh back to the full mesh. Only relevant if a valid 'cortex_label' is used. Note that while std::numeric_limits<float>::quiet_NaN() seems to be the best choice, this cannot be used because FreeSurfer tools (which are likely to be used on the output data later) cannot handle per-vertex data including NAN values.
     if(argc >= 3) {
         subjects_dir = std::string(argv[2]);
     }
@@ -243,8 +244,8 @@ int main(int argc, char** argv) {
                 std::vector<std::vector<float>> circle_stats;
                 if  (use_cortex_label) {
                     circle_stats = geodesic_circles(m_cortex, qv_cs, (float)circ_scale, circle_stats_do_meandists_this_hemi);
-                    circle_stats[0] = fs::Mesh::curv_data_for_orig_mesh(circle_stats[0], res_pair.first, surface.num_vertices());
-                    circle_stats[1] = fs::Mesh::curv_data_for_orig_mesh(circle_stats[1], res_pair.first, surface.num_vertices());
+                    circle_stats[0] = fs::Mesh::curv_data_for_orig_mesh(circle_stats[0], res_pair.first, surface.num_vertices(), fill_value);
+                    circle_stats[1] = fs::Mesh::curv_data_for_orig_mesh(circle_stats[1], res_pair.first, surface.num_vertices(), fill_value);
                 } else {
                     circle_stats = geodesic_circles(m, qv_cs, (float)circ_scale, circle_stats_do_meandists_this_hemi);
                 }
@@ -257,7 +258,7 @@ int main(int argc, char** argv) {
                 if(circle_stats_do_meandists_this_hemi) {
                     std::vector<float> mean_geodists_circ = circle_stats[2];
                     if  (use_cortex_label) {
-                        mean_geodists_circ = fs::Mesh::curv_data_for_orig_mesh(mean_geodists_circ, res_pair.first, surface.num_vertices());
+                        mean_geodists_circ = fs::Mesh::curv_data_for_orig_mesh(mean_geodists_circ, res_pair.first, surface.num_vertices(), fill_value);
                     }
                     fs::write_curv(mgd_filename, mean_geodists_circ);
                     std::cout << "     o Geodesic mean distance results for hemi " << hemi << " written to file '" << mgd_filename << "'.\n";
@@ -274,7 +275,7 @@ int main(int argc, char** argv) {
                 std::vector<float> mean_dists;
                 if  (use_cortex_label) {
                     mean_dists = mean_geodist_p(m_cortex);
-                    mean_dists = fs::Mesh::curv_data_for_orig_mesh(mean_dists, res_pair.first, surface.num_vertices());
+                    mean_dists = fs::Mesh::curv_data_for_orig_mesh(mean_dists, res_pair.first, surface.num_vertices(), fill_value);
                 } else {
                     mean_dists = mean_geodist(m);
                 }
