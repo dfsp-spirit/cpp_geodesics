@@ -69,14 +69,17 @@ if [ $cortex_only == "yes" ]; then
     cortex_outfilepart="cortex"
 else
     echo "${APPTAG} Using whole brain."
-    cortex_outfilepart="wholebrain"
+    cortex_outfilepart="fullbr"
     cortex_label_file="none" # the special string 'none' means 'use all vertices' (no label file).
 fi
 
+outfile_ext="" # = ".curv"
+circscale_part="_cs${circ_scale}"
+
 # These are the expected output files, as written by geodcircles. You cannot change them here, as they need to match those constructed in geodcircles/main.cpp.
-outfile_perim=subject1/surf/lh.geocirc_perimeter_vcglib_${surface}_${cortex_outfilepart}_circscale2.curv
-outfile_radius=subject1/surf/lh.geocirc_radius_vcglib_${surface}_${cortex_outfilepart}_circscale2.curv
-outfile_meandist=subject1/surf/lh.mean_geodist_vcglib_${surface}_${cortex_outfilepart}.curv
+outfile_perim=subject1/surf/lh.geocircperimeter_${surface}_${cortex_outfilepart}${circscale_part}${outfile_ext}
+outfile_radius=subject1/surf/lh.geocircradius_${surface}_${cortex_outfilepart}${circscale_part}${outfile_ext}
+outfile_meandist=subject1/surf/lh.meangeodist_${surface}_${cortex_outfilepart}${outfile_ext}
 
 if [ -f "${outfile_perim}" ]; then
     rm "${outfile_perim}"
@@ -93,7 +96,7 @@ hemi="lh"
 
 
 ../../geodcircles subjects.txt . ${surface} ${do_circle_stats} ${keep_existing} ${circ_scale} ${cortex_label_file} ${hemi}
-../../export_brainmesh subject1/surf/lh.${surface} "${outfile_perim}" lh.${surface}_perimeter_${cortex_outfilepart}.ply
-../../export_brainmesh subject1/surf/lh.${surface} "${outfile_radius}" lh.${surface}_radius_${cortex_outfilepart}.ply
-../../export_brainmesh subject1/surf/lh.${surface} "${outfile_meandist}" lh.${surface}_meandist_${cortex_outfilepart}.ply && echo "$APPTAG Done. You can view the results in MeshLab or other tools, e.g.: meshlab lh.${surface}_meandist_${cortex_outfilepart}.ply"
+../../export_brainmesh subject1/surf/lh.${surface} "${outfile_perim}" lh.${surface}_perimeter_${cortex_outfilepart}${circscale_part}.ply
+../../export_brainmesh subject1/surf/lh.${surface} "${outfile_radius}" lh.${surface}_radius_${cortex_outfilepart}${circscale_part}.ply
+../../export_brainmesh subject1/surf/lh.${surface} "${outfile_meandist}" lh.${surface}_meandist_${cortex_outfilepart}${circscale_part}.ply && echo "$APPTAG Done. You can view the results in MeshLab or other tools, e.g.: meshlab lh.${surface}_meandist_${cortex_outfilepart}.ply"
 

@@ -42,6 +42,8 @@ int main(int argc, char** argv) {
         std::cout << " * The output files will be written to the surf/ subdir of each subject.\n";
         exit(1);
     }
+
+    // These settings can be changed via command line arguments.
     std::string subjects_file = std::string(argv[1]);
     std::string subjects_dir = ".";
     std::string surface_name = "pial";
@@ -51,7 +53,13 @@ int main(int argc, char** argv) {
     std::string cortex_label = "";
     int circ_scale = 5; // The fraction of the total surface that the circles for the geodesic circle stats should have (in percent).
     string arg_hemi = "both";
+
+    // These settings cannot be changed via command line arguments, they require a recompile.
     float fill_value = 0.0f; // The default per-vertex data value used when mapping data from cortex-only submesh back to the full mesh. Only relevant if a valid 'cortex_label' is used. Note that while std::numeric_limits<float>::quiet_NaN() seems to be the best choice, this cannot be used because FreeSurfer tools (which are likely to be used on the output data later) cannot handle per-vertex data including NAN values.
+    std::string curv_outputfile_extension = ""; // Output file extension for the curv files when constructing output file names, including the dot if one is wanted. FreeSurfer does not use any, but one could use '.curv' to indicate the format and avoid confusion, as the format could also be MGH/MGZ instead of curv.
+
+
+    // Parse command line arguments.
     if(argc >= 3) {
         subjects_dir = std::string(argv[2]);
     }
@@ -203,19 +211,19 @@ int main(int argc, char** argv) {
                 vcgmesh_from_fs_surface(&m_cortex, res_pair.second);
 
                 std::cout << "Created VCG mesh with " << m_cortex.VN() << " vertices and " << m_cortex.FN() << " faces from cortex label.\n";
-                // TODO: we need to change the output per-vertex data using the mapping information
-                // in res_pair.first. This is currently not done, and the output data will be wrong
-                // and have the wrong size.
             }
 
-            std::string cortex_outfilepart = use_cortex_label ? "cortex" : "wholebrain";
+            std::string cortex_outfilepart = use_cortex_label ? "cortex" : "fullbr";    // cortex only or full brain mesh, including medial wall
+            std::string circscale_outfilepart = "_cs" + std::to_string(circ_scale); // The circ_scale setting, if circle stats are computed.
+
+
+            const std::string mgd_filename = fs::util::fullpath({subjects_dir, subject, "surf", hemi + ".meangeodist_" + surface_name + "_" + cortex_outfilepart + curv_outputfile_extension});
 
             // Compute the geodesic mean distances and write result file.
             if(do_circle_stats) {
-            std::string cortex_outfilepart = use_cortex_label ? "cortex" : "wholebrain";
-                const std::string rad_filename = fs::util::fullpath({subjects_dir, subject, "surf", hemi + ".geocirc_radius_vcglib_" + surface_name + "_" + cortex_outfilepart + "_circscale" + std::to_string(circ_scale) + ".curv"});
-                const std::string per_filename = fs::util::fullpath({subjects_dir, subject, "surf", hemi + ".geocirc_perimeter_vcglib_" + surface_name + "_" + cortex_outfilepart + "_circscale" + std::to_string(circ_scale) + ".curv"});
-                const std::string mgd_filename = fs::util::fullpath({subjects_dir, subject, "surf", hemi + ".mean_geodist_vcglib_" + surface_name + "_" + cortex_outfilepart + ".curv"});
+                const std::string rad_filename = fs::util::fullpath({subjects_dir, subject, "surf", hemi + ".geocircradius_" + surface_name + "_" + cortex_outfilepart + circscale_outfilepart + curv_outputfile_extension});
+                const std::string per_filename = fs::util::fullpath({subjects_dir, subject, "surf", hemi + ".geocircperimeter_" + surface_name + "_" + cortex_outfilepart + circscale_outfilepart + curv_outputfile_extension});
+                // Note: there is another filename for the mean geodist, but that is only used if we do not compute circle stats. See variable 'mean_geodist_outfile' below.
 
                 if(keep_existing_files) {
                     if(circle_stats_do_meandists_this_hemi) {
@@ -264,9 +272,8 @@ int main(int argc, char** argv) {
                     std::cout << "     o Geodesic mean distance results for hemi " << hemi << " written to file '" << mgd_filename << "'.\n";
                 }
             } else {
-                const std::string mean_geodist_outfile = fs::util::fullpath({subjects_dir, subject, "surf", hemi + ".mean_geodist_vcglib_" + surface_name + "_" + cortex_outfilepart + ".curv"});
                 if(keep_existing_files) {
-                    if(file_exists(mean_geodist_outfile)) {
+                    if(file_exists(mgd_filename)) {
                         std::cout << "     o Skipping computation for hemi " << hemi << ", output file exists.\n";
                         num_skipped_hemis_so_far++;
                         continue;
@@ -279,8 +286,8 @@ int main(int argc, char** argv) {
                 } else {
                     mean_dists = mean_geodist(m);
                 }
-                fs::write_curv(mean_geodist_outfile, mean_dists);
-                std::cout << "     o Geodesic mean distance results for hemi " << hemi << " written to file '" << mean_geodist_outfile << "'.\n";
+                fs::write_curv(mgd_filename, mean_dists);
+                std::cout << "     o Geodesic mean distance results for hemi " << hemi << " written to file '" << mgd_filename << "'.\n";
             }
             const std::chrono::time_point<std::chrono::steady_clock> subject_hemi_end_at = std::chrono::steady_clock::now();
             const double hemi_duration_seconds = std::chrono::duration_cast<std::chrono::milliseconds>(subject_hemi_end_at - subject_hemi_start_at).count() / 1000.0;
