@@ -4,6 +4,8 @@ Fast computation of geodesic distances and related mesh descriptors on (brain su
 
 
 [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.8090921.svg)](https://doi.org/10.5281/zenodo.8090921)
+![main](https://github.com/dfsp-spirit/cpp_geodesics/actions/workflows/tests.yml/badge.svg?branch=main)
+
 
 
 ## About
