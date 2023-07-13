@@ -29,19 +29,3 @@ jobs:
       run: |
         #ctest -C Debug --output-on-failure --verbose
         ./build/cpp_geodesic_tests
-
-    - name: Setup python
-      uses: actions/setup-python@v3
-      if: contains(matrix.os, 'ubuntu')
-      with:
-        python-version: 3.8
-
-    - name: Upload code coverage to coveralls
-      if: contains(matrix.os, 'ubuntu')
-      env:
-        COVERALLS_REPO_TOKEN: ${{ secrets.COVERALLS_REPO_TOKEN }}
-      run: |
-        python -m venv foo
-        source foo/bin/activate
-        pip install --upgrade pip setuptools cpp-coveralls
-        coveralls -E ".*CMakeFiles.*" -E ".*test/.*.cpp.*" --exclude "foo" --exclude "build/_deps"
