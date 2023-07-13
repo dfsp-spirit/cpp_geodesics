@@ -158,10 +158,10 @@ int main(int argc, char** argv) {
         }
     }
     if(argc >= 7) {
-        std::string cout = argv[6];
-        if(cout == "true") {
+        std::string csvout = argv[6];
+        if(csvout == "true") {
             csv = true;
-        } else if(cout == "false") {
+        } else if(csvout == "false") {
             csv = false;
         } else {
             throw std::runtime_error("Argument csv must be 'true' or 'false'.\n");
