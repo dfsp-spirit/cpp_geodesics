@@ -58,12 +58,12 @@ class Neighborhood {
   /// @param neigh_write_size the number of vertices to consider in the neighborhood. If more than its size, will be filled with NAN. If less, the rest will be ignored.
   /// @param pvd float, per-vertex descriptor value for this vertex. See `use_pvd` below if you do not want/have this.
   /// @param use_pvd bool, whether to write the value 'pvd' to the ouput (if not, resulting returned vector will be shorter).
-  /// @param normals whether to write the normals. Can set to false if they are empty or filled with junk because you did not compute them.
+  /// @param write_normals whether to write the normals. Can set to false if they are empty or filled with junk because you did not compute them.
   /// @param allow_nan bool, whether to allow nans. If false, and a short neighborhood (smaller than neigh_write_size) leads to production of NAN values in the output vector, an empty vector will be returned instead. The caller can then act on the vector length, e.g. decide to skip this row.
   /// @return float vector representation of neighborhood, handy for CSV or vvbin export
-  std::vector<float> to_row(const size_t neigh_write_size, const float pvd=0.0, const bool use_pvd=false, const bool normals=true, const bool allow_nan=true) {
+  std::vector<float> to_row(const size_t neigh_write_size, const float pvd=0.0, const bool use_pvd=false, const bool write_normals=true, const bool allow_nan=true) {
     size_t row_length = 1 + ((3 + 1) * neigh_write_size); // the source index, plus for each neighbor: the 3 coords (x,y,z), the distance
-    if(normals) {
+    if(write_normals) {
       row_length += 3 * neigh_write_size; // for each neighbor: the normals
     }
     if(use_pvd) {
@@ -103,7 +103,7 @@ class Neighborhood {
       }
     }
 
-    if(normals) {
+    if(write_normals) {
       for(size_t j=0; j < neigh_write_size; j++) {  // Write the neighbor normals.
         if(j < this->size()) {
           row[num_written] = this->normals[j][0]; num_written++;
@@ -158,7 +158,7 @@ std::vector<Neighborhood> neighborhoods_from_geod_neighbors(const std::vector<st
     for(size_t j = 0; j < neigh_size; j++) {
       //std::cout << ">>> Handling neighborhood #" << i << " of " << num_neighborhoods << " with size " << neigh_size << "\n";
       neigh_mesh_idx = geod_neighbors[i][j].index; // absolute index (in full mesh vertex vector)
-      neigh_indices[j] = neigh_mesh_idx;
+      neigh_indices[j] = int(neigh_mesh_idx);
       neigh_distances[j] = geod_neighbors[i][j].distance;  // This is the geodesic distance in this case!
       neigh_coords[j] = std::vector<float> {m_vcoords[neigh_mesh_idx][0], m_vcoords[neigh_mesh_idx][1], m_vcoords[neigh_mesh_idx][2]};
       source_vert_coords = std::vector<float> {m_vcoords[central_vert_mesh_idx][0], m_vcoords[central_vert_mesh_idx][1], m_vcoords[central_vert_mesh_idx][2]};

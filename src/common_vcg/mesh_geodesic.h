@@ -435,7 +435,7 @@ std::vector<std::vector<float>> geodesic_circles(MyMesh& m, std::vector<int> que
   //std::cout  << "Using " << query_vertices.size() << " query vertices.\n";
 
   std::vector<float> radius, perimeter, meandist;
-  size_t nqv = query_vertices.size();
+  int nqv = int(query_vertices.size());
   radius.resize(nqv);
   perimeter.resize(nqv);
   meandist.resize(nqv);
@@ -445,7 +445,7 @@ std::vector<std::vector<float>> geodesic_circles(MyMesh& m, std::vector<int> que
 
 
   # pragma omp parallel for shared(surf, radius, perimeter, meandist)
-  for(size_t i=0; i<nqv; i++) {
+  for(int i=0; i<nqv; i++) {
     MyMesh mt; // per thread, recreated from FreeSurfer mesh
     vcgmesh_from_fs_surface(&mt, surf);
 
