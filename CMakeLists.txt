@@ -28,8 +28,8 @@ if( CMAKE_CXX_COMPILER_ID MATCHES "Clang|AppleClang|GNU" )
     target_compile_options( geodcircles PRIVATE -Wall -Wextra)
 endif()
 if( CMAKE_CXX_COMPILER_ID MATCHES "MSVC" )
-    ADD_DEFINITIONS("_CRT_SECURE_NO_WARNINGS=1") # Disable warnings about fopen, strcpy, etc under msvcc
 	target_compile_options( geodcircles PRIVATE /W4 /WX )
+    target_compile_definitions(geodcircles PRIVATE _CRT_SECURE_NO_WARNINGS) # Disable MSVCC non-standard warnings/errors about fopen, strcpy, etc.
 endif()
 
 
@@ -59,6 +59,7 @@ if( CMAKE_CXX_COMPILER_ID MATCHES "Clang|AppleClang|GNU" )
 endif()
 if( CMAKE_CXX_COMPILER_ID MATCHES "MSVC" )
 	target_compile_options( demo_vcglibbrain PRIVATE /W4 /WX )
+    target_compile_definitions(demo_vcglibbrain PRIVATE _CRT_SECURE_NO_WARNINGS) # Disable MSVCC non-standard warnings/errors about fopen, strcpy, etc.
 endif()
 
 
@@ -87,6 +88,7 @@ if( CMAKE_CXX_COMPILER_ID MATCHES "Clang|AppleClang|GNU" )
 endif()
 if( CMAKE_CXX_COMPILER_ID MATCHES "MSVC" )
 	target_compile_options( export_brainmesh PRIVATE /W4 /WX )
+    target_compile_definitions(export_brainmesh PRIVATE _CRT_SECURE_NO_WARNINGS) # Disable MSVCC non-standard warnings/errors about fopen, strcpy, etc.
 endif()
 
 
@@ -114,6 +116,7 @@ if( CMAKE_CXX_COMPILER_ID MATCHES "Clang|AppleClang|GNU" )
 endif()
 if( CMAKE_CXX_COMPILER_ID MATCHES "MSVC" )
 	target_compile_options( meshneigh_edge PRIVATE /W4 /WX )
+    target_compile_definitions(meshneigh_edge PRIVATE _CRT_SECURE_NO_WARNINGS) # Disable MSVCC non-standard warnings/errors about fopen, strcpy, etc.
 endif()
 
 
@@ -141,6 +144,7 @@ if( CMAKE_CXX_COMPILER_ID MATCHES "Clang|AppleClang|GNU" )
 endif()
 if( CMAKE_CXX_COMPILER_ID MATCHES "MSVC" )
 	target_compile_options( meshneigh_geod PRIVATE /W4 /WX )
+    target_compile_definitions(meshneigh_geod PRIVATE _CRT_SECURE_NO_WARNINGS) # Disable MSVCC non-standard warnings/errors about fopen, strcpy, etc.
 endif()
 
 
@@ -160,6 +164,7 @@ if( CMAKE_CXX_COMPILER_ID MATCHES "Clang|AppleClang|GNU" )
 endif()
 if( CMAKE_CXX_COMPILER_ID MATCHES "MSVC" )
 	target_compile_options( demo_geolibbrain PRIVATE /W4 /WX )
+    target_compile_definitions(demo_geolibbrain PRIVATE _CRT_SECURE_NO_WARNINGS) # Disable MSVCC non-standard warnings/errors about fopen, strcpy, etc.
 endif()
 
 
@@ -179,6 +184,7 @@ if( CMAKE_CXX_COMPILER_ID MATCHES "Clang|AppleClang|GNU" )
 endif()
 if( CMAKE_CXX_COMPILER_ID MATCHES "MSVC" )
 	target_compile_options( geodpath PRIVATE /W4 /WX )
+    target_compile_definitions(geodpath PRIVATE _CRT_SECURE_NO_WARNINGS) # Disable MSVCC non-standard warnings/errors about fopen, strcpy, etc.
 endif()
 
 
@@ -207,4 +213,5 @@ if( CMAKE_CXX_COMPILER_ID MATCHES "Clang|AppleClang|GNU" )
 endif()
 if( CMAKE_CXX_COMPILER_ID MATCHES "MSVC" )
 	target_compile_options( cpp_geodesic_tests PRIVATE /W4 /WX )
+    target_compile_definitions(cpp_geodesic_tests PRIVATE _CRT_SECURE_NO_WARNINGS) # Disable MSVCC non-standard warnings/errors about fopen, strcpy, etc.
 endif()
