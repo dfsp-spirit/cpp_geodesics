@@ -56,7 +56,8 @@ if( CMAKE_CXX_COMPILER_ID MATCHES "Clang|AppleClang|GNU" )
     target_compile_options( demo_vcglibbrain PRIVATE -Wall -Wextra)
 endif()
 if( CMAKE_CXX_COMPILER_ID MATCHES "MSVC" )
-	target_compile_options( demo_vcglibbrain PRIVATE /W4 /WX )
+	#target_compile_options( demo_vcglibbrain PRIVATE /W4 /WX )
+    target_compile_options( demo_vcglibbrain PRIVATE /W4)
 endif()
 
 
