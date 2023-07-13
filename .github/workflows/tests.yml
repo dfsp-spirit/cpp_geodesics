@@ -27,9 +27,8 @@ jobs:
 
     - name: Test
       run: |
-        cd build
         #ctest -C Debug --output-on-failure --verbose
-        ./cpp_geodesic_tests
+        ./build/cpp_geodesic_tests
 
     - name: Setup python
       uses: actions/setup-python@v2
