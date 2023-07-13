@@ -2,8 +2,6 @@ cmake_minimum_required(VERSION 3.8.2)
 project(cpp_geodesics)
 
 
-ADD_DEFINITIONS("_CRT_SECURE_NO_WARNINGS=1") # Disable warnings about fopen, strcpy, etc under msvcc
-
 # Build the geodcircles application that uses VCGLIB and computes geodesic circle stats and/or geodesic mean distances.
 set(SOURCE_FILES_COMMON_VCG third_party/vcglib/wrap/ply/plylib.cpp)
 set(SOURCE_FILES_GEODCIRCLES_VCG src/geodcircles/main.cpp ${SOURCE_FILES_COMMON_VCG})
@@ -30,6 +28,7 @@ if( CMAKE_CXX_COMPILER_ID MATCHES "Clang|AppleClang|GNU" )
     target_compile_options( geodcircles PRIVATE -Wall -Wextra)
 endif()
 if( CMAKE_CXX_COMPILER_ID MATCHES "MSVC" )
+    ADD_DEFINITIONS("_CRT_SECURE_NO_WARNINGS=1") # Disable warnings about fopen, strcpy, etc under msvcc
 	target_compile_options( geodcircles PRIVATE /W4 /WX )
 endif()
 
