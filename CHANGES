@@ -1,0 +1,17 @@
+cpp_geodesics Changes
+======================
+
+*Note*: This repo contains the main app `geodcircles` along with some utility apps. Unless otherwise noted, all
+changes listed below are for the `geodcircles` app.
+
+
+v0.2.0: Medial wall masking, Windows/MSVC support
+-------------------------------------------------
+* Add support for masking the medial wall during computation of geodesic circle stats and mean geodesic distances.
+* Support compiling under Windows with MSVC by updating to libfs v0.3.4. (Unit tests are also run under Windows on CI starting from now.)
+
+
+v0.1.0: Initial release
+-----------------------
+* Support computing geodesic circle stats and mean geodesic distances for brain surface meshes.
+* The geodcircles app can run directly on a FreeSurfer recon-all output directory.

@@ -16,6 +16,7 @@ Due to the high mesh resolution and computational cost of running geodesics comp
 
 To use down-sampled meshes, you will have to generate them, and the related down-sampled labels if you want to restrict computations to the cortex (as opposed to the medial wall), using FreeSurfer command line tools `mri_surf2surf` and `mri_label2label`. I have bash scripts available for doing that in parallel for many subjects in my [freesurfer_parallel_scripts repo](https://github.com/dfsp-spirit/freesurfer_parallel_scripts/tree/main/tools) if you are interested. The script you want is called `parallel_downsample_label.bash`, but it uses other scripts from the same repo (`downsample_label.bash`), so it is safer to just clone the full repo.
 
+
 ## Usage
 
 Run `./geodcircles` to see the usage help:
