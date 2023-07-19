@@ -14,8 +14,10 @@
 #include <cmath>
 #include <algorithm>
 #include <chrono>
+#include <cstdint>
 
-#define LIBFS_VERSION "0.3.2"
+
+#define LIBFS_VERSION "0.3.4"
 
 /// @file
 ///
@@ -130,6 +132,19 @@ namespace fs {
 
   namespace util {
 
+    /// @brief  Cross-platform wrapper for localtime_r and localtime_s.
+    /// @param time the time to convert to an std::tm struct.
+    /// @return the std::tm struct.
+    tm _localtime(const std::time_t& time) {
+      std::tm tm_snapshot;
+      #if (defined(WIN32) || defined(_WIN32) || defined(__WIN32__))
+        ::localtime_s(&tm_snapshot, &time);
+      #else
+        ::localtime_r(&time, &tm_snapshot); // POSIX
+      #endif
+        return tm_snapshot;
+    }
+
     /// @brief Get current time as string, e.g. for log messages.
     /// @param t the timepoint to format as a string, typically `std::system_clock::now()`.
     /// @return the formatted time string.
@@ -143,10 +158,9 @@ namespace fs {
       struct tm tm;
       char time_buffer[64];
       //if (::gmtime_r(&as_time_t, &tm)) {
-      if (::localtime_r(&as_time_t, &tm)) {
-        if (std::strftime(time_buffer, sizeof(time_buffer), "%F %T", &tm)) {
-          return std::string{time_buffer};
-        }
+      tm = _localtime(as_time_t);
+      if (std::strftime(time_buffer, sizeof(time_buffer), "%F %T", &tm)) {
+        return std::string{time_buffer};
       }
       throw std::runtime_error("Failed to get current date as string");
     }
@@ -404,7 +418,7 @@ namespace fs {
   int _fread3(std::istream&);
   template <typename T> T _freadt(std::istream&);
   std::string _freadstringnewline(std::istream&);
-  std::string _freadfixedlengthstring(std::istream&, int32_t, bool);
+  std::string _freadfixedlengthstring(std::istream&, size_t, bool);
   bool _ends_with(std::string const &fullString, std::string const &ending);
   size_t _vidx_2d(size_t, size_t, size_t);
   struct MghHeader;
@@ -554,13 +568,13 @@ namespace fs {
           continue;
         }
         // Add the upper left triangle of this grid cell.
-        faces.push_back(i);
-        faces.push_back(i + ny + 1);
-        faces.push_back(i + 1);
+        faces.push_back(int(i));
+        faces.push_back(int(i + ny + 1));
+        faces.push_back(int(i + 1));
         // Add the lower right triangle of this grid cell.
-        faces.push_back(i);
-        faces.push_back(i + ny + 1);
-        faces.push_back(i + ny);
+        faces.push_back(int(i));
+        faces.push_back(int(i + ny + 1));
+        faces.push_back(int(i + ny));
       }
 
       mesh.vertices = vertices;
@@ -895,7 +909,7 @@ namespace fs {
     /// fs::Mesh patch = result.second;
     /// auto vertexindexmap_submesh2full = result.first; // or '<std::unordered_map<int32_t, int32_t>' instead of 'auto'.
     /// @endcode
-    std::pair <std::unordered_map<int32_t, int32_t>, fs::Mesh> submesh_vertex(const std::vector<int> &old_vertex_indices, const bool mapdir_fulltosubmesh = false) const {
+    std::pair <std::unordered_map<int32_t, int32_t>, fs::Mesh> submesh_vertex(const std::vector<int32_t> &old_vertex_indices, const bool mapdir_fulltosubmesh = false) const {
       fs::Mesh submesh;
       std::vector<float> new_vertices;
       std::vector<int> new_faces;
@@ -903,9 +917,9 @@ namespace fs {
       int32_t new_vertex_idx = 0;
       for(size_t i = 0; i < old_vertex_indices.size(); i++) {
         vertex_index_map_full2submesh[old_vertex_indices[i]] = new_vertex_idx;
-        new_vertices.push_back(this->vertices[old_vertex_indices[i]*3]);
-        new_vertices.push_back(this->vertices[old_vertex_indices[i]*3+1]);
-        new_vertices.push_back(this->vertices[old_vertex_indices[i]*3+2]);
+        new_vertices.push_back(this->vertices[size_t(old_vertex_indices[i])*3]);
+        new_vertices.push_back(this->vertices[size_t(old_vertex_indices[i])*3+1]);
+        new_vertices.push_back(this->vertices[size_t(old_vertex_indices[i])*3+2]);
         new_vertex_idx++;
       }
       int face_v0;
@@ -952,7 +966,7 @@ namespace fs {
 
       std::vector<float> data_orig_mesh(orig_mesh_num_vertices, fill_value);
       for(size_t i=0; i<data_submesh.size(); i++) {
-          auto got = submesh_to_orig_mapping.find(i);
+          auto got = submesh_to_orig_mapping.find(int(i));
           if (got != submesh_to_orig_mapping.end()) {
             data_orig_mesh[got->second] = data_submesh[i];
           }
@@ -1065,7 +1079,7 @@ namespace fs {
       #ifdef LIBFS_DBG_INFO
       std::cout << LIBFS_APPTAG << "Reading brain mesh from Wavefront object format file " << filename << ".\n";
       #endif
-      std::ifstream input(filename);
+      std::ifstream input(filename, std::fstream::in);
       if(input.is_open()) {
         Mesh::from_obj(mesh, &input);
         input.close();
@@ -1091,7 +1105,9 @@ namespace fs {
 
       std::vector<float> vertices;
       std::vector<int> faces;
-      size_t num_vertices, num_faces, num_edges;
+      size_t num_vertices = 0;
+      size_t num_faces = 0;
+      size_t num_edges = 0;
       size_t num_verts_parsed = 0;
       size_t num_faces_parsed = 0;
       float x, y, z;    // vertex xyz coords
@@ -1175,7 +1191,7 @@ namespace fs {
       #ifdef LIBFS_DBG_INFO
       std::cout << LIBFS_APPTAG << "Reading brain mesh from OFF format file " << filename << ".\n";
       #endif
-      std::ifstream input(filename);
+      std::ifstream input(filename, std::fstream::in);
       if(input.is_open()) {
         Mesh::from_off(mesh, &input);
         input.close();
@@ -1237,7 +1253,7 @@ namespace fs {
             if(vertices.size() < (size_t)num_verts * 3) {
               float x,y,z;
               if (!(iss >> x >> y >> z)) {
-                throw std::domain_error("Could not parse vertex line of PLY data, invalid format.\n");
+                throw std::domain_error("Could not parse vertex line " + std::to_string(line_idx) + " of PLY data, invalid format.\n");
               }
               vertices.push_back(x);
               vertices.push_back(y);
@@ -1246,7 +1262,7 @@ namespace fs {
               if(faces.size() < (size_t)num_faces * 3) {
                 int verts_per_face, v0, v1, v2;
                 if (!(iss >> verts_per_face >> v0 >> v1 >> v2)) {
-                  throw std::domain_error("Could not parse face line of PLY data, invalid format.\n");
+                  throw std::domain_error("Could not parse face line " + std::to_string(line_idx) + " of PLY data, invalid format.\n");
                 }
                 if(verts_per_face != 3) {
                   throw std::domain_error("Only triangular meshes are supported: PLY faces lines must contain exactly 3 vertex indices.\n");
@@ -1286,7 +1302,7 @@ namespace fs {
       #ifdef LIBFS_DBG_INFO
       std::cout << LIBFS_APPTAG << "Reading brain mesh from PLY format file " << filename << ".\n";
       #endif
-      std::ifstream input(filename);
+      std::ifstream input(filename, std::fstream::in);
       if(input.is_open()) {
         Mesh::from_ply(mesh, &input);
         input.close();
@@ -1568,7 +1584,7 @@ namespace fs {
 
     /// Construct a Curv instance from the given per-vertex data.
     Curv(std::vector<float> curv_data) :
-      num_faces(100000), num_vertices(0), num_values_per_vertex(1) { data = curv_data; num_vertices = data.size(); }
+      num_faces(100000), num_vertices(0), num_values_per_vertex(1) { data = curv_data; num_vertices = int(data.size()); }
 
     /// Construct an empty Curv instance.
     Curv() :
@@ -1652,7 +1668,7 @@ namespace fs {
       std::vector<int32_t> reg_verts;
       for(size_t i=0; i<this->vertex_labels.size(); i++) {
         if(this->vertex_labels[i] == region_label) {
-          reg_verts.push_back(i);
+          reg_verts.push_back(int(i));
         }
       }
       return(reg_verts);
@@ -1717,23 +1733,23 @@ namespace fs {
 
   /// Models the header of an MGH file.
   struct MghHeader {
-    int32_t dim1length;  ///< size of data along 1st dimension
-    int32_t dim2length;  ///< size of data along 2nd dimension
-    int32_t dim3length;  ///< size of data along 3rd dimension
-    int32_t dim4length;  ///< size of data along 4th dimension
+    int32_t dim1length = 0;  ///< size of data along 1st dimension
+    int32_t dim2length = 0;  ///< size of data along 2nd dimension
+    int32_t dim3length = 0;  ///< size of data along 3rd dimension
+    int32_t dim4length = 0;  ///< size of data along 4th dimension
 
-    int32_t dtype;  ///< the MRI data type
-    int32_t dof;  ///< typically ignored
-    int16_t ras_good_flag; ///< flag indicating whether the data in the RAS fields (Mdc, Pxyz_c) are valid. 1 means valid, everything else means invalid.
+    int32_t dtype = 0;  ///< the MRI data type
+    int32_t dof = 0;  ///< typically ignored
+    int16_t ras_good_flag = 0; ///< flag indicating whether the data in the RAS fields (Mdc, Pxyz_c) are valid. 1 means valid, everything else means invalid.
 
     /// @brief Compute the number of values based on the dim*length header fields.
     size_t num_values() const {
       return((size_t) dim1length * dim2length * dim3length * dim4length);
     }
 
-    float xsize;  ///< size of voxels along 1st axis (x or r)
-    float ysize;  ///< size of voxels along 2nd axis (y or a)
-    float zsize;  ///< size of voxels along 3rd axis (z or s)
+    float xsize = 0.0;  ///< size of voxels along 1st axis (x or r)
+    float ysize = 0.0;  ///< size of voxels along 2nd axis (y or a)
+    float zsize = 0.0;  ///< size of voxels along 3rd axis (z or s)
     std::vector<float> Mdc;  ///< matrix
     std::vector<float> Pxyz_c;  ///< x,y,z coordinates of central vertex
   };
@@ -1863,7 +1879,7 @@ namespace fs {
   /// @endcode
   std::vector<std::string> read_subjectsfile(const std::string& filename) {
     std::vector<std::string> subjects;
-    std::ifstream input(filename);
+    std::ifstream input(filename, std::fstream::in);
     std::string line;
 
     if(! input.is_open()) {
@@ -2026,7 +2042,7 @@ namespace fs {
     if(ifs.is_open()) {
       ifs.seekg(284, ifs.beg); // skip to end of header and beginning of data
 
-      int num_values = mgh_header->num_values();
+      int num_values = int(mgh_header->num_values());
       std::vector<T> data;
       for(int i=0; i<num_values; i++) {
         data.push_back( _freadt<T>(ifs));
@@ -2045,7 +2061,7 @@ namespace fs {
   /// @private
   template <typename T>
   std::vector<T> _read_mgh_data(MghHeader* mgh_header, std::istream* is) {
-    int num_values = mgh_header->num_values();
+    int num_values = int(mgh_header->num_values());
     std::vector<T> data;
     for(int i=0; i<num_values; i++) {
       data.push_back( _freadt<T>(*is));
@@ -2177,6 +2193,7 @@ namespace fs {
   bool _is_bigendian() {
     short int number = 0x1;
     char *numPtr = (char*)&number;
+    //std::cout << "Platform is big endian: " << (numPtr[0] != 1) << ".\n";
     return (numPtr[0] != 1);
   }
 
@@ -2222,7 +2239,7 @@ namespace fs {
   /// fs::read_curv(&curv, "examples/read_curv/lh.thickness");
   /// @endcode
   void read_curv(Curv* curv, const std::string& filename) {
-    std::ifstream is(filename);
+    std::ifstream is(filename, std::fstream::in | std::fstream::binary);
     if(is.is_open()) {
       read_curv(curv, &is, filename);
       is.close();
@@ -2323,7 +2340,7 @@ namespace fs {
   /// fs::read_annot(&annot, annot_fname);
   /// @endcode
   void read_annot(Annot* annot, const std::string& filename) {
-    std::ifstream is(filename);
+    std::ifstream is(filename, std::fstream::in | std::fstream::binary);
     if(is.is_open()) {
       read_annot(annot, &is);
       is.close();
@@ -2351,12 +2368,14 @@ namespace fs {
     return(curv.data);
   }
 
+ 
   /// Swap endianness of a value.
   ///
   /// THIS FUNCTION IS INTERNAL AND SHOULD NOT BE CALLED BY API CLIENTS.
   /// @private
   template <typename T>
   T _swap_endian(T u) {
+
       static_assert (CHAR_BIT == 8, "CHAR_BIT != 8");
 
       union
@@ -2447,10 +2466,7 @@ namespace fs {
   /// Read a fixed length C-style string from an open binary stream. This does not care about trailing NULL bytes or anything, it just reads the given length of bytes.
   /// @throws std::out_of_range if length is not positive
   /// @private
-  std::string _freadfixedlengthstring(std::istream &is, int32_t length, bool strip_last_char=true) {
-    if(length <= 0) {
-      throw std::out_of_range("Parameter 'length' must be a positive integer.\n");
-    }
+  std::string _freadfixedlengthstring(std::istream &is, size_t length, bool strip_last_char=true) {
     std::string str;
     str.resize(length);
     is.read(&str[0], length);
@@ -2469,7 +2485,7 @@ namespace fs {
   void write_curv(std::ostream& os, std::vector<float> curv_data, int32_t num_faces = 100000) {
     const uint32_t CURV_MAGIC = 16777215;
     _fwritei3(os, CURV_MAGIC);
-    _fwritet<int32_t>(os, curv_data.size());
+    _fwritet<int32_t>(os, int(curv_data.size()));
     _fwritet<int32_t>(os, num_faces);
     _fwritet<int32_t>(os, 1); // Number of values per vertex.
     for(size_t i=0; i<curv_data.size(); i++) {
@@ -2658,7 +2674,7 @@ namespace fs {
     /// Return the number of entries (vertices/voxels) in this label.
     size_t num_entries() const {
       size_t num_ent = this->vertex.size();
-      if(this->coord_x.size() != num_ent || this->coord_y.size() != num_ent || this->coord_z.size() != num_ent || this->value.size() != num_ent || this->value.size() != num_ent) {
+      if(this->coord_x.size() != num_ent || this->coord_y.size() != num_ent || this->coord_z.size() != num_ent || this->value.size() != num_ent) {
         std::cerr << "Inconsistent label: sizes of property vectors do not match.\n";
       }
       return(num_ent);
@@ -2676,8 +2692,8 @@ namespace fs {
     _fwritei3(os, SURF_TRIS_MAGIC);
     std::string created_and_comment_lines = "Created by fslib\n\n";
     os << created_and_comment_lines;
-    _fwritet<int32_t>(os, vertices.size() / 3);  // number of vertices
-    _fwritet<int32_t>(os, faces.size() / 3);  // number of faces
+    _fwritet<int32_t>(os, int(vertices.size() / 3));  // number of vertices
+    _fwritet<int32_t>(os, int(faces.size() / 3));  // number of faces
     for(size_t i=0; i < vertices.size(); i++) {
        _fwritet<float>(os, vertices[i]);
     }
@@ -2792,7 +2808,7 @@ namespace fs {
   /// fs::read_label(&label, "subject1/label/lh.cortex.label");
   /// @endcode
   void read_label(Label* label, const std::string& filename) {
-    std::ifstream infile(filename);
+    std::ifstream infile(filename, std::fstream::in);
     if(infile.is_open()) {
       read_label(label, &infile);
       infile.close();
