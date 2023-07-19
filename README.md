@@ -89,7 +89,7 @@ Note for Mac users: Apple's version of the clang compiler that comes with MacOS 
 
 ### Building without cmake
 
-The only officially supported method to build is via cmake, but of course you can just read the [CMakeLists.txt file](./CMakeLists.txt) in combination with your compiler's manual page to construct the commands to compile without cmake. We vendor all dependencies in the repo, so you do not need to worry about installing other things. E.g., to manually compile `geodcircles` with GNU C++, you would do:
+The only officially supported method to build is via cmake, but of course you can just read the [CMakeLists.txt file](./CMakeLists.txt) in combination with your compiler's manual page to construct the commands to compile without cmake. We vendor all dependencies in the repo, so you do not need to worry about installing other things. E.g., to manually compile `geodcircles` with the GNU C++ compiler, you would do:
 
 ```shell
 g++ -Isrc/common -I src/common_vcg -Ithird_party/libfs -Ithird_party/vcglib -Ithird_party/vcglib/eigenlib -Ithird_party/spline -I third_party/tinycolormap third_party/vcglib/wrap/ply/plylib.cpp src/geodcircles/main.cpp -o geodcircles
