@@ -75,7 +75,7 @@ I would recommend `sudo apt install build-essential cmake git`
 
 To build with cmake:
 
-```
+```shell
 git clone https://github.com/dfsp-spirit/cpp_geodesics
 cd cpp_geodesics
 cmake .
@@ -86,6 +86,14 @@ In the last step, you can also build a single app only, e.g., `make geodcircles`
 
 Note for Mac users: Apple's version of the clang compiler that comes with MacOS does not support OpenMP, so you will have to install a suitable compiler and use it to compile these apps. Without OpenMP support, only a single CPU core will be used. Both standard clang or g++, e.g. from Homebrew or MacPorts, work fine.
 
+
+### Building without cmake
+
+The only officially supported method to build is via cmake, but of course you can just read the [CMakeLists.txt file](./CMakeLists.txt) in combination with your compiler's manual page to construct the commands to compile without cmake. We vendor all dependencies in the repo, so you do not need to worry about installing other things. E.g., to manually compile `geodcircles` with GNU C++, you would do:
+
+```shell
+g++ -Isrc/common -I src/common_vcg -Ithird_party/libfs -Ithird_party/vcglib -Ithird_party/vcglib/eigenlib -Ithird_party/spline -I third_party/tinycolormap third_party/vcglib/wrap/ply/plylib.cpp src/geodcircles/main.cpp -o geodcircles
+```
 
 ## Usage
 
