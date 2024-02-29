@@ -39,7 +39,7 @@ int main(int argc, char** argv) {
         std::cout << "NOTES:\n";
         std::cout << " * Sorry for the current command line parsing state: you will have to supply all arguments if you want to change the last one.\n";
         std::cout << " * We recommend to run this on simplified meshes to save computation time, e.g., by scaling the vertex count to that of fsaverage6. If you do that and use the cortex_label parameter, you will of course also need scaled cortex labels.\n";
-        std::cout << " * The output files will be written to the surf/ subdir of each subject.\n";
+        std::cout << " * The output files will be written to the surf/ subdir of each subject. They are in FreeSurfer curv format.\n";
         exit(1);
     }
 
