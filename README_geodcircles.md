@@ -17,6 +17,10 @@ Due to the high mesh resolution and computational cost of running geodesics comp
 To use down-sampled meshes, you will have to generate them, and the related down-sampled labels if you want to restrict computations to the cortex (as opposed to the medial wall), using FreeSurfer command line tools `mri_surf2surf` and `mri_label2label`. I have bash scripts available for doing that in parallel for many subjects in my [freesurfer_parallel_scripts repo](https://github.com/dfsp-spirit/freesurfer_parallel_scripts/tree/main/tools) if you are interested. The script you want is called `parallel_downsample_label.bash`, but it uses other scripts from the same repo (`downsample_label.bash`), so it is safer to just clone the full repo.
 
 
+### Installation and compiling
+
+See instructions in the [README.md file](./README.md) in this repo.
+
 ## Usage
 
 Run `./geodcircles` to see the usage help:
@@ -51,7 +55,9 @@ In the following examples, we change to your `SUBJECTS_DIR` with the `recon_all`
 
 #### Example 1
 
-In this example, we want to run `geodcircles` with default settings in the current working directory, and use the mentioned `subjects.txt` file you provide:
+In this example, we want to run `geodcircles` with default settings in the current working directory, and use the mentioned `subjects.txt` file you provide.
+
+Note: Here we assume that you have checked out this repo to the path ```~/cpp_geodesics/``` (which typically evaluates to something like ```/home/your_user/cpp_geodesics/```) and that you already compiled the `geodcircles` app in there, i.e., the executable file ```~/cpp_geodesics/geodcircles``` should exist on your system.
 
 ```shell
 cd ~/data/study1/freesurfer_output/       # or whereever your data is
