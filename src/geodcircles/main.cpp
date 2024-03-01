@@ -25,17 +25,18 @@ int main(int argc, char** argv) {
 
     std::cout << "=====[ geodcircles ]=====.\n";
 
-    if(argc < 2 || argc > 9) {
+    if(argc < 2 || argc > 10) {
         std::cout << "== Compute mean geodesic distances and circle stats for FreeSurfer brain meshes ==.\n";
         std::cout << "Usage: " << argv[0] << " <subjects_file> [<subjects_dir> [<surface> [<do_circle_stats> [<keep_existing> [<circ_scale> [<cortex_label> [<hemi>]]]]]]]\n";
         std::cout << "  <subjects_file> : text file containing one subject identifier per line.\n";
         std::cout << "  <subjects_dir>  : directory containing the FreeSurfer recon-all output for the subjects. Defaults to current working directory.\n";
         std::cout << "  <surface>       : the surface file to load from the surf/ subdir of each subject, without hemi part. Defaults to 'pial'.\n";
         std::cout << "  <do_circle_stat>: flag whether to compute geodesic circle stats as well, must be 0 (off), 1 (on) or 2 (on with mean dists). Defaults to 2. Valid aliases for 0 are 'false' and 'no'. Valid aliases for 1 are 'true' and 'yes'. Valid aliases for 2 are 'yes_with_meandists' and 'true_with_meandists'.\n";
-        std::cout << "  <keep_existing> : flag whether to keep existing output files, must be 'no' (off: recompute and overwrite files. aliases: '0' and 'false' are also supported), or 'yes' (keep existing files, skip computation if exists. aliases '1' and 'true' are also supported). Defaults to 1.\n";
+        std::cout << "  <keep_existing> : flag whether to keep existing output files, must be 'no' (off: recompute and overwrite files. aliases: '0' and 'false' are also supported), or 'yes' (keep existing files, skip computation if exists). Aliases '1' / 'true', or '0' / 'false' are also supported. Defaults to 1.\n";
         std::cout << "  <circ_scale>    : int, the fraction of the total surface that the circles for the geodesic circle stats should have (in percent). Ignored if do_circle_stats is 0. Defaults to 5.\n";
         std::cout << "  <cortex_label>  : str, optional file name of a cortex label file, without the hemi prefix to load from the label/ subdir of each subject. If given, load label and ignore non-label vertices, typically the medial wall, during all computations. Defaults to the empty string, i.e., no cortex label file. E.g., 'cortex.label'. Can be set to 'none' to turn off.\n";
         std::cout << "  <hemi>          : str, which hemispheres to compute. One of 'lh', 'rh' or 'both'. Defaults to 'both'.\n";
+        std::cout << "  <write_mgh>     : flag whether to write extra output files in MGH format (in addition to curv format), must be 'no' (off: only curv format) or 'yes' (on: write curv and MGH formats).  Aliases '1' / 'true', or '0' / 'false' are also supported. Defaults to 0.\n";
         std::cout << "NOTES:\n";
         std::cout << " * Sorry for the current command line parsing state: you will have to supply all arguments if you want to change the last one.\n";
         std::cout << " * We recommend to run this on simplified meshes to save computation time, e.g., by scaling the vertex count to that of fsaverage6. If you do that and use the cortex_label parameter, you will of course also need scaled cortex labels.\n";
@@ -53,10 +54,12 @@ int main(int argc, char** argv) {
     std::string cortex_label = "";
     int circ_scale = 5; // The fraction of the total surface that the circles for the geodesic circle stats should have (in percent).
     string arg_hemi = "both";
+    bool write_output_also_in_mgh_format = false;
 
     // These settings cannot be changed via command line arguments, they require a recompile.
     float fill_value = 0.0f; // The default per-vertex data value used when mapping data from cortex-only submesh back to the full mesh. Only relevant if a valid 'cortex_label' is used. Note that while std::numeric_limits<float>::quiet_NaN() seems to be the best choice, this cannot be used because FreeSurfer tools (which are likely to be used on the output data later) cannot handle per-vertex data including NAN values.
     std::string curv_outputfile_extension = ""; // Output file extension for the curv files when constructing output file names, including the dot if one is wanted. FreeSurfer does not use any, but one could use '.curv' to indicate the format and avoid confusion, as the format could also be MGH/MGZ instead of curv.
+    std::string mgh_outputfile_extension = ".mgh";  // Output file extension for the optional MGH files when constructing output file names, including the dot if one is wanted.
 
 
     // Parse command line arguments.
@@ -97,8 +100,18 @@ int main(int argc, char** argv) {
     if(argc >= 8) { // cortex_label
         cortex_label = std::string(argv[7]);
     }
-    if(argc == 9) {
+    if(argc >= 9) {
         arg_hemi = std::string(argv[8]);
+    }
+    if(argc == 10) { // whether to keep existing files / skip computation for those that are already done.
+        if (std::string(argv[9]) == "0" || std::string(argv[9]) == "no" || std::string(argv[9]) == "false") {
+            write_output_also_in_mgh_format = false;
+        } else if (std::string(argv[9]) == "1" || std::string(argv[9]) == "yes" || std::string(argv[9]) == "true") {
+            write_output_also_in_mgh_format = true;
+        } else {
+            std::cerr << "Invalid value for parameter 'write_mgh'. Must be 'no' or 'yes' (or one of the aliases for those).\n";
+            exit(1);
+        }
     }
 
     if (! fs::util::file_exists(subjects_file)) {
@@ -129,6 +142,12 @@ int main(int argc, char** argv) {
         use_cortex_label = true;
     } else {
         std::cout << "Not using a cortex label file to ignore medial wall vertices, computing for all mesh vertices.\n";
+    }
+
+    if(write_output_also_in_mgh_format) {
+        std::cout << "Writing all output files in both MGH and curv file formats.\n";
+    } else {
+        std::cout << "Writing all output files in FreeSurfer curv file format.\n";
     }
 
     std::cout << "=Starting computation=\n";
@@ -217,33 +236,60 @@ int main(int argc, char** argv) {
             std::string circscale_outfilepart = "_cs" + std::to_string(circ_scale); // The circ_scale setting, if circle stats are computed.
 
 
-            const std::string mgd_filename = fs::util::fullpath({subjects_dir, subject, "surf", hemi + ".meangeodist_" + surface_name + "_" + cortex_outfilepart + curv_outputfile_extension});
+            const std::string mgd_filename_curv = fs::util::fullpath({subjects_dir, subject, "surf", hemi + ".meangeodist_" + surface_name + "_" + cortex_outfilepart + curv_outputfile_extension});
+            const std::string mgd_filename_mgh = fs::util::fullpath({subjects_dir, subject, "surf", hemi + ".meangeodist_" + surface_name + "_" + cortex_outfilepart + mgh_outputfile_extension});
 
             // Compute the geodesic mean distances and write result file.
             if(do_circle_stats) {
-                const std::string rad_filename = fs::util::fullpath({subjects_dir, subject, "surf", hemi + ".geocircradius_" + surface_name + "_" + cortex_outfilepart + circscale_outfilepart + curv_outputfile_extension});
-                const std::string per_filename = fs::util::fullpath({subjects_dir, subject, "surf", hemi + ".geocircperimeter_" + surface_name + "_" + cortex_outfilepart + circscale_outfilepart + curv_outputfile_extension});
+                const std::string rad_filename_curv = fs::util::fullpath({subjects_dir, subject, "surf", hemi + ".geocircradius_" + surface_name + "_" + cortex_outfilepart + circscale_outfilepart + curv_outputfile_extension});
+                const std::string per_filename_curv = fs::util::fullpath({subjects_dir, subject, "surf", hemi + ".geocircperimeter_" + surface_name + "_" + cortex_outfilepart + circscale_outfilepart + curv_outputfile_extension});
+                const std::string rad_filename_mgh = fs::util::fullpath({subjects_dir, subject, "surf", hemi + ".geocircradius_" + surface_name + "_" + cortex_outfilepart + circscale_outfilepart + mgh_outputfile_extension});
+                const std::string per_filename_mgh = fs::util::fullpath({subjects_dir, subject, "surf", hemi + ".geocircperimeter_" + surface_name + "_" + cortex_outfilepart + circscale_outfilepart + mgh_outputfile_extension});
                 // Note: there is another filename for the mean geodist, but that is only used if we do not compute circle stats. See variable 'mean_geodist_outfile' below.
 
                 if(keep_existing_files) {
                     if(circle_stats_do_meandists_this_hemi) {
-                        if(file_exists(rad_filename) && file_exists(per_filename) && file_exists(mgd_filename)) {
-                            std::cout << "     o Skipping computation for hemi " << hemi << ", output files exist.\n";
-                            num_skipped_hemis_so_far++;
-                            continue;
+                        if(write_output_also_in_mgh_format) {
+                            if(file_exists(rad_filename_curv) && file_exists(per_filename_curv) && file_exists(mgd_filename_curv) &&
+                                            file_exists(rad_filename_mgh) && file_exists(per_filename_mgh) && file_exists(mgd_filename_mgh)) {
+                                std::cout << "     o Skipping computation for hemi " << hemi << ", curv and MGH format output files exist.\n";
+                                num_skipped_hemis_so_far++;
+                                continue;
+                            }
+                        } else {
+                            if(file_exists(rad_filename_curv) && file_exists(per_filename_curv) && file_exists(mgd_filename_curv)) {
+                                std::cout << "     o Skipping computation for hemi " << hemi << ", curv format output files exist.\n";
+                                num_skipped_hemis_so_far++;
+                                continue;
+                            }
                         }
                         // If people run this program several times with different circ_scale settings, we may not have
                         // computed the circle stats for the current setting yet, but as the mean dist is not affected by
                         // that setting, it may exist already and we can save a bit of time by not re-computing it.
-                        if(file_exists(mgd_filename)) {
-                            std::cout << "     o Skipping only mean-dists computation for hemi " << hemi << ", output file for that (but not for circle stats) exists.\n";
-                            circle_stats_do_meandists_this_hemi = false;
+                        if(write_output_also_in_mgh_format) {
+                            if(file_exists(mgd_filename_curv) && file_exists(mgd_filename_mgh)) {
+                                std::cout << "     o Skipping only mean-dists computation for hemi " << hemi << ", curv and MGH format output files for that (but not for circle stats) exists.\n";
+                                circle_stats_do_meandists_this_hemi = false;
+                            }
+                        } else {
+                            if(file_exists(mgd_filename_curv)) {
+                                std::cout << "     o Skipping only mean-dists computation for hemi " << hemi << ", curv format output file for that (but not for circle stats) exists.\n";
+                                circle_stats_do_meandists_this_hemi = false;
+                            }
                         }
                     } else {
-                        if(file_exists(rad_filename) && file_exists(per_filename)) {
-                            std::cout << "     o Skipping computation for hemi " << hemi << ", output files exist.\n";
-                            num_skipped_hemis_so_far++;
-                            continue;
+                        if(write_output_also_in_mgh_format) {
+                            if(file_exists(rad_filename_curv) && file_exists(per_filename_curv) && file_exists(rad_filename_mgh) && file_exists(per_filename_mgh)) {
+                                std::cout << "     o Skipping computation for hemi " << hemi << ", curv and MGH format output files exist.\n";
+                                num_skipped_hemis_so_far++;
+                                continue;
+                            }
+                        } else {
+                            if(file_exists(rad_filename_curv) && file_exists(per_filename_curv)) {
+                                std::cout << "     o Skipping computation for hemi " << hemi << ", curv format output files exist.\n";
+                                num_skipped_hemis_so_far++;
+                                continue;
+                            }
                         }
                     }
                 }
@@ -259,24 +305,44 @@ int main(int argc, char** argv) {
                 }
                 const std::vector<float> radii = circle_stats[0];
                 const std::vector<float> perimeters = circle_stats[1];
-                fs::write_curv(rad_filename, radii);
-                std::cout << "     o Geodesic circle radius results for hemi " << hemi << " written to file '" << rad_filename << "'.\n";
-                fs::write_curv(per_filename, perimeters);
-                std::cout << "     o Geodesic circle perimeter results for hemi " << hemi << " written to file '" << per_filename << "'.\n";
+                fs::write_curv(rad_filename_curv, radii);
+                std::cout << "     o Geodesic circle radius results for hemi " << hemi << " written to file '" << rad_filename_curv << "' in curv format.\n";
+                if(write_output_also_in_mgh_format) {
+                    fs::write_mgh(fs::Mgh(radii), rad_filename_mgh);
+                    std::cout << "     o Geodesic circle radius results for hemi " << hemi << " written to file '" << rad_filename_mgh << "' in MGH format.\n";
+                }
+                fs::write_curv(per_filename_curv, perimeters);
+                std::cout << "     o Geodesic circle perimeter results for hemi " << hemi << " written to file '" << per_filename_curv << "' in curv format.\n";
+                if(write_output_also_in_mgh_format) {
+                    fs::write_mgh(fs::Mgh(radii), per_filename_mgh);
+                    std::cout << "     o Geodesic circle perimeter results for hemi " << hemi << " written to file '" << per_filename_mgh << "' in MGH format.\n";
+                }
                 if(circle_stats_do_meandists_this_hemi) {
                     std::vector<float> mean_geodists_circ = circle_stats[2];
                     if  (use_cortex_label) {
                         mean_geodists_circ = fs::Mesh::curv_data_for_orig_mesh(mean_geodists_circ, res_pair.first, surface.num_vertices(), fill_value);
                     }
-                    fs::write_curv(mgd_filename, mean_geodists_circ);
-                    std::cout << "     o Geodesic mean distance results for hemi " << hemi << " written to file '" << mgd_filename << "'.\n";
+                    fs::write_curv(mgd_filename_curv, mean_geodists_circ);
+                    std::cout << "     o Geodesic mean distance results for hemi " << hemi << " written to file '" << mgd_filename_curv << "' in curv format.\n";
+                    if(write_output_also_in_mgh_format) {
+                        fs::write_mgh(fs::Mgh(mean_geodists_circ), mgd_filename_mgh);
+                        std::cout << "     o Geodesic mean distance results for hemi " << hemi << " written to file '" << mgd_filename_mgh << "' in MGH format.\n";
+                    }
                 }
             } else {
                 if(keep_existing_files) {
-                    if(file_exists(mgd_filename)) {
-                        std::cout << "     o Skipping computation for hemi " << hemi << ", output file exists.\n";
-                        num_skipped_hemis_so_far++;
-                        continue;
+                    if(write_output_also_in_mgh_format) {
+                        if(file_exists(mgd_filename_curv) && file_exists(mgd_filename_mgh)) {
+                            std::cout << "     o Skipping computation for hemi " << hemi << ", curv and MGH format output files exist.\n";
+                            num_skipped_hemis_so_far++;
+                            continue;
+                        }
+                    } else {
+                        if(file_exists(mgd_filename_curv)) {
+                            std::cout << "     o Skipping computation for hemi " << hemi << ", curv format output file exists.\n";
+                            num_skipped_hemis_so_far++;
+                            continue;
+                        }
                     }
                 }
                 std::vector<float> mean_dists;
@@ -286,8 +352,12 @@ int main(int argc, char** argv) {
                 } else {
                     mean_dists = mean_geodist(m);
                 }
-                fs::write_curv(mgd_filename, mean_dists);
-                std::cout << "     o Geodesic mean distance results for hemi " << hemi << " written to file '" << mgd_filename << "'.\n";
+                fs::write_curv(mgd_filename_curv, mean_dists);
+                std::cout << "     o Geodesic mean distance results for hemi " << hemi << " written to file '" << mgd_filename_curv << "' in curv format.\n";
+                if(write_output_also_in_mgh_format) {
+                    fs::write_mgh(fs::Mgh(mean_dists), mgd_filename_mgh);
+                    std::cout << "     o Geodesic mean distance results for hemi " << hemi << " written to file '" << mgd_filename_mgh << "' in MGH format.\n";
+                }
             }
             const std::chrono::time_point<std::chrono::steady_clock> subject_hemi_end_at = std::chrono::steady_clock::now();
             const double hemi_duration_seconds = std::chrono::duration_cast<std::chrono::milliseconds>(subject_hemi_end_at - subject_hemi_start_at).count() / 1000.0;

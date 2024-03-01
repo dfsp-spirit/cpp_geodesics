@@ -110,6 +110,16 @@ Usage: ./geodpath <mesh> [<source> [<target>]]
   <target> : int >= 0, the target vertex (0-based index). Defaults to 100.
 ```
 
+### Running a full demo computation on the included demo data
+
+This repository contains some down-sampled [demonstartion data](./demo_data/). Here is how to run the `geodcircles` application on the demo data (after you have compiled it as explained in the section *Building* above):
+
+```shell
+./geodcircles demo_data/subjects_dir/subjects_fsaverage3.txt demo_data/subjects_dir/
+```
+
+This will perform the computations on all subjects listed in the file [demo_data/subjects_dir/subjects_fsaverage3.txt](./demo_data/subjects_dir/subjects_fsaverage3.txt) and write the output files into the respective `surf/` sub directory of each subject.
+
 
 ## Algorithms
 
