@@ -110,7 +110,9 @@ Usage: ./geodpath <mesh> [<source> [<target>]]
   <target> : int >= 0, the target vertex (0-based index). Defaults to 100.
 ```
 
-### Running a full demo computation on the included demo data
+The most important application in this repo is `geodcircles`.
+
+### Running a full geodcircles demo computation on the included demo data
 
 This repository contains some down-sampled [demonstartion data](./demo_data/). Here is how to run the `geodcircles` application on the demo data (after you have compiled it as explained in the section *Building* above):
 
@@ -119,6 +121,12 @@ This repository contains some down-sampled [demonstartion data](./demo_data/). H
 ```
 
 This will perform the computations on all subjects listed in the file [demo_data/subjects_dir/subjects_fsaverage3.txt](./demo_data/subjects_dir/subjects_fsaverage3.txt) and write the output files into the respective `surf/` sub directory of each subject.
+
+The output files are written in FreeSurfer `curv` format by default, you can use command line arguments to also write in FreeSurfer `MGH` format.
+
+Note: Both formats can be read in various programming languages, e.g., in Matlab using the functions that comes with FresSurfer in the `matlab/` sub directory of the installation folder, in Python with the `nibabel` package, in R with the `freesurferformats` package on CRAN, in C++ with [libfs](https://github.com/dfsp-spirit/libfs). I have also written libraries for Rust, Java, Julia and Go that can handle the formats, see the [list of my repos](https://github.com/dfsp-spirit?tab=repositories) here on my Github account.
+
+
 
 
 ## Algorithms
