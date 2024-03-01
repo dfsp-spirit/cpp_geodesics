@@ -37,10 +37,11 @@ Usage: ./geodcircles <subjects_file> [<subjects_dir> [<surface> [<do_circle_stat
   <circ_scale>    : int, the fraction of the total surface that the circles for the geodesic circle stats should have (in percent). Ignored if do_circle_stats is 0. Defaults to 5.
   <cortex_label>  : str, optional file name of a cortex label file, without the hemi prefix to load from the label/ subdir of each subject. If given, load label and ignore non-label vertices, typically the medial wall, during all computations. Defaults to the empty string, i.e., no cortex label file. E.g., 'cortex.label'. Can be set to 'none' to turn off.
   <hemi>          : str, which hemispheres to compute. One of 'lh', 'rh' or 'both'. Defaults to 'both'.
+  <write_mgh>     : flag whether to write extra output files in MGH format (in addition to curv format), must be 'no' (off: only curv format) or 'yes' (on: write curv and MGH formats).  Aliases '1' / 'true', or '0' / 'false' are also supported. Defaults to 0.
 NOTES:
  * Sorry for the current command line parsing state: you will have to supply all arguments if you want to change the last one.
  * We recommend to run this on simplified meshes to save computation time, e.g., by scaling the vertex count to that of fsaverage6. If you do that and use the cortex_label parameter, you will of course also need scaled cortex labels.
- * The output files will be written to the surf/ subdir of each subject.
+ * The output files will be written to the surf/ subdir of each subject. They are in FreeSurver curv format.
 ```
 
 You can see the default values for all command line arguments at the end of the respective help text.
@@ -87,7 +88,15 @@ Note that we specified a dot ('`.`') as the working directory, as we want to use
 * `circ_scale`=`5`     (use 5 percent of area for circles)
 * `cortex_label`=`cortex6.label`   (restrict vertices of mesh to those listed in the label file, delete all others for the computation. The results in the written surface overlay files will have NAN values for deleted vertices.)
 
-We did not provide a value for the last parameter `hemi`, so the default of `both` was used.
+We did not provide a value for the parameters `hemi` and `write_mgh` so the defaults were used. You can find out about the defaults from the help output that is printed when you run the application without any arguments.
+
+## Information on the output files
+
+The output files are written to the respective subject directory. The file names are constructed from the hemisphere, descriptor, and settings used. They are printed during the computation.
+
+By default, output is written in FreeSurfer curv format. You can use command line arguments to also write in MGH format.
+
+The output is in native space of the subjects, so you would need to map this to some standard space (typically fsaverage, or a downsampled version of it) for group comparison.
 
 
 ## Where to find information on installation, compiling, author, getting help, ...
