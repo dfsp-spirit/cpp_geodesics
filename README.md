@@ -120,7 +120,7 @@ This repository contains some down-sampled [demonstartion data](./demo_data/). H
 ./geodcircles demo_data/subjects_dir/subjects_fsaverage3.txt demo_data/subjects_dir/
 ```
 
-This will perform the computations on all subjects listed in the file [demo_data/subjects_dir/subjects_fsaverage3.txt](./demo_data/subjects_dir/subjects_fsaverage3.txt) and write the output files into the respective `surf/` sub directory of each subject.
+This will perform the computations on all subjects listed in the file [demo_data/subjects_dir/subjects_fsaverage3.txt](./demo_data/subjects_dir/subjects_fsaverage3.txt) and write the output files into the respective `surf/` sub directory of each subject. The demo data in the directory ```./demo_data/subjects_dir/``` is organized exactly in the way FreeSurfer writes its output.
 
 The output files are written in FreeSurfer `curv` format by default, you can use command line arguments to also write in FreeSurfer `MGH` format.
 

@@ -90,6 +90,19 @@ Note that we specified a dot ('`.`') as the working directory, as we want to use
 
 We did not provide a value for the parameters `hemi` and `write_mgh` so the defaults were used. You can find out about the defaults from the help output that is printed when you run the application without any arguments.
 
+## Information on input files
+
+The application expects a directory filled with pre-processed neuroimaging data, organized in the a structure as it is output by FreeSurfer's `recon-all` software (the SUBJECTS_DIR).
+
+The full FreeSurfer output is **not** required. You only need, for each subject:
+* the meshes (e.g., ```<SUBJECTS_DIR>/<subject_name>/surf/lh.pial``` and ```<SUBJECTS_DIR>/<subject_name>/surf/rh.pial``` for pial surface).
+* optional: if you want to exlude non-cortical parts of the meshes (the medial wall), the cortex labels (i.e., ```<SUBJECTS_DIR>/<subject_name>/label/lh.cortex.label``` and ```<SUBJECTS_DIR>/<subject_name>/label/rh.cortex.label```) are needed.
+
+The meshes are expected in FreeSurfer's own surface format, which is a simple binary format for triangular meshes.
+
+NOTE: If you want to run the app on other meshes (e.g., arbitrary meshes which do not come from a neuroimaging background), you can convert your meshes from standard formats like PLY, wavefront object, STL, and others to FreeSurfer mesh format with tools like the ```freesurferformats``` package for R. Keep in mind that the meshes must consist of a single connected component.
+
+
 ## Information on the output files
 
 The output files are written to the respective subject directory, in the `surf/` sub directory. The file names are constructed from the hemisphere, descriptor, and settings used. They are printed during the computation.
