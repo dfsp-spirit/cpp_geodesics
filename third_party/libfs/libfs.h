@@ -1733,6 +1733,21 @@ namespace fs {
 
   /// Models the header of an MGH file.
   struct MghHeader {
+    MghHeader() {}  ///< Empty default constuctor.
+    MghHeader(Curv curv) {  ///< Constuctor to fill header from a Curv instance.
+      dim1length = curv.data.size();
+      dim2length = 1;
+      dim3length = 1;
+      dim4length = 1;
+      dtype = fs::MRI_FLOAT;
+    }
+    MghHeader(std::vector<float> curv_data) { ///< Constuctor to fill header from a 1D float array (curv data).
+      dim1length = curv_data.size();
+      dim2length = 1;
+      dim3length = 1;
+      dim4length = 1;
+      dtype = fs::MRI_FLOAT;
+    }
     int32_t dim1length = 0;  ///< size of data along 1st dimension
     int32_t dim2length = 0;  ///< size of data along 2nd dimension
     int32_t dim3length = 0;  ///< size of data along 3rd dimension
@@ -1761,6 +1776,7 @@ namespace fs {
     explicit MghData(std::vector<uint8_t> curv_data) { data_mri_uchar = curv_data; }  ///< constructor to create MghData from MRI_UCHAR (uint8_t) data.
     explicit MghData(std::vector<short> curv_data) { data_mri_short = curv_data; }  ///< constructor to create MghData from MRI_SHORT (short) data.
     MghData(std::vector<float> curv_data) { data_mri_float = curv_data; }  ///< constructor to create MghData from MRI_FLOAT (float) data.
+    MghData(Curv curv) { data_mri_float = curv.data; }  ///< constructor to create MghData from a Curv instance
     std::vector<int32_t> data_mri_int;  ///< data of type MRI_INT, check the dtype to see whether this is relevant for this instance.
     std::vector<uint8_t> data_mri_uchar;  ///< data of type MRI_UCHAR, check the dtype to see whether this is relevant for this instance.
     std::vector<float> data_mri_float;  ///< data of type MRI_FLOAT, check the dtype to see whether this is relevant for this instance.
@@ -1771,6 +1787,15 @@ namespace fs {
   struct Mgh {
     MghHeader header;  ///< Header for this MGH instance.
     MghData data;  ///< 4D data for this MGH instance.
+    Mgh() {}  ///< Empty default constuctor.
+    Mgh(Curv curv) {  ///< Constuctor to create MGH instance from Curv instance.
+      header = MghHeader(curv);
+      data = MghData(curv);
+    }
+    Mgh(std::vector<float> curv_data) {  ///< Constuctor to create MGH instance from a 1D float array (curv data).
+      header = MghHeader(curv_data);
+      data = MghData(curv_data);
+    }
   };
 
   /// @brief A simple 4D array datastructure, useful for representing volume data.
@@ -2368,7 +2393,7 @@ namespace fs {
     return(curv.data);
   }
 
- 
+
   /// Swap endianness of a value.
   ///
   /// THIS FUNCTION IS INTERNAL AND SHOULD NOT BE CALLED BY API CLIENTS.
