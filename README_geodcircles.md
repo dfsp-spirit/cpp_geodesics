@@ -92,7 +92,7 @@ We did not provide a value for the parameters `hemi` and `write_mgh` so the defa
 
 ## Information on the output files
 
-The output files are written to the respective subject directory. The file names are constructed from the hemisphere, descriptor, and settings used. They are printed during the computation.
+The output files are written to the respective subject directory, in the `surf/` sub directory. The file names are constructed from the hemisphere, descriptor, and settings used. They are printed during the computation.
 
 By default, output is written in FreeSurfer curv format. You can use command line arguments to also write in MGH format.
 
