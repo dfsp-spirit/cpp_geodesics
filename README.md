@@ -124,7 +124,7 @@ This will perform the computations on all subjects listed in the file [demo_data
 
 The output files are written in FreeSurfer `curv` format by default, you can use command line arguments to also write in FreeSurfer `MGH` format.
 
-Note: Both formats can be read in various programming languages, e.g., in Matlab using the functions that comes with FresSurfer in the `matlab/` sub directory of the installation folder, in Python with the `nibabel` package, in R with the `freesurferformats` package on CRAN, in C++ with [libfs](https://github.com/dfsp-spirit/libfs). I have also written libraries for Rust, Java, Julia and Go that can handle the formats, see the [list of my repos](https://github.com/dfsp-spirit?tab=repositories) here on my Github account.
+Note: Both formats can be read in various programming languages, e.g., in Matlab using the functions that comes with FresSurfer in the `matlab/` sub directory of the installation folder, in Python with the [nibabel](https://nipy.org/nibabel/) package, in R with the `freesurferformats` package ([repo](https://github.com/dfsp-spirit/freesurferformats), [CRAN](https://CRAN.R-project.org/package=freesurferformats)), in C++ with [libfs](https://github.com/dfsp-spirit/libfs). I have also written libraries for Rust, Java, Julia and Go that can handle the formats, see the [list of my repos](https://github.com/dfsp-spirit?tab=repositories) here on my Github account.
 
 
 See [README_geodcircles.md](./README_geodcircles.md) for details on using the `geodcircles` application.
