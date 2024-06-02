@@ -1,5 +1,7 @@
 cmake_minimum_required(VERSION 3.8.2)
-project(cpp_geodesics)
+
+project(cpp_geodesics CXX)
+find_package(Threads)
 
 
 # Build the geodcircles application that uses VCGLIB and computes geodesic circle stats and/or geodesic mean distances.
