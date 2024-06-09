@@ -88,6 +88,8 @@ In the last step, you can also build a single app only, e.g., `make geodcircles`
 
 Note for Mac users: Apple's version of the clang compiler that comes with MacOS does not support OpenMP, so you will have to install a suitable compiler and use it to compile these apps. Without OpenMP support, only a single CPU core will be used. Both standard clang or g++, e.g. from Homebrew or MacPorts, work fine.
 
+Note for Ubuntu 22.04 LTS users: On one Ubuntu 22.04 LTS system, I received the error `No rule to make target '/usr/lib/x86_64-linux-gnu/libpthread.so', needed by 'geodcircles'.  Stop.` when I ran `make`. Checking the file system revealed that only `/usr/lib/x86_64-linux-gnu/libpthread.so.0` existed, but not `/usr/lib/x86_64-linux-gnu/libpthread.so`, so I symlinked it: `sudo ln -s /usr/lib/x86_64-linux-gnu/libpthread.so.0 /usr/lib/x86_64-linux-gnu/libpthread.so`. This is a hack that should not be needed of course, but if you receive the mentioned error message, better look into your `/usr/lib/x86_64-linux-gnu/` directory. This may also hint at a `cmake` bug, but I did not bother to investigate this any further.
+
 
 ### Building without cmake
 
