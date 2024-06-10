@@ -86,3 +86,5 @@ void write_vv(const std::string& filename, std::vector<std::vector<T>> data) {
       throw std::runtime_error("Unable to open file '" + filename + "' for writing.\n");
     }
   }
+
+  

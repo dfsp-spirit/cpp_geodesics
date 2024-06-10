@@ -16,6 +16,7 @@
 #include "mesh_geodesic.h"
 #include "mesh_neighborhood.h"
 #include "write_data.h"
+#include "write_data_npy.h"
 
 
 #include <string>
@@ -41,7 +42,8 @@
 /// @param input_pvd_file str, path to per-vertex data (like pial lgi, thickness) file for mesh.
 /// @param input_ctx_file str, path to cortex label file for mesh to identify cortex versus medial wall vertices and remove the latter.
 /// @param neigh_write_size int, number of vertices to export per neighborhood, even if more are part of it. used to force CSV rows to a fixed length over several meshes for machine learning input.
-void mesh_neigh_edge(const std::string& input_mesh_file, const size_t k = 1, const std::string& output_dist_file="edge_distances", const bool include_self=true, const bool write_json=false, const bool write_csv=false, const bool write_vvbin=true, const bool with_neigh=false, const std::string& input_pvd_file="", const std::string& input_ctx_file="", const size_t neigh_write_size = 0) {
+/// @param write_numpy bool, whether to export in Numpy format (flattened).
+void mesh_neigh_edge(const std::string& input_mesh_file, const size_t k = 1, const std::string& output_dist_file="edge_distances", const bool include_self=true, const bool write_json=false, const bool write_csv=false, const bool write_vvbin=true, const bool with_neigh=false, const std::string& input_pvd_file="", const std::string& input_ctx_file="", const size_t neigh_write_size = 0, const bool write_numpy=true) {
 
     debug_print(CPP_GEOD_DEBUG_LVL_VERBOSE, "Reading mesh '" + input_mesh_file + "' to compute graph " + std::to_string(k) + "-ring edge neighborhoods...");
     if(include_self) {
@@ -99,6 +101,21 @@ void mesh_neigh_edge(const std::string& input_mesh_file, const size_t k = 1, con
             //strtofile(neighborhoods_to_json(nh), output_neigh_file_json);
             //std::cout << "Neighborhood information written to JSON file '" + output_neigh_file_json + "'.\n";
             debug_print(CPP_GEOD_DEBUG_LVL_WARN, "Writing Neighborhood information to JSON format not supported yet, skipping. Use CSV instead.");
+        }
+    }
+
+    // Write it to a NumPy file.
+    if(write_numpy) {
+        if(write_dists) {
+            std::string output_dist_file_numpy = output_dist_file + ".npy";
+            write_numpy_file<int32_t>(output_dist_file_numpy, neigh);
+            std::cout << std::string(APPTAG) << "Neighborhood edge distance information written to NumPy file '" + output_dist_file_numpy + "'.\n";
+        }
+        if(with_neigh) {
+            //std::string output_neigh_file_json = output_neigh_file + ".json";
+            //strtofile(neighborhoods_to_json(nh), output_neigh_file_json);
+            //std::cout << "Neighborhood information written to JSON file '" + output_neigh_file_json + "'.\n";
+            debug_print(CPP_GEOD_DEBUG_LVL_WARN, "Writing Neighborhood information to NumPy format not supported yet, skipping. Use CSV instead.");
         }
     }
 
