@@ -90,7 +90,7 @@ Note that we specified a dot ('`.`') as the working directory, as we want to use
 
 We did not provide a value for the parameters `hemi` and `write_mgh` so the defaults were used. You can find out about the defaults from the help output that is printed when you run the application without any arguments.
 
-## Information on input files
+## Information on input file organization and formats
 
 The application expects a directory filled with pre-processed neuroimaging data, organized in the a structure as it is output by FreeSurfer's `recon-all` software (the SUBJECTS_DIR).
 
@@ -100,7 +100,7 @@ The full FreeSurfer output is **not** required. You only need, for each subject:
 
 The meshes are expected in FreeSurfer's own surface format, which is a simple binary format for triangular meshes.
 
-NOTE: If you want to run the app on other meshes (e.g., arbitrary meshes which do not come from a neuroimaging background), you can convert your meshes from standard formats like PLY, wavefront object, STL, and others to FreeSurfer mesh format with tools like the ```freesurferformats``` package for R. Keep in mind that the meshes must consist of a single connected component.
+NOTE: If you want to run the app on other meshes (e.g., arbitrary meshes which do not come from a neuroimaging background), you can convert your meshes from standard formats like PLY, wavefront object, STL, and others to FreeSurfer mesh format with tools like the ```freesurferformats``` package for R. Keep in mind that the meshes must consist of a single connected component. In C++, you can also convert the meshes using [libfs](https://github.com/dfsp-spirit/libfs), see [this libfs example program](https://github.com/dfsp-spirit/libfs/blob/main/examples/read_surf/read_surf.cpp).
 
 
 ## Information on the output files
