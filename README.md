@@ -88,9 +88,9 @@ In the last step, you can also build a single app only, e.g., `make geodcircles`
 
 ### Trouble shooting the build process
 
-Note for Mac users: Apple's version of the clang compiler that comes with MacOS does not support OpenMP, so you will have to install a suitable compiler and use it to compile these apps. Without OpenMP support, only a single CPU core will be used. Both standard clang or g++, e.g. from Homebrew or MacPorts, work fine.
+Note for Mac users: The applications build and run fine with Apple's clang (the compiler that ships with Xcode). OpenMP is optional and auto-detected by cmake; since Apple's clang does not ship OpenMP support, OpenMP is simply not enabled on macOS. No extra compiler installation is required.
 
-Note for Ubuntu 22.04 LTS users: On one Ubuntu 22.04 LTS system, I received the error `No rule to make target '/usr/lib/x86_64-linux-gnu/libpthread.so', needed by 'geodcircles'.  Stop.` when I ran `make`. Checking the file system revealed that only `/usr/lib/x86_64-linux-gnu/libpthread.so.0` existed, but not `/usr/lib/x86_64-linux-gnu/libpthread.so`, so I symlinked it: `sudo ln -s /usr/lib/x86_64-linux-gnu/libpthread.so.0 /usr/lib/x86_64-linux-gnu/libpthread.so`. This is a hack that should not be needed of course, but if you receive the mentioned error message, better look into your `/usr/lib/x86_64-linux-gnu/` directory. This may also hint at a `cmake` bug, but I did not bother to investigate this any further.
+Note for Ubuntu users: If `cmake` or `make` fails with an error like `No rule to make target '/usr/lib/x86_64-linux-gnu/libpthread.so'`, make sure the `build-essential` package (which provides `libc6-dev` and thus the `libpthread.so` link) is installed: `sudo apt install build-essential`.
 
 
 ### Building without cmake
