@@ -1073,6 +1073,12 @@ public:
 
 
 	// Caricamento camera da un ply
+#if 0 // Disabled 2026-08-21: this function referenced the non-existent members
+      // `this->pi` and `this->camera`, which made the header fail to compile on
+      // AppleClang (macOS), where the member function gets instantiated even
+      // though it is never called (GCC never instantiates it). It is unused in
+      // this project, so it is disabled instead of patched. Upstream vcglib
+      // fixed this later by passing `pi` and `camera` as parameters.
 	int LoadCamera(const char * filename)
 	{
 		vcg::ply::PlyFile pf;
@@ -1144,6 +1150,7 @@ public:
 
 		return 0;
 	}
+#endif // LoadCamera disabled
 
 
 	static bool LoadMask(const char * filename, int &mask)
