@@ -5,6 +5,11 @@ cpp_geodesics Changes
 changes listed below are for the `geodcircles` app.
 
 
+v0.3.0: Fix compilation under Apple Clang
+------------------------------------------
+* Fix VCGLIB not compiling under Apple Clang (bugs in unused parts that gcc wont instatitate, but aclang does)
+
+
 v0.2.0: Medial wall masking, Windows/MSVC support
 -------------------------------------------------
 * Add support for masking the medial wall during computation of geodesic circle stats and mean geodesic distances.
